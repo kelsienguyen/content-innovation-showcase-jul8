@@ -115,8 +115,12 @@ details[open] summary::before{transform:rotate(45deg)}
 .vote-cta:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .mast .vote-cta{margin-top:24px}
 .votebar{margin-top:26px;background:#fff;border:1px solid var(--line);border-radius:8px;
-  box-shadow:var(--shadow);padding:24px 20px;text-align:center}
+  box-shadow:var(--shadow);padding:24px 20px;text-align:center;scroll-margin-top:16px}
 .votebar p{font-weight:700;color:var(--navy);margin-bottom:14px}
+.votebar iframe{width:100%;height:1250px;border:0;border-radius:6px;background:#fff}
+.votebar .alt{font-size:12.5px;font-weight:400;color:var(--sub);margin:6px 0 0}
+.votebar .alt a{color:var(--darkblue)}
+html{scroll-behavior:smooth}
 
 .foot{margin-top:34px;border-top:1px solid var(--line);padding-top:16px;color:var(--sub);font-size:12.5px}
 .foot p{margin-bottom:4px}
@@ -137,6 +141,7 @@ details[open] summary::before{transform:rotate(45deg)}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition:none!important}
+  html{scroll-behavior:auto}
 }
 </style>
 <header class="mast">
@@ -151,7 +156,7 @@ details[open] summary::before{transform:rotate(45deg)}
       <div class="stat"><b>8</b><span>team members</span></div>
       <div class="stat"><b>4</b><span>strategic pillars</span></div>
     </div>
-    <a class="vote-cta" href="https://docs.google.com/forms/d/e/1FAIpQLSdgVXf-HHWn0ZkN48X9mgLewFEYAJgBj14ify0rn8s2lsHVdw/viewform" target="_blank" rel="noopener">Cast your vote</a>
+    <a class="vote-cta" href="#vote">Cast your vote</a>
   </div>
 </header>
 <div class="wrap">
@@ -420,14 +425,11 @@ Partnership execution: Successful signing of the MOU with the NLP administration
   </details>
 </article></main>
 
-<section class="votebar">
-  <p>Seen all 11? Vote for the project that stood out most.</p>
-  <a class="vote-cta" href="https://docs.google.com/forms/d/e/1FAIpQLSdgVXf-HHWn0ZkN48X9mgLewFEYAJgBj14ify0rn8s2lsHVdw/viewform" target="_blank" rel="noopener">Cast your vote</a>
-</section>
+<section class="votebar" id="vote"><p>Seen all 11? Vote for the project that stood out most.</p><iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdgVXf-HHWn0ZkN48X9mgLewFEYAJgBj14ify0rn8s2lsHVdw/viewform?embedded=true" title="Vote form" loading="lazy"></iframe><p class="alt">Form not loading? <a href="https://docs.google.com/forms/d/e/1FAIpQLSdgVXf-HHWn0ZkN48X9mgLewFEYAJgBj14ify0rn8s2lsHVdw/viewform" target="_blank" rel="noopener">Open the ballot in a new tab</a>.</p></section>
 
 <footer class="foot">
   <p>Source: <a href="https://docs.google.com/spreadsheets/d/1UMuHgg1VP8MPRr8sAQce7wyvRNt3XCbIojl5F9Y0v3s/edit" target="_blank" rel="noopener">
-  Innovation &amp; Initiatives Project Intake (Responses)</a> &middot; pulled July 7, 2026, 4:58 PM.</p>
+  Innovation &amp; Initiatives Project Intake (Responses)</a> &middot; pulled July 7, 2026, 5:50 PM.</p>
   <p>The first submissions predate a fix in the intake form's impact question; those leads re-confirmed their ratings directly (Slack, July 7), and the site shows the confirmed values. The raw responses in the sheet are untouched.</p>
   <p>Attachment links open in Google Drive; access follows the file's Drive permissions.</p>
 </footer>

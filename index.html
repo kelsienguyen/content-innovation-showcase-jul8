@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>July 8 Showcase &middot; Innovation &amp; Initiatives</title>
+<style>
+:root{
+  --blue:#00beff; --blue1:#009feb; --blue2:#0081cc; --darkblue:#0056b3;
+  --ink:#0c2846; --navy:#1e3f6b; --sub:#6b8fbc; --line:#e3ecf5;
+  --bg:#f6f7fa; --card:#fff;
+  --shadow:0 2px 8px 0 rgba(12,40,70,.08); --shadow-h:0 4px 12px 0 rgba(12,40,70,.15);
+  --font:"Open Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --fnum:"Barlow","Open Sans",-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding:0 20px 48px}
+a{color:var(--darkblue)}
+
+.mast{background:#0c2846;color:#fff;padding:4px 20px 0;position:relative}
+.mast::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;
+  background:linear-gradient(90deg,#00beff,#009feb)}
+.mast-inner{max-width:1020px;margin:0 auto;padding:40px 0 52px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7ddcff}
+.mast h1{font-size:clamp(26px,4.5vw,38px);font-weight:800;letter-spacing:-.015em;line-height:1.2;
+  margin:8px 0 10px;text-wrap:balance}
+.sub{color:#8fb0d4;max-width:62ch}
+.stats{display:flex;flex-wrap:wrap;gap:12px 40px;margin-top:26px}
+.stat b{display:block;font-family:var(--fnum);font-size:34px;font-weight:700;line-height:1;
+  font-variant-numeric:tabular-nums;color:#00beff}
+.stat span{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8fb0d4}
+
+.program{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);
+  margin-top:-18px;padding:14px 18px 16px}
+.program-label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--navy);margin-bottom:10px}
+.program-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.prog{display:block;text-decoration:none;border:1px solid var(--line);border-left:3px solid var(--blue1);
+  border-radius:6px;padding:9px 12px;background:#f6f7fa;transition:box-shadow .15s,transform .15s}
+.prog:hover{box-shadow:var(--shadow-h);transform:translateY(-1px)}
+.prog-t{display:block;font-weight:700;font-size:13.5px;color:var(--ink);line-height:1.35}
+.prog-l{display:block;font-size:12px;color:var(--sub);margin-top:2px}
+
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 18px}
+.chip{--pc:#0056b3;font:600 13px/1 var(--font);color:var(--navy);background:#fff;
+  border:1px solid #bed2e8;border-radius:9999px;padding:8px 14px;cursor:pointer;
+  transition:background .15s,color .15s,border-color .15s}
+.chip b{font-weight:700;color:var(--sub);margin-left:2px}
+.chip:hover{border-color:var(--pc);color:var(--pc)}
+.chip.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.chip.active b{color:#7ddcff}
+.chip:focus-visible,.prog:focus-visible,.mlink:focus-visible,summary:focus-visible,.decnote:focus-visible{
+  outline:2px solid var(--blue1);outline-offset:2px}
+
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);
+  padding:20px 20px 16px;display:flex;flex-direction:column;gap:10px;
+  transition:box-shadow .15s,transform .15s;scroll-margin-top:16px}
+.card:hover{box-shadow:var(--shadow-h)}
+.card.hidden{display:none}
+.cardtop{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pillchip{--pc:#0056b3;--pb:#e3ecf5;font-size:11.5px;font-weight:700;letter-spacing:.02em;
+  color:var(--pc);background:var(--pb);border-radius:9999px;padding:4px 10px;white-space:nowrap}
+.badge-live{font-size:11.5px;font-weight:700;color:#fff;border-radius:9999px;padding:4px 10px;
+  background:linear-gradient(90deg,rgb(240 205 0),rgb(240 140 8));white-space:nowrap}
+.badge-async{font-size:11.5px;font-weight:600;color:var(--sub);border:1px solid var(--line);
+  border-radius:9999px;padding:3px 10px;white-space:nowrap}
+.card h3{font-size:19px;font-weight:800;letter-spacing:-.01em;line-height:1.3;color:var(--ink);
+  text-wrap:balance}
+.lead-line{font-size:13px;font-weight:600;color:var(--navy);margin-top:-6px}
+.excerpt{color:#33517a;font-size:14px}
+
+.impact{border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:#fbfcfe}
+.impact-title{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--navy);opacity:.75;margin-bottom:7px}
+.irow{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:10px;padding:2.5px 0}
+.ilab{font-size:12px;font-weight:600;color:var(--navy)}
+.isegs{display:flex;gap:3px}
+.seg{width:22px;height:7px;border-radius:2px;background:#e3ecf5}
+.seg.on{background:linear-gradient(90deg,#00beff,#009feb)}
+.ival{font-size:11.5px;font-weight:600;color:var(--darkblue);font-variant-numeric:tabular-nums}
+.nr{color:#8fa9c9;font-weight:400;font-style:italic}
+.decnote{width:15px;height:15px;border-radius:50%;border:1px solid var(--sub);color:var(--sub);
+  background:none;font:700 10px/1 var(--font);cursor:help;vertical-align:1px;margin-left:5px}
+
+.mats{display:flex;flex-wrap:wrap;gap:8px}
+.mlink{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;
+  text-decoration:none;color:var(--darkblue);border:1px solid #bed2e8;border-radius:6px;
+  padding:6px 10px;background:#f6f7fa;transition:border-color .15s}
+.mlink:hover{border-color:var(--blue1)}
+.mthumb{width:34px;height:24px;object-fit:cover;border-radius:3px;border:1px solid var(--line)}
+.ext{color:var(--sub)}
+
+details{border-top:1px solid var(--line);padding-top:8px;margin-top:auto}
+summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--darkblue);list-style:none;
+  display:flex;align-items:center;gap:6px}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"";width:7px;height:7px;border-right:2px solid var(--darkblue);
+  border-bottom:2px solid var(--darkblue);transform:rotate(-45deg);transition:transform .15s;margin-left:1px}
+details[open] summary::before{transform:rotate(45deg)}
+.fullsub{padding:10px 2px 4px;display:flex;flex-direction:column;gap:12px}
+.fullsub h4{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--navy);opacity:.75;margin-bottom:3px}
+.pre{white-space:pre-line;font-size:13.5px;color:#33517a}
+
+.foot{margin-top:34px;border-top:1px solid var(--line);padding-top:16px;color:var(--sub);font-size:12.5px}
+.foot p{margin-bottom:4px}
+.foot a{color:var(--sub)}
+
+@media (max-width:880px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .mast-inner{padding:32px 0 44px}
+  .stats{gap:10px 28px}
+  .stat b{font-size:28px}
+}
+@media (max-width:480px){
+  .card{padding:16px 14px 14px}
+  .irow{grid-template-columns:76px 1fr auto;gap:8px}
+  .ilab,.ival{font-size:11px}
+  .seg{width:15px;height:6px}
+  .impact{padding:9px 10px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important}
+}
+</style>
+<header class="mast">
+  <div class="mast-inner">
+    <p class="eyebrow">Quipper Philippines &middot; Content Team</p>
+    <h1>Innovation &amp; Initiatives Showcase</h1>
+    <p class="sub">Eleven team-built projects and proposals, from shipped production workflows to new
+    product and partnership ideas. Collected through the project intake form for the July 8, 2026 showcase.</p>
+    <div class="stats">
+      <div class="stat"><b>11</b><span>projects</span></div>
+      <div class="stat"><b>4</b><span>live pitches</span></div>
+      <div class="stat"><b>8</b><span>team members</span></div>
+      <div class="stat"><b>4</b><span>strategic pillars</span></div>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+<section class="program">
+  <p class="program-label">On stage July 8</p>
+  <div class="program-row"><a class="prog" href="#p1"><span class="prog-t">Automated Image Suggestion and Generation</span><span class="prog-l">Jothairo Ursaga</span></a><a class="prog" href="#p2"><span class="prog-t">QLab</span><span class="prog-l">Steven</span></a><a class="prog" href="#p4"><span class="prog-t">Creation of Math Applications</span><span class="prog-l">Miguel Punongbayan</span></a><a class="prog" href="#p8"><span class="prog-t">Branching video (K3-SHS)</span><span class="prog-l">Nadine Uy / Hazenne Taplac</span></a></div>
+</section>
+
+<nav class="filters" aria-label="Filter projects"><button class="chip active" data-filter="all">All projects <b>11</b></button><button class="chip" data-filter="Workflow Automation" style="--pc:#544dc9">Workflow Automation <b>3</b></button><button class="chip" data-filter="Learner Engagement" style="--pc:#0081cc">Learner Engagement <b>3</b></button><button class="chip" data-filter="Content Quality" style="--pc:#008878">Content Quality <b>3</b></button><button class="chip" data-filter="Scalability &amp; Expansion" style="--pc:#cc4004">Scalability &amp; Expansion <b>2</b></button><button class="chip" data-filter="live">Live on Jul 8 <b>4</b></button></nav>
+
+<main class="grid">
+<article class="card" id="p1" data-pillar="Workflow Automation" data-live="true">
+  <div class="cardtop">
+    <span class="pillchip" style="--pc:#544dc9;--pb:#e2dff6">Workflow Automation</span>
+    <span class="badge-live">Presenting live &middot; Jul 8</span>
+  </div>
+  <h3>Automated Image Suggestion and Generation</h3>
+  <p class="lead-line">Jothairo Ursaga</p>
+  <p class="excerpt">This project adds a structured analysis step to image generation, enabling the system to recommend functional, non-decorative visuals. These recommendations are based on strict criteria, such as procedural steps, safety, and physical structures&hellip;</p>
+  <div class="impact">
+    <span class="impact-title">Self-assessed impact <button class="decnote" type="button" title="This entry was submitted on an earlier layout of the impact question; ratings shown are decoded from the original grid. See note below.">i</button></span>
+    <div class="irow"><span class="ilab">Reach</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Low</span></div><div class="irow"><span class="ilab">Efficiency</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i></span><span class="ival">Transformative</span></div><div class="irow"><span class="ilab">Engagement</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Moderate</span></div><div class="irow"><span class="ilab">Sustainability</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div>
+  </div>
+  <div class="mats"><a class="mlink" href="https://drive.google.com/open?id=1GPPUoslXvQe3h8IL8Yo5VHVp1S0axngz" target="_blank" rel="noopener"><span>Materials on Drive</span><span class="ext" aria-hidden="true">&#8599;</span></a></div>
+  <details>
+    <summary>Full submission</summary>
+    <div class="fullsub"><h4>Problem / opportunity</h4><p class="pre">This project adds a structured analysis step to image generation, enabling the system to recommend functional, non-decorative visuals. These recommendations are based on strict criteria, such as procedural steps, safety, and physical structures, ensuring all images directly support learning objectives and performance-based competencies across various strands.</p><h4>Success metrics</h4><p class="pre">Functional Detection Accuracy: The system must only recommend images when they directly improve a learner&#x27;s understanding, such as clarifying complex processes, structures, comparisons, or layouts.
+
+Procedural Recognition: The system must reliably detect both explicit and implicit step-based processes for visualization.
+
+Zero Decorative Suggestions: Success is defined by the strict exclusion of images recommended purely for aesthetic or &quot;stock&quot; purposes; every visual must have an instructional necessity.
+
+Comprehensive Image Prompts: Every suggestion must include standardized, detailed metadata.
+
+Cross-Strand Applicability: The logic must prove effective across all technical subjects, including ICT (e.g., CSS, CPJ) and TLE strands (e.g., TOS, FBO).</p></div>
+  </details>
+</article>
+<article class="card" id="p2" data-pillar="Learner Engagement" data-live="true">
+  <div class="cardtop">
+    <span class="pillchip" style="--pc:#0081cc;--pb:#d6f5ff">Learner Engagement</span>
+    <span class="badge-live">Presenting live &middot; Jul 8</span>
+  </div>
+  <h3>QLab</h3>
+  <p class="lead-line">Steven</p>
+  <p class="excerpt">QLab is Quipper&#x27;s interactive science simulation platform that lets Filipino students perform virtual collaborative labs—from titrations to circuit-building to ecosystem modeling—directly inside their existing Quipper courses, no equipment, lab&hellip;</p>
+  <div class="impact">
+    <span class="impact-title">Self-assessed impact <button class="decnote" type="button" title="This entry was submitted on an earlier layout of the impact question; ratings shown are decoded from the original grid. See note below.">i</button></span>
+    <div class="irow"><span class="ilab">Reach</span><span class="isegs" aria-hidden="true"><i class="seg"></i><i class="seg"></i><i class="seg"></i><i class="seg"></i></span><span class="ival"><span class="nr">not rated</span></span></div><div class="irow"><span class="ilab">Efficiency</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Moderate</span></div><div class="irow"><span class="ilab">Engagement</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i></span><span class="ival">Transformative</span></div><div class="irow"><span class="ilab">Sustainability</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div>
+  </div>
+  
+  <details>
+    <summary>Full submission</summary>
+    <div class="fullsub"><h4>The pitch</h4><p class="pre">QLab is Quipper&#x27;s interactive science simulation platform that lets Filipino students perform virtual collaborative labs—from titrations to circuit-building to ecosystem modeling—directly inside their existing Quipper courses, no equipment, lab space, or safety risk required. Built and tagged to Revised K-10 and strengthened SHS competencies, it closes the hands-on science gap for the majority of Philippine public and private schools that lack functioning laboratories, while giving Quipper a defensible answer to PhET and a genuinely differentiated feature versus Khan Academy and Rex Education.</p><h4>Problem / opportunity</h4><p class="pre">This solves (1) lab/equipment access inequity among Philippine schools, (2) curriculum&#x27;s shift towards experiental/phenomenon-based learning, (3) competitive exposure, and (4) cost and safety barriers involved in actual lab settings.</p><h4>Success metrics</h4><p class="pre">[1] Adoption and Engagement (simulations launched per active student/month; % of teachers who assign at least 1 simulation per grading period; repeat usage rate, etc.)
+[2] Learning Outcomes (Pre-/post-simulation assessment score deltas on the same competency; Improvement in HOTS-item performance for topics covered by simulations (tie-in with existing HOTS work in MCQ); Reduction in misconception rates on historically low-performing items (e.g., titration curves, stoichiometry, circuits)
+[3] Curriculum and Content Coverage (% of Revised K-10/sSHS Science competencies (per grade level) with a corresponding simulation)
+[4] Business/Product Impact (Uplift in subscription retention/renewal for schools using simulations vs. those that don&#x27;t; New school sign-ups or upsells attributable to the simulation feature)
+[5] Operational/Quality (Simulation build time/cost per topic)</p></div>
+  </details>
+</article>
+<article class="card" id="p4" data-pillar="Content Quality" data-live="true">
+  <div class="cardtop">
+    <span class="pillchip" style="--pc:#008878;--pb:#bcefe2">Content Quality</span>
+    <span class="badge-live">Presenting live &middot; Jul 8</span>
+  </div>
+  <h3>Creation of Math Applications</h3>
+  <p class="lead-line">Miguel Punongbayan</p>
+  <p class="excerpt">One issue of the math team is the creation of illustrations specific to our content, such as graphs, plane and solid figures, number lines, etc. Previously, we use online tools to create such figures. To make it more consistent and streamlined on&hellip;</p>
+  <div class="impact">
+    <span class="impact-title">Self-assessed impact</span>
+    <div class="irow"><span class="ilab">Reach</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Low</span></div><div class="irow"><span class="ilab">Efficiency</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div><div class="irow"><span class="ilab">Engagement</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Moderate</span></div><div class="irow"><span class="ilab">Sustainability</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div>
+  </div>
+  <div class="mats"><a class="mlink" href="https://drive.google.com/open?id=1DYWhlV8fKKFQ9_oG5RzxKrFMpL1UiZjA" target="_blank" rel="noopener"><span>Materials on Drive</span><span class="ext" aria-hidden="true">&#8599;</span></a></div>
+  <details>
+    <summary>Full submission</summary>
+    <div class="fullsub"><h4>The pitch</h4><p class="pre">One issue of the math team is the creation of illustrations specific to our content, such as graphs, plane and solid figures, number lines, etc. Previously, we use online tools to create such figures. To make it more consistent and streamlined on our end, we plan to create our own tools through Python to make our figures more consistent. We already started with creating one application for graph theory, and we plan to extending its features to cover other areas such as algebra, geometry, etc.</p><h4>Problem / opportunity</h4><p class="pre">It addresses the difficulty of creating figures during the writing process of the lesson and unit outputs. With the application, the production can become faster, and the illustration becomes more consistent.</p><h4>Success metrics</h4><p class="pre">Content quality and productivity.</p></div>
+  </details>
+</article>
+<article class="card" id="p8" data-pillar="Learner Engagement" data-live="true">
+  <div class="cardtop">
+    <span class="pillchip" style="--pc:#0081cc;--pb:#d6f5ff">Learner Engagement</span>
+    <span class="badge-live">Presenting live &middot; Jul 8</span>
+  </div>
+  <h3>Branching video (K3-SHS)</h3>
+  <p class="lead-line">Nadine Uy / Hazenne Taplac</p>
+  <p class="excerpt">We&#x27;ve been exploring interactive branching videos to make learning more engaging and learner-driven. For our K3, we developed a Choose Your Own Adventure storybook where children can choose between a jungle or ocean adventure. As they progress&hellip;</p>
+  <div class="impact">
+    <span class="impact-title">Self-assessed impact</span>
+    <div class="irow"><span class="ilab">Reach</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Moderate</span></div><div class="irow"><span class="ilab">Efficiency</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Moderate</span></div><div class="irow"><span class="ilab">Engagement</span><span class="isegs" aria-hidden="true"><i class="seg"></i><i class="seg"></i><i class="seg"></i><i class="seg"></i></span><span class="ival"><span class="nr">not rated</span></span></div><div class="irow"><span class="ilab">Sustainability</span><span class="isegs" aria-hidden="true"><i class="seg"></i><i class="seg"></i><i class="seg"></i><i class="seg"></i></span><span class="ival"><span class="nr">not rated</span></span></div>
+  </div>
+  <div class="mats"><a class="mlink" href="https://drive.google.com/open?id=1JGMTzyZhQ_ISq3cEjIER_lMuMb5sHOSy" target="_blank" rel="noopener"><span>Materials on Drive</span><span class="ext" aria-hidden="true">&#8599;</span></a></div>
+  <details>
+    <summary>Full submission</summary>
+    <div class="fullsub"><h4>The pitch</h4><p class="pre">We&#x27;ve been exploring interactive branching videos to make learning more engaging and learner-driven.
+
+For our K3, we developed a Choose Your Own Adventure storybook where children can choose between a jungle or ocean adventure. As they progress through the story, they can hover over or click on animals, plants, and objects to discover fun facts, hear names, and explore additional learning content. It transforms a traditional storybook into an interactive learning experience that encourages curiosity and exploration.
+
+For our higher-level learners, we created a branching learning experience focused on dengue fever. Instead of a linear lesson, it&#x27;s designed more like an interactive encyclopedia or Britannica experience. Learners can click on different sections to explore topics such as symptoms, diagnostic tests, prevention, treatment, and other related information at their own pace. This gives them the flexibility to follow their interests while ensuring they understand the connections between different concepts.
+
+Both projects demonstrate how branching videos can move beyond passive content consumption by giving learners meaningful choices and allowing them to explore information in a way that&#x27;s engaging, interactive, and suited to their learning level.</p><h4>Problem / opportunity</h4><p class="pre">Traditional digital learning materials are often linear, requiring learners to simply watch or read without actively exploring the content. This can reduce engagement, limit curiosity, and make it difficult for learners to retain information or learn at their own pace. 
+
+Our interactive branching experiences transform learners from passive viewers into active participants. Through clickable hotspots, branching story paths, and self-directed navigation, learners make choices, explore content, and discover information in a meaningful way. By incorporating game-like elements, the experience feels less like a traditional lesson and more like an interactive learning adventure.</p><h4>Success metrics</h4><p class="pre">1. Completion Rate – Percentage of learners who complete the interactive branching experience.
+2. Engagement Rate – Number of clicks on hotspots, branching paths explored, and interactions per learner.
+3. Learning Outcomes  – Improvement in pre- and post-assessment scores or quiz performance.
+4. Knowledge Retention – Learners&#x27; ability to recall and apply concepts in follow-up assessments.
+5. Learner Satisfaction– Positive feedback from students and teachers regarding engagement, enjoyment, and ease of use.
+* **Replay Rate** – Percentage of learners who revisit the activity to explore different choices or paths, indicating high engagement and replay value.
+* **Teacher Adoption** – Number of classes or teachers integrating the branching experiences into their lessons.</p></div>
+  </details>
+</article>
+<article class="card" id="p3" data-pillar="Workflow Automation" data-live="false">
+  <div class="cardtop">
+    <span class="pillchip" style="--pc:#544dc9;--pb:#e2dff6">Workflow Automation</span>
+    <span class="badge-async">Async showcase</span>
+  </div>
+  <h3>Using ChatGPT Agents for Batch Production of Visuals and Animations for PS</h3>
+  <p class="lead-line">Jaq Eroles</p>
+  <p class="excerpt">One of Quipper&#x27;s strengths is that we provide ready-made, editable presentation slides—an offering that our clients value and one that meets market demand. We have received requests from clients for presentation slides with richer and more engaging&hellip;</p>
+  <div class="impact">
+    <span class="impact-title">Self-assessed impact <button class="decnote" type="button" title="This entry was submitted on an earlier layout of the impact question; ratings shown are decoded from the original grid. See note below.">i</button></span>
+    <div class="irow"><span class="ilab">Reach</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Low</span></div><div class="irow"><span class="ilab">Efficiency</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i></span><span class="ival">Transformative</span></div><div class="irow"><span class="ilab">Engagement</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Moderate</span></div><div class="irow"><span class="ilab">Sustainability</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div>
+  </div>
+  
+  <details>
+    <summary>Full submission</summary>
+    <div class="fullsub"><h4>The pitch</h4><p class="pre">One of Quipper&#x27;s strengths is that we provide ready-made, editable presentation slides—an offering that our clients value and one that meets market demand.
+
+We have received requests from clients for presentation slides with richer and more engaging content. However, with our previous workflow, producing rich, high-quality slides was a time-intensive process. Moreover, existing AI slide generators were not an ideal solution because they often missed key learning points, produced visuals that were inconsistent with our branding and style, and still required significant editing by SMEs.
+
+Hence, we developed a workflow that combines AI tools with human oversight to efficiently produce high-quality slides. We use a CustomGPT to instantly and accurately transform our SG and TG content into presentation text. Then, we use a ChatGPT agent to batch-generate visuals that automatically follow Quipper&#x27;s style guide. No need to prompt visuals individually. For example, we can generate all 15 visuals for a lesson in one batch—and even generate visuals for several different lessons simultaneously. We were also able to produce GIFS that animate our visuals.
+
+The success of this project is a win for both sides. Clients receive richer, fully editable, and more visually-engaging presentation slides. On our side, we produce more comprehensive and better quality presentations in a fraction of the time, with no additional cost.
+
+In the future, we plan to further streamline this workflow under a single Agent, automate prompting, and create other learning materials such as story slides and similar resources.</p><h4>Problem / opportunity</h4><p class="pre">Batch-producing visuals and animations (GIFS) for slide presentations</p><h4>Success metrics</h4><p class="pre">- PS use
+- PS production turn around time</p></div>
+  </details>
+</article>
+<article class="card" id="p5" data-pillar="Content Quality" data-live="false">
+  <div class="cardtop">
+    <span class="pillchip" style="--pc:#008878;--pb:#bcefe2">Content Quality</span>
+    <span class="badge-async">Async showcase</span>
+  </div>
+  <h3>K-3 Storybook Collection</h3>
+  <p class="lead-line">Grace Lucinario</p>
+  <p class="excerpt">The Storybook Project Compilation is an initiative to develop a comprehensive K-3 literacy resource package using hundreds of original English and Filipino stories compiled by our team over the years. This project provides teachers with quick&hellip;</p>
+  <div class="impact">
+    <span class="impact-title">Self-assessed impact</span>
+    <div class="irow"><span class="ilab">Reach</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div><div class="irow"><span class="ilab">Efficiency</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div><div class="irow"><span class="ilab">Engagement</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Moderate</span></div><div class="irow"><span class="ilab">Sustainability</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div>
+  </div>
+  <div class="mats"><a class="mlink" href="https://drive.google.com/open?id=1sbnabsh4h_QSh39M1HXKc-tQNJU7ncJrE4ZkDhkt9VQ" target="_blank" rel="noopener"><span>Materials on Drive</span><span class="ext" aria-hidden="true">&#8599;</span></a></div>
+  <details>
+    <summary>Full submission</summary>
+    <div class="fullsub"><h4>The pitch</h4><p class="pre">The Storybook Project Compilation is an initiative to develop a comprehensive K-3 literacy resource package using hundreds of original English and Filipino stories compiled by our team over the years. This project provides teachers with quick, ready-made, and flexible reading materials paired with targeted comprehension activities. It serves as an accessible, bilingual alternative to costly, English-only reading packages currently in the market, aiming to support and enrich learners&#x27; foundational reading fluency, vocabulary, and comprehension skills.</p><h4>Problem / opportunity</h4><p class="pre">Problem: Teachers and schools are constantly looking for literacy resources for enrichment and assessment. However, existing market solutions (such as McGraw Hill’s SRA Reading Lab from Abiva or SIBS&#x27;s &quot;Active Reading Buddy&quot;) are often costly and are limited to the English language only. Furthermore, teachers often need reliable materials &quot;on the spot&quot; without having to build them from scratch.
+
+Opportunity: The K-3 team already has a rich repository of hundreds of original stories in both English and Filipino. By systematically compiling these into leveled story-and-activity packets arranged by targeted comprehension skills, we can offer a ready-made, bilingual literacy package that directly fills the gap left by expensive traditional publishers.</p><h4>Success metrics</h4><p class="pre">1. Teacher utilization rate: High download or access rates of the Story + Activity packets by teachers using them for &quot;on the spot&quot; enrichment or assessment. (measured by safeshare?)
+
+2. Literacy skill improvement: Measurable improvements in K-3 learners&#x27; reading fluency, vocabulary development, and comprehension skills after utilizing the leveled stories. (shared by clients)
+
+3. Platform engagement: Increased student interaction with the animated versions of the stories hosted on our platform. (also measured by safeshare?)
+
+4. Market competitiveness: Positive feedback from schools adopting this bilingual package as a cost-effective alternative to the English-only packages offered by competitors like Abiva and SIBS.</p></div>
+  </details>
+</article>
+<article class="card" id="p6" data-pillar="Content Quality" data-live="false">
+  <div class="cardtop">
+    <span class="pillchip" style="--pc:#008878;--pb:#bcefe2">Content Quality</span>
+    <span class="badge-async">Async showcase</span>
+  </div>
+  <h3>K-3 ARAL Content (Literacy &amp; Numeracy)</h3>
+  <p class="lead-line">Grace Lucinario</p>
+  <p class="excerpt">The Quipper ARAL (Academic Recovery and Accessible Learning) Content project provides a systematic, learner-centered remediation package designed to address learning loss in Key Stage 1 (Grades 1 to 3) Literacy and Numeracy. Aligned with the&hellip;</p>
+  <div class="impact">
+    <span class="impact-title">Self-assessed impact</span>
+    <div class="irow"><span class="ilab">Reach</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div><div class="irow"><span class="ilab">Efficiency</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i></span><span class="ival">Transformative</span></div><div class="irow"><span class="ilab">Engagement</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div><div class="irow"><span class="ilab">Sustainability</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i></span><span class="ival">Transformative</span></div>
+  </div>
+  
+  <details>
+    <summary>Full submission</summary>
+    <div class="fullsub"><h4>The pitch</h4><p class="pre">The Quipper ARAL (Academic Recovery and Accessible Learning) Content project provides a systematic, learner-centered remediation package designed to address learning loss in Key Stage 1 (Grades 1 to 3) Literacy and Numeracy. Aligned with the national ARAL Program Act (RA 12028), this initiative equips teachers and tutors with a comprehensive suite of data-driven tools, including exact pre- and post-assessments, instructional planners, presentation slides, printable study guides, and digital interactives. By utilizing evidence-based pedagogies—such as the Concrete-Pictorial-Abstract (CPA) approach for math and Bloom’s Taxonomy for literacy—the project ensures educators can pinpoint exact skill gaps and deliver highly targeted interventions.
+
+cannot attach info deck: https://docs.google.com/presentation/d/1yuEA-2Lb3LvyyH17tkuhTv8zN_q-546fS2A1yCvWpo0/edit?usp=sharing</p><h4>Problem / opportunity</h4><p class="pre">Many Filipino learners have experienced severe learning loss due to prolonged absences or the pandemic, resulting in them falling below minimum proficiency levels in reading and mathematics. Traditional, calendar-based teaching fails these students because it moves on to advanced topics before foundational skills are mastered. This project solves that problem by enforcing the principle that &quot;assessment drives instruction&quot;. It provides the tools needed to identify a learner&#x27;s specific starting point (down to the missing competency) and supplies the targeted intervention materials to teach those skills, ensuring learners are never left behind.</p><h4>Success metrics</h4><p class="pre">1. Learner growth and mastery rates: The primary metric is the quantifiable improvement between the Pre-assessment and Post-assessment scores of the ARAL learners. Success is indicated by learners moving up the established tiers, such as improving their Reading Profile (e.g., moving from Emerging to Developing or Reading at Grade Level) or their Rapid Mathematics Assessment (RMA) Profile (e.g., moving from Not Proficient to Proficient).
+
+2. ARAL program exit rate: The percentage of learners who successfully achieve strict independent mastery of their grade-level competencies and are officially recommended to &quot;Exit the ARAL Program&quot;.
+
+3. Educator implementation confidence: Measured via teacher feedback (like the ARAL Content Design Survey drafted previously), specifically tracking how helpful tutors find the standardized components, the ease of using the scoring checklists, and their overall confidence in facilitating the CPA and Bloom&#x27;s Taxonomy frameworks.</p></div>
+  </details>
+</article>
+<article class="card" id="p7" data-pillar="Learner Engagement" data-live="false">
+  <div class="cardtop">
+    <span class="pillchip" style="--pc:#0081cc;--pb:#d6f5ff">Learner Engagement</span>
+    <span class="badge-async">Async showcase</span>
+  </div>
+  <h3>Grades 1 to 3 Supplementary Interactives</h3>
+  <p class="lead-line">Grace Lucinario</p>
+  <p class="excerpt">This project expands our platform&#x27;s interactive content library to cover all core subjects (Mathematics, English, Filipino, Science, and Makabansa) for Grades 1 to 3. By delivering premium, gamified, and strictly curriculum-aligned digital materials&hellip;</p>
+  <div class="impact">
+    <span class="impact-title">Self-assessed impact</span>
+    <div class="irow"><span class="ilab">Reach</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i></span><span class="ival">Transformative</span></div><div class="irow"><span class="ilab">Efficiency</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div><div class="irow"><span class="ilab">Engagement</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i></span><span class="ival">Transformative</span></div><div class="irow"><span class="ilab">Sustainability</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div>
+  </div>
+  <div class="mats"><a class="mlink" href="https://drive.google.com/open?id=1A-QZjkM08ZYVuiEhAI7zqMsJqg0ww2BaKJIi6BONT3I" target="_blank" rel="noopener"><span>Materials on Drive</span><span class="ext" aria-hidden="true">&#8599;</span></a></div>
+  <details>
+    <summary>Full submission</summary>
+    <div class="fullsub"><h4>The pitch</h4><p class="pre">This project expands our platform&#x27;s interactive content library to cover all core subjects (Mathematics, English, Filipino, Science, and Makabansa) for Grades 1 to 3. By delivering premium, gamified, and strictly curriculum-aligned digital materials in a lightweight offline format, the initiative aims to boost student engagement, support teachers with ready-made resources, and elevate the company&#x27;s competitive standing as an EdTech leader.</p><h4>Problem / opportunity</h4><p class="pre">The core problem is that schools are actively looking for modern, engaging alternatives to traditional learning materials, and clients have explicitly requested gamified content to keep students engaged. The opportunity it addresses is competitive differentiation; by offering a dynamic, strictly K-10-aligned digital product, we can position ourselves far ahead of traditional publishers, increase platform stickiness, attract new school adoptions, and ultimately drive higher business revenue.</p><h4>Success metrics</h4><p class="pre">1. Platform stickiness: Improved user retention and sustained engagement with the platform.
+
+2. New school adoptions: An increase in the number of schools subscribing to K-3 content.
+
+3. Business revenue: Higher overall revenue driven by the appeal of this premium K-3 interactive package.</p></div>
+  </details>
+</article>
+<article class="card" id="p9" data-pillar="Scalability &amp; Expansion" data-live="false">
+  <div class="cardtop">
+    <span class="pillchip" style="--pc:#cc4004;--pb:#fadfc9">Scalability &amp; Expansion</span>
+    <span class="badge-async">Async showcase</span>
+  </div>
+  <h3>Adopt-a-School Outreach Program (Idea Stage)</h3>
+  <p class="lead-line">Grace Lucinario</p>
+  <p class="excerpt">The Adopt-a-School Outreach Program can be an internal CSR initiative where Quipper adopts a partner public school to directly implement the ARAL program. Utilizing our published Grades 1–3 Literacy and Numeracy content, volunteer Subject Matter&hellip;</p>
+  <div class="impact">
+    <span class="impact-title">Self-assessed impact</span>
+    <div class="irow"><span class="ilab">Reach</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Moderate</span></div><div class="irow"><span class="ilab">Efficiency</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Moderate</span></div><div class="irow"><span class="ilab">Engagement</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div><div class="irow"><span class="ilab">Sustainability</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div>
+  </div>
+  
+  <details>
+    <summary>Full submission</summary>
+    <div class="fullsub"><h4>The pitch</h4><p class="pre">The Adopt-a-School Outreach Program can be an internal CSR initiative where Quipper adopts a partner public school to directly implement the ARAL program. Utilizing our published Grades 1–3 Literacy and Numeracy content, volunteer Subject Matter Experts (SMEs) and Client Support Officers (CSOs) will serve as direct tutors. This program can provide a real-world application of Quipper’s materials while actively supporting the national mandate for academic recovery.</p><h4>Problem / opportunity</h4><p class="pre">Public schools often lack the manpower and specialized training to effectively execute intensive remediation programs like ARAL, leaving the most vulnerable early-grade learners without adequate support. Quipper has both the specialized content and the internal expertise. By deploying our own SMEs and CSOs as tutors, we bridge the implementation gap for a partner school, showcase the real-world efficacy of our ARAL content, and boost internal employee morale through meaningful community service.</p><h4>Success metrics</h4><p class="pre">Program completion &amp; attendance: High, consistent attendance and completion rates from both the student beneficiaries and the internal Quipper volunteers.
+Student progress rate: Percentage of enrolled students showing measurable improvement from pre- to post-assessments, successfully exiting the ARAL program.
+Volunteer engagement &amp; satisfaction: High satisfaction scores from participating SMEs and CSOs regarding their training, orientation, and overall volunteer experience.
+Partnership success: Successful execution of the MOU and positive feedback from the partner school&#x27;s administration and faculty regarding the program&#x27;s impact.</p></div>
+  </details>
+</article>
+<article class="card" id="p10" data-pillar="Scalability &amp; Expansion" data-live="false">
+  <div class="cardtop">
+    <span class="pillchip" style="--pc:#cc4004;--pb:#fadfc9">Scalability &amp; Expansion</span>
+    <span class="badge-async">Async showcase</span>
+  </div>
+  <h3>NLP Children’s Library Partnership Project (Idea stage)</h3>
+  <p class="lead-line">Grace Lucinario</p>
+  <p class="excerpt">This initiative proposes a strategic partnership with the National Library of the Philippines (NLP) to install a customized, “lite” version of Quipper’s K-12 DepEd curriculum-aligned content on the Children’s Library&#x27;s digital devices (desktops&hellip;</p>
+  <div class="impact">
+    <span class="impact-title">Self-assessed impact</span>
+    <div class="irow"><span class="ilab">Reach</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div><div class="irow"><span class="ilab">Efficiency</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div><div class="irow"><span class="ilab">Engagement</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg"></i></span><span class="ival">High</span></div><div class="irow"><span class="ilab">Sustainability</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i><i class="seg on"></i></span><span class="ival">Transformative</span></div>
+  </div>
+  
+  <details>
+    <summary>Full submission</summary>
+    <div class="fullsub"><h4>The pitch</h4><p class="pre">This initiative proposes a strategic partnership with the National Library of the Philippines (NLP) to install a customized, “lite” version of Quipper’s K-12 DepEd curriculum-aligned content on the Children’s Library&#x27;s digital devices (desktops, tablets, and interactive ViewBoards). By offering a secure, read-only library of student slides and key lesson bullet points, this project fills the library&#x27;s current gap in formal curriculum materials while positioning Quipper as a key public champion of national digital literacy.</p><h4>Problem / opportunity</h4><p class="pre">The NLP’s newly opened Children’s Library has modern digital infrastructure (tablets, interactive TVs) but lacks formal DepEd K-12 curriculum-aligned content, limiting its utility for visiting students who need academic alignment. Quipper can fill this gap by providing a secure, screenshot-protected &quot;lite&quot; digital library. This solves the library&#x27;s content deficit, gamifies their hardware utility, and serves as a powerful, low-cost marketing tool that boosts Quipper&#x27;s brand visibility among everyday learners and educators.</p><h4>Success metrics</h4><p class="pre">Device utilization &amp; traffic: Active monthly user sessions and time spent engaging with the Quipper application across the library’s devices.
+Brand impression &amp; lead generation: Increase in organic website traffic, inbound inquiries, or trial sign-ups originating from the Kalaw, Manila area or library-linked promos.
+Partnership execution: Successful signing of the MOU with the NLP administration and positive PR coverage from the launch.</p></div>
+  </details>
+</article>
+<article class="card" id="p11" data-pillar="Workflow Automation" data-live="false">
+  <div class="cardtop">
+    <span class="pillchip" style="--pc:#544dc9;--pb:#e2dff6">Workflow Automation</span>
+    <span class="badge-async">Async showcase</span>
+  </div>
+  <h3>Filipino Grammar Checker</h3>
+  <p class="lead-line">Myrna Macatangay</p>
+  <p class="excerpt">This project is intended to serve as a guide for ChatGPT in editing Filipino grammar.</p>
+  <div class="impact">
+    <span class="impact-title">Self-assessed impact</span>
+    <div class="irow"><span class="ilab">Reach</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Moderate</span></div><div class="irow"><span class="ilab">Efficiency</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Moderate</span></div><div class="irow"><span class="ilab">Engagement</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Low</span></div><div class="irow"><span class="ilab">Sustainability</span><span class="isegs" aria-hidden="true"><i class="seg on"></i><i class="seg on"></i><i class="seg"></i><i class="seg"></i></span><span class="ival">Moderate</span></div>
+  </div>
+  <div class="mats"><a class="mlink" href="https://drive.google.com/open?id=1VH2YWvcgyeW3RG2B79LAfeYKisJDIA3C" target="_blank" rel="noopener"><span>Materials on Drive</span><span class="ext" aria-hidden="true">&#8599;</span></a></div>
+  <details>
+    <summary>Full submission</summary>
+    <div class="fullsub"><h4>The pitch</h4><p class="pre">This project is intended to serve as a guide for ChatGPT in editing Filipino grammar.</p><h4>Problem / opportunity</h4><p class="pre">This project addresses the need for a consistent and reliable reference that guides ChatGPT in editing Filipino grammar. It aims to improve the accuracy, consistency, and quality of grammar corrections in Filipino by providing clear guidance for language editing.</p><h4>Success metrics</h4><p class="pre">The success of this initiative will be measured by the accuracy of ChatGPT&#x27;s outputs. A key indicator is the percentage of grammar-edited responses that are free from grammatical, spelling, and language errors, with higher error-free output rates indicating greater success.</p></div>
+  </details>
+</article></main>
+
+<footer class="foot">
+  <p>Source: <a href="https://docs.google.com/spreadsheets/d/1UMuHgg1VP8MPRr8sAQce7wyvRNt3XCbIojl5F9Y0v3s/edit" target="_blank" rel="noopener">
+  Innovation &amp; Initiatives Project Intake (Responses)</a> &middot; pulled July 7, 2026, 2:43 PM.</p>
+  <p>Impact ratings marked with an "i" come from the first submissions, which used an earlier layout of the impact question. They are decoded against the original grid; the source sheet is untouched.</p>
+  <p>Attachment links open in Google Drive; access follows the file's Drive permissions.</p>
+</footer>
+</div>
+<script>
+document.querySelectorAll('.chip').forEach(function(chip){
+  chip.addEventListener('click', function(){
+    document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('active')});
+    chip.classList.add('active');
+    var f = chip.dataset.filter;
+    document.querySelectorAll('.card').forEach(function(card){
+      var show = f === 'all' || (f === 'live' ? card.dataset.live === 'true' : card.dataset.pillar === f);
+      card.classList.toggle('hidden', !show);
+    });
+  });
+});
+</script>
+</body>
+</html>

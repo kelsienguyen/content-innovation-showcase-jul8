@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Piano & Sheet Music Studio</title>
+    <!-- Tailwind CSS for sleek UI styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbars for a clean look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-neutral-50 text-neutral-800 min-h-screen flex flex-col justify-between overflow-x-hidden font-sans">
+
+    <!-- Header Section -->
+    <header class="bg-white border-b border-neutral-200 py-4 px-6 shadow-sm">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-600 rounded-lg text-white shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-neutral-900">Virtuoso Piano</h1>
+                    <p class="text-xs text-neutral-500 font-medium">Interactive Sheet Music & Flat Synth Studio</p>
+                </div>
+            </div>
+
+            <!-- Global Controls -->
+            <div class="flex items-center gap-3 flex-wrap">
+                <!-- Sound selector -->
+                <div class="flex items-center gap-2 bg-neutral-100 rounded-lg p-1 border border-neutral-200">
+                    <label class="text-[10px] text-neutral-500 px-2 uppercase font-bold tracking-wider">Sound</label>
+                    <select id="sound-select" class="bg-white text-neutral-700 text-xs rounded border border-neutral-200 focus:ring-2 focus:ring-indigo-500 py-1 px-2.5 cursor-pointer font-medium">
+                        <option value="piano">Acoustic Piano</option>
+                        <option value="warm">Warm Synth</option>
+                        <option value="retro">8-Bit Retro</option>
+                        <option value="organ">Church Organ</option>
+                    </select>
+                </div>
+
+                <!-- Volume control -->
+                <div class="flex items-center gap-2 bg-neutral-100 rounded-lg py-1 px-3 border border-neutral-200 text-xs font-semibold text-neutral-600">
+                    <span>Vol</span>
+                    <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.5" class="w-20 h-1 bg-neutral-300 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                </div>
+
+                <!-- Sustain Control -->
+                <button id="sustain-btn" class="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-lg border border-neutral-200 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition">
+                    <span class="w-2 h-2 rounded-full bg-neutral-400 mr-1 animate-pulse" id="sustain-indicator"></span>
+                    Sustain <span class="text-[9px] text-neutral-400 font-normal ml-0.5">(Space)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="max-w-6xl w-full mx-auto p-4 md:p-6 flex-grow flex flex-col gap-6 justify-center">
+
+        <!-- CORE STACKED INSTRUMENT (Sheet Music directly above Piano Keyboard) -->
+        <div class="flex flex-col border border-neutral-200 rounded-2xl bg-white shadow-sm overflow-hidden">
+            
+            <!-- 1. Interactive Sheet Music Staff (ON TOP) -->
+            <div class="p-5 border-b border-neutral-100 relative bg-neutral-50">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200" id="mode-badge">
+                            Free Play Mode
+                        </span>
+                        <p class="text-xs text-neutral-500 hidden sm:block" id="helper-text">Play keys below to see notes dynamically render on the staff.</p>
+                    </div>
+                    
+                    <button id="clear-staff-btn" class="text-xs bg-white hover:bg-neutral-100 px-3 py-1.5 rounded-lg text-neutral-500 hover:text-neutral-800 border border-neutral-200 transition font-medium">
+                        Clear History
+                    </button>
+                </div>
+
+                <!-- Staff Graphics -->
+                <div class="bg-white rounded-xl p-4 border border-neutral-200 relative flex justify-center min-h-[160px] overflow-x-auto shadow-inner">
+                    <svg id="music-staff" viewBox="0 0 800 160" class="w-full min-w-[700px] h-full" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Standard Treble Staff horizontal lines (Spacing 16px) -->
+                        <line x1="20" y1="40" x2="780" y2="40" stroke="#262626" stroke-width="1.2" />
+                        <line x1="20" y1="56" x2="780" y2="56" stroke="#262626" stroke-width="1.2" />
+                        <line x1="20" y1="72" x2="780" y2="72" stroke="#262626" stroke-width="1.2" />
+                        <line x1="20" y1="88" x2="780" y2="88" stroke="#262626" stroke-width="1.2" />
+                        <line x1="20" y1="104" x2="780" y2="104" stroke="#262626" stroke-width="1.2" />
+
+                        <!-- Perfectly Scaled and Positioned Treble Clef (G Clef) Vector -->
+                        <g id="treble-clef" transform="translate(25, 12) scale(0.42)" fill="#171717">
+                            <path d="M47.5,182.2c-5.4-8.1-7.8-19.3-6.6-32.3c1.7-19.2,10.6-39.7,24.1-55.7c2.1-2.5,2.4-2.5,2.4-0.1c0,3-0.5,14.6-0.8,20c-1.3,21,1.5,41,8.3,58.3c2.4,6.2,5.5,12.2,8.4,16.5c1.4,2.1,1.2,2.5-0.7,1.8C65.5,184.9,54.2,189.5,47.5,182.2z"/>
+                            <path d="M110.1,142.1c2.1-4.7,3.5-10.4,4.2-16.8c1-8.5,0-15.6-3-21c-4.4-7.7-13.6-11.4-22.3-9.1c-13.4,3.6-21.7,18.8-21.7,39.6c0,21,8.3,38.6,22.1,41.9C104.9,179.9,112.9,159.2,110.1,142.1z"/>
+                            <path d="M125.7,222.1c-2.4-1.2-5-2.7-5.9-3.2c-1.3-0.8-1.5-1.5-0.7-3.6c5.9-15.6,8.7-32.8,8.2-50.6c-0.2-7.5-0.9-18-1.5-23.4c-1.2-10-4.6-22-8.3-29.3c-1.7-3.3-1.6-3.7,0.3-6.1c11.9-15.5,19.3-32.6,23-53.1c1.9-10.5,2.1-26.6,0.5-35.3c-1.4-8.1-4-15.4-7.5-20.9c-2.7-4.2-2.3-4.3,2.5-0.3c10.4,8.8,17.4,23.3,19.2,40.1c1,9.4,0.1,25-2,34.8c-3.6,17-9.8,32.4-19.1,47c-1.4,2.2-1.4,2.5-0.1,6.8c3.2,10.6,5.3,23.4,5.9,34.9c0.7,13.5-0.7,27.1-4.2,39.6C134.4,221.7,129.5,224,125.7,222.1z"/>
+                            <path d="M109.1,13.2c-0.4-1.6-0.7-2.9-0.7-2.9s-0.9,1.1-2,2.5C102.5,17.5,99.3,24,96.3,33c-6.1,18.5-12.7,48-15,67c-0.7,5.5-0.7,6-0.3,4.4c1.1-4.1,2.9-13.8,4.1-21.5c3.2-20.9,9.4-44.2,16.2-61C105.7,10.6,109.5,14.8,109.1,13.2z"/>
+                            <path d="M84.7,219c-10.5-8.2-13.6-25-7-38.3c3.8-7.7,10.8-13.5,19-15.9c3.9-1.2,5-1.2,8.1,0.2c7.2,3.2,12.7,10.4,14.4,18.9c1.9,9.7-1.1,20.1-8.1,27.1c-6.5,6.5-16.7,10-25.1,8.5C85.4,219.3,85,219.2,84.7,219z"/>
+                        </g>
+
+                        <!-- Dynamic container for notes rendered via JavaScript -->
+                        <g id="notes-layer"></g>
+
+                        <!-- Target/Glow guide overlay for learning mode -->
+                        <g id="target-guide-layer"></g>
+                    </svg>
+                    
+                    <!-- Overlay loading status / instructions -->
+                    <div id="keyboard-prompt" class="absolute inset-0 bg-neutral-900/10 backdrop-blur-[1px] flex items-center justify-center pointer-events-none transition-all duration-500 opacity-0">
+                        <span class="bg-white text-neutral-800 px-4 py-2 rounded-xl text-xs font-semibold border border-neutral-200 shadow-lg flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></span>
+                            Click anywhere on the keyboard to start Audio Synthesizer
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Flat Piano Keyboard (DIRECTLY BELOW THE STAFF) -->
+            <div class="relative bg-white select-none p-4">
+                <!-- Sleek minimal flat gray boundary line replacing old dark wood bar -->
+                <div class="h-1 bg-neutral-200 rounded-full mb-3 w-full"></div>
+
+                <!-- Piano Keyboard Container -->
+                <div id="piano-keyboard" class="relative flex w-full bg-neutral-50 p-1.5 rounded-xl border border-neutral-200 shadow-inner h-[220px]">
+                    <!-- Populated programmatically by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW CONTROLLER: Playback & Composition Center -->
+        <section class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h3 class="text-sm font-bold text-neutral-800 uppercase tracking-wider mb-1">Your Composition</h3>
+                    <p class="text-xs text-neutral-500">The app automatically records the keys you play. Play them back below!</p>
+                </div>
+
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <!-- Notes Counter Badge -->
+                    <div class="bg-neutral-100 text-neutral-700 border border-neutral-200 rounded-lg px-3 py-1.5 text-xs font-semibold flex items-center gap-2 min-w-[90px] justify-center">
+                        <svg class="h-3.5 w-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        <span id="composed-count">0 notes</span>
+                    </div>
+
+                    <!-- Play Recorded Composition Button -->
+                    <button id="play-composed-btn" disabled class="flex-grow md:flex-none flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed border border-indigo-200 text-indigo-700 text-xs font-bold px-4 py-2 rounded-lg transition-all">
+                        <svg class="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        Play Composition
+                    </button>
+
+                    <!-- Clear Composition Button -->
+                    <button id="clear-composed-btn" class="bg-neutral-100 hover:bg-neutral-200 text-neutral-600 text-xs font-bold px-3 py-2 rounded-lg transition border border-neutral-200">
+                        Reset Recorder
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom Grid: Melodies / Learning Panel & Metronome -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Melody Guide Selector -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between gap-4 lg:col-span-2">
+                <div>
+                    <h3 class="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">Interactive Music Lessons</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="song-list">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Active Song Status / Controls -->
+                <div id="lesson-status" class="hidden bg-neutral-50 rounded-xl p-4 border border-neutral-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-indigo-100 text-indigo-600 rounded-lg border border-indigo-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-neutral-400 font-bold uppercase tracking-wide">Lesson In Progress</p>
+                            <h4 class="text-sm font-bold text-neutral-800" id="current-song-title">Song Title</h4>
+                            <p class="text-xs text-indigo-600 font-semibold" id="current-song-author">By Composer</p>
+                        </div>
+                    </div>
+
+                    <!-- Song progress indicator -->
+                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                        <div class="flex flex-col items-end gap-1 w-24">
+                            <span class="text-xs font-bold text-neutral-500" id="progress-text">Note 0 / 0</span>
+                            <div class="w-full bg-neutral-200 rounded-full h-1.5 overflow-hidden">
+                                <div id="progress-bar" class="bg-indigo-600 h-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <button id="exit-lesson-btn" class="bg-neutral-200 hover:bg-neutral-300 text-neutral-700 border border-neutral-300 text-xs font-bold px-3 py-2 rounded-lg transition">
+                            Quit Lesson
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metronome & Helper Utility -->
+            <div class="bg-white border border-neutral-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between gap-4">
+                <div>
+                    <h3 class="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">Studio Metronome</h3>
+                    <p class="text-xs text-neutral-400 mb-4">Set the pace for lessons and playback.</p>
+
+                    <div class="flex items-center justify-between bg-neutral-50 p-3 rounded-xl border border-neutral-200">
+                        <div class="flex flex-col">
+                            <span class="text-2xl font-black text-neutral-800" id="bpm-val">120 <span class="text-xs text-indigo-600">BPM</span></span>
+                            <input type="range" id="tempo-slider" min="60" max="200" value="120" class="w-full h-1 bg-neutral-300 rounded-lg appearance-none cursor-pointer accent-indigo-600 mt-2">
+                        </div>
+                        <button id="metronome-btn" class="p-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" id="metro-play-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Keyboard Bindings Hint -->
+                <div class="flex items-center justify-between text-xs font-semibold text-neutral-500">
+                    <span>Keyboard Helper:</span>
+                    <button id="toggle-labels-btn" class="text-indigo-600 hover:text-indigo-800 font-bold transition">Show Key Caps</button>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-neutral-200 py-4 px-6 text-center text-xs text-neutral-400 font-medium">
+        <p>© 2026 Virtuoso Interactive Piano Studio. Enhanced Treble Clef Precision. Powered by Web Audio API.</p>
+    </footer>
+
+    <!-- Audio Synthesis and App Logic Script -->
+    <script>
+        // --- DATA STRUCTURES ---
+        
+        // Comprehensive pitch layout for notes spanning from C4 to C6 (2 Octaves)
+        const PITCH_MAP = {
+            'C4':  { freq: 261.63, step: 0,  accidental: false, label: 'C4' },
+            'C#4': { freq: 277.18, step: 0,  accidental: true,  label: 'C#4' },
+            'D4':  { freq: 293.66, step: 1,  accidental: false, label: 'D4' },
+            'D#4': { freq: 311.13, step: 1,  accidental: true,  label: 'D#4' },
+            'E4':  { freq: 329.63, step: 2,  accidental: false, label: 'E4' },
+            'F4':  { freq: 349.23, step: 3,  accidental: false, label: 'F4' },
+            'F#4': { freq: 369.99, step: 3,  accidental: true,  label: 'F#4' },
+            'G4':  { freq: 392.00, step: 4,  accidental: false, label: 'G4' },
+            'G#4': { freq: 415.30, step: 4,  accidental: true,  label: 'G#4' },
+            'A4':  { freq: 440.00, step: 5,  accidental: false, label: 'A4' },
+            'A#4': { freq: 466.16, step: 5,  accidental: true,  label: 'A#4' },
+            'B4':  { freq: 493.88, step: 6,  accidental: false, label: 'B4' },
+            'C5':  { freq: 523.25, step: 7,  accidental: false, label: 'C5' },
+            'C#5': { freq: 554.37, step: 7,  accidental: true,  label: 'C#5' },
+            'D5':  { freq: 587.33, step: 8,  accidental: false, label: 'D5' },
+            'D#5': { freq: 622.25, step: 8,  accidental: true,  label: 'D#5' },
+            'E5':  { freq: 659.25, step: 9,  accidental: false, label: 'E5' },
+            'F5':  { freq: 698.46, step: 10, accidental: false, label: 'F5' },
+            'F#5': { freq: 739.99, step: 10, accidental: true,  label: 'F#5' },
+            'G5':  { freq: 783.99, step: 11, accidental: false, label: 'G5' },
+            'G#5': { freq: 830.61, step: 11, accidental: true,  label: 'G#5' },
+            'A5':  { freq: 880.00, step: 12, accidental: false, label: 'A5' },
+            'A#5': { freq: 932.33, step: 12, accidental: true,  label: 'A#5' },
+            'B5':  { freq: 987.77, step: 13, accidental: false, label: 'B5' },
+            'C6':  { freq: 1046.50, step: 14, accidental: false, label: 'C6' }
+        };
+
+        // Standard keyboard shortcuts for effortless interaction
+        const KEYBOARD_MAP = {
+            'a': 'C4', 'w': 'C#4', 's': 'D4', 'e': 'D#4', 'd': 'E4', 'f': 'F4', 't': 'F#4',
+            'g': 'G4', 'y': 'G#4', 'h': 'A4', 'u': 'A#4', 'j': 'B4', 'k': 'C5', 'o': 'C#5',
+            'l': 'D5', 'p': 'D#5', ';': 'E5', "'": 'F5', ']': 'F#5', '\\': 'G5', 'z': 'C6'
+        };
+
+        // Master lists of Songs / Melodies for Interactive Learning Mode
+        const SONGS = {
+            'ode-to-joy': {
+                title: 'Ode to Joy',
+                composer: 'L. van Beethoven',
+                notes: ['E5', 'E5', 'F5', 'G5', 'G5', 'F5', 'E5', 'D5', 'C5', 'C5', 'D5', 'E5', 'E5', 'D5', 'D5', 
+                        'E5', 'E5', 'F5', 'G5', 'G5', 'F5', 'E5', 'D5', 'C5', 'C5', 'D5', 'E5', 'D5', 'C5', 'C5']
+            },
+            'fur-elise': {
+                title: 'Für Elise (Theme)',
+                composer: 'L. van Beethoven',
+                notes: ['E5', 'D#5', 'E5', 'D#5', 'E5', 'B4', 'D5', 'C5', 'A4', 'C4', 'E4', 'A4', 'B4', 'E4', 'G#4', 'B4', 'C5']
+            },
+            'twinkle-twinkle': {
+                title: 'Twinkle Star',
+                composer: 'Traditional',
+                notes: ['C4', 'C4', 'G4', 'G4', 'A4', 'A4', 'G4', 'F4', 'F4', 'E4', 'E4', 'D4', 'D4', 'C4']
+            },
+            'jingle-bells': {
+                title: 'Jingle Bells',
+                composer: 'J. Pierpont',
+                notes: ['E5', 'E5', 'E5', 'E5', 'E5', 'E5', 'E5', 'G5', 'C5', 'D5', 'E5', 'F5', 'F5', 'F5']
+            }
+        };
+
+        // --- APP STATE ---
+        let audioContext = null;
+        let masterGainNode = null;
+        const activeVoices = {}; // Tracks sound objects being played currently
+        
+        let activeSoundType = 'piano'; // piano, warm, retro, organ
+        let isSustainEnabled = false;
+        let showKeyLabels = true;
+        
+        // Dynamic Composition Memory
+        let composedNotes = [];
+        let isPlayingComposition = false;
+        let compositionPlaybackTimeout = null;
+
+        // Sheet Music Representation
+        let historyNotes = []; // Used in free-play mode (contains last 8 played note labels)
+        const MAX_HISTORY = 9;
+
+        // Lesson Mode State
+        let currentLesson = null; // Key of active song, or null
+        let lessonIndex = 0; // Current note index to play
+
+        // Metronome State
+        let metronomeInterval = null;
+        let isMetronomePlaying = false;
+        let metronomeBpm = 120;
+        let metronomeBeat = 0;
+
+        // --- AUDIO ENGINE ---
+        function initAudio() {
+            if (audioContext) return;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            masterGainNode = audioContext.createGain();
+            masterGainNode.gain.setValueAtTime(parseFloat(document.getElementById('volume-slider').value), audioContext.currentTime);
+            masterGainNode.connect(audioContext.destination);
+            
+            // Hide initial setup overlay prompt
+            document.getElementById('keyboard-prompt').classList.add('opacity-0');
+            document.getElementById('keyboard-prompt').classList.add('pointer-events-none');
+        }
+
+        // Generate customized synthesized piano sounds natively
+        function playNote(noteName) {
+            initAudio();
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            const pitch = PITCH_MAP[noteName];
+            if (!pitch) return;
+
+            // Stop existing identical note if it's currently held
+            if (activeVoices[noteName]) {
+                activeVoices[noteName].stop();
+            }
+
+            const now = audioContext.currentTime;
+            const freq = pitch.freq;
+
+            const osc1 = audioContext.createOscillator();
+            const osc2 = audioContext.createOscillator();
+            const noteGainNode = audioContext.createGain();
+
+            noteGainNode.connect(masterGainNode);
+            osc1.connect(noteGainNode);
+            osc2.connect(noteGainNode);
+
+            osc1.frequency.setValueAtTime(freq, now);
+            osc2.frequency.setValueAtTime(freq * 2, now); // Add depth with overtone
+
+            if (activeSoundType === 'piano') {
+                // Percussive attack & soft natural decay
+                osc1.type = 'triangle';
+                osc2.type = 'sine';
+                
+                noteGainNode.gain.setValueAtTime(0.001, now);
+                noteGainNode.gain.linearRampToValueAtTime(0.4, now + 0.008);
+                noteGainNode.gain.exponentialRampToValueAtTime(0.02, now + 1.8);
+            } else if (activeSoundType === 'warm') {
+                // Soft synth pad
+                osc1.type = 'sine';
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(freq * 1.002, now); // Detune slightly
+                
+                noteGainNode.gain.setValueAtTime(0.001, now);
+                noteGainNode.gain.linearRampToValueAtTime(0.35, now + 0.05);
+                noteGainNode.gain.exponentialRampToValueAtTime(0.04, now + 2.0);
+            } else if (activeSoundType === 'retro') {
+                // Chiptune / Pulse sound
+                osc1.type = 'square';
+                osc2.type = 'sawtooth';
+                
+                noteGainNode.gain.setValueAtTime(0.001, now);
+                noteGainNode.gain.linearRampToValueAtTime(0.18, now + 0.005);
+                noteGainNode.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+            } else if (activeSoundType === 'organ') {
+                // Organ drawbars simulation
+                osc1.type = 'sine';
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(freq * 3, now); // 3rd harmonic
+                
+                noteGainNode.gain.setValueAtTime(0.001, now);
+                noteGainNode.gain.linearRampToValueAtTime(0.25, now + 0.02);
+                noteGainNode.gain.exponentialRampToValueAtTime(0.05, now + 2.2);
+            }
+
+            osc1.start(now);
+            osc2.start(now);
+
+            // Keep track of parameters for dynamic release damper
+            activeVoices[noteName] = {
+                osc1,
+                osc2,
+                gain: noteGainNode,
+                stop: function() {
+                    const releaseTime = isSustainEnabled ? 1.4 : 0.12;
+                    const stopNow = audioContext.currentTime;
+                    try {
+                        noteGainNode.gain.cancelScheduledValues(stopNow);
+                        noteGainNode.gain.setValueAtTime(noteGainNode.gain.value, stopNow);
+                        noteGainNode.gain.exponentialRampToValueAtTime(0.0001, stopNow + releaseTime);
+                        osc1.stop(stopNow + releaseTime);
+                        osc2.stop(stopNow + releaseTime);
+                    } catch (e) {
+                        // Handle potential Web Audio state issues
+                    }
+                }
+            };
+
+            // Trigger visual representation
+            handleNotePlayVisuals(noteName);
+        }
+
+        function stopNote(noteName) {
+            if (activeVoices[noteName]) {
+                activeVoices[noteName].stop();
+                delete activeVoices[noteName];
+            }
+            handleNoteReleaseVisuals(noteName);
+        }
+
+        // --- KEYBOARD GENERATOR & UI HANDLERS ---
+        const keyboardContainer = document.getElementById('piano-keyboard');
+
+        function generatePiano() {
+            keyboardContainer.innerHTML = '';
+            
+            const notesArray = Object.keys(PITCH_MAP);
+            const whiteKeys = notesArray.filter(note => !PITCH_MAP[note].accidental);
+            const numWhiteKeys = whiteKeys.length;
+            
+            // Step 1: Render White Keys
+            whiteKeys.forEach((note, index) => {
+                const pitch = PITCH_MAP[note];
+                const keyWidth = 100 / numWhiteKeys;
+                
+                const keyEl = document.createElement('div');
+                keyEl.id = `key-${note}`;
+                keyEl.className = 'absolute bg-white hover:bg-neutral-50 border border-neutral-200 rounded-b-lg shadow-sm transition-all duration-75 cursor-pointer flex flex-col justify-end items-center pb-4 z-10 active-key-effect';
+                keyEl.style.width = `${keyWidth}%`;
+                keyEl.style.left = `${index * keyWidth}%`;
+                keyEl.style.height = '100%';
+                keyEl.setAttribute('data-note', note);
+                
+                // Add key label
+                keyEl.innerHTML = `
+                    <div class="text-center font-bold pointer-events-none select-none">
+                        <span class="block text-[11px] text-indigo-600 uppercase tracking-widest key-bind-cap ${showKeyLabels ? '' : 'hidden'}">${getFriendlyKeyBind(note)}</span>
+                        <span class="block text-[10px] text-neutral-400 mt-0.5">${note}</span>
+                    </div>
+                `;
+
+                // Pointer Events for perfect Multi-touch responsive mapping
+                keyEl.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    keyEl.setPointerCapture(e.pointerId);
+                    playNote(note);
+                });
+                
+                keyEl.addEventListener('pointerup', (e) => {
+                    e.preventDefault();
+                    stopNote(note);
+                });
+
+                keyEl.addEventListener('pointerleave', (e) => {
+                    stopNote(note);
+                });
+
+                keyboardContainer.appendChild(keyEl);
+            });
+
+            // Step 2: Render Black Keys Centered exactly on white keys margins
+            let whiteKeyIndex = 0;
+            notesArray.forEach((note) => {
+                const pitch = PITCH_MAP[note];
+                if (!pitch.accidental) {
+                    whiteKeyIndex++;
+                    return;
+                }
+
+                const keyWidth = 100 / numWhiteKeys;
+                const blackWidth = keyWidth * 0.65;
+                const leftPos = (whiteKeyIndex * keyWidth) - (blackWidth / 2);
+
+                const keyEl = document.createElement('div');
+                keyEl.id = `key-${note}`;
+                keyEl.className = 'absolute bg-neutral-800 hover:bg-neutral-700 rounded-b shadow-md transition-all duration-75 cursor-pointer flex flex-col justify-end items-center pb-2 z-20 active-key-effect';
+                keyEl.style.width = `${blackWidth}%`;
+                keyEl.style.left = `${leftPos}%`;
+                keyEl.style.height = '62%';
+                keyEl.setAttribute('data-note', note);
+
+                keyEl.innerHTML = `
+                    <div class="text-center font-bold pointer-events-none select-none">
+                        <span class="block text-[10px] text-indigo-400 uppercase key-bind-cap ${showKeyLabels ? '' : 'hidden'}">${getFriendlyKeyBind(note)}</span>
+                        <span class="block text-[8px] text-neutral-500">${note}</span>
+                    </div>
+                `;
+
+                // Add pointer event handling
+                keyEl.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    keyEl.setPointerCapture(e.pointerId);
+                    playNote(note);
+                });
+                
+                keyEl.addEventListener('pointerup', (e) => {
+                    e.preventDefault();
+                    stopNote(note);
+                });
+
+                keyEl.addEventListener('pointerleave', (e) => {
+                    stopNote(note);
+                });
+
+                keyboardContainer.appendChild(keyEl);
+            });
+        }
+
+        // Maps key cap binding triggers based on data
+        function getFriendlyKeyBind(note) {
+            for (let [key, val] of Object.entries(KEYBOARD_MAP)) {
+                if (val === note) return key.toUpperCase();
+            }
+            return '';
+        }
+
+        // Visual change on note trigger
+        function handleNotePlayVisuals(noteName) {
+            const keyEl = document.getElementById(`key-${noteName}`);
+            if (!keyEl) return;
+            const pitch = PITCH_MAP[noteName];
+            
+            if (pitch.accidental) {
+                keyEl.classList.remove('bg-neutral-800');
+                keyEl.classList.add('bg-indigo-600', 'ring-2', 'ring-indigo-300');
+            } else {
+                keyEl.classList.remove('bg-white');
+                keyEl.classList.add('bg-indigo-50', 'translate-y-[2px]', 'border-indigo-300');
+            }
+
+            // Register note play to app modes
+            registerNoteOnStaff(noteName);
+        }
+
+        function handleNoteReleaseVisuals(noteName) {
+            const keyEl = document.getElementById(`key-${noteName}`);
+            if (!keyEl) return;
+            const pitch = PITCH_MAP[noteName];
+
+            if (pitch.accidental) {
+                keyEl.classList.add('bg-neutral-800');
+                keyEl.classList.remove('bg-indigo-600', 'ring-2', 'ring-indigo-300');
+            } else {
+                keyEl.classList.add('bg-white');
+                keyEl.classList.remove('bg-indigo-50', 'translate-y-[2px]', 'border-indigo-300');
+            }
+        }
+
+        // --- SHEET MUSIC STAFF RENDERER ---
+        const notesLayer = document.getElementById('notes-layer');
+        const targetGuideLayer = document.getElementById('target-guide-layer');
+
+        // Registers notes played based on mode
+        function registerNoteOnStaff(noteName) {
+            // Automatically log to custom composition memory if in Free Play
+            if (!currentLesson && !isPlayingComposition) {
+                composedNotes.push(noteName);
+                if (composedNotes.length > 100) {
+                    composedNotes.shift(); // Limit to 100 recorded notes buffer
+                }
+                updateCompositionRecorder();
+            }
+
+            if (currentLesson) {
+                // Practice Mode: Check if note played matches target lesson note
+                const targetNote = SONGS[currentLesson].notes[lessonIndex];
+                if (noteName === targetNote) {
+                    lessonIndex++;
+                    triggerNoteBlastEffect(noteName);
+                    
+                    if (lessonIndex >= SONGS[currentLesson].notes.length) {
+                        triggerSongSuccess();
+                    } else {
+                        updateLessonUI();
+                        renderStaff();
+                    }
+                }
+            } else {
+                // Free Play Mode: Add note to scrolling list
+                historyNotes.push(noteName);
+                if (historyNotes.length > MAX_HISTORY) {
+                    historyNotes.shift();
+                }
+                renderStaff();
+            }
+        }
+
+        // Update Recorder State & UI
+        function updateCompositionRecorder() {
+            const countEl = document.getElementById('composed-count');
+            const playBtn = document.getElementById('play-composed-btn');
+            
+            countEl.innerText = `${composedNotes.length} note${composedNotes.length === 1 ? '' : 's'}`;
+            
+            if (composedNotes.length > 0) {
+                playBtn.removeAttribute('disabled');
+                playBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                playBtn.setAttribute('disabled', 'true');
+                playBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // Dynamic staff notes painter
+        function renderStaff() {
+            notesLayer.innerHTML = '';
+            targetGuideLayer.innerHTML = '';
+
+            const strokeColor = "#171717";
+            const noteFill = "#262626";
+            const highlightColor = "#4f46e5"; // Modern flat Indigo focus
+
+            if (currentLesson) {
+                const song = SONGS[currentLesson];
+                const totalNotes = song.notes.length;
+                
+                // Show up to 8 notes in a sliding frame
+                const frameSize = 8;
+                let startFrame = Math.max(0, lessonIndex - 2);
+                if (startFrame + frameSize > totalNotes) {
+                    startFrame = Math.max(0, totalNotes - frameSize);
+                }
+
+                const endFrame = Math.min(totalNotes, startFrame + frameSize);
+
+                for (let i = startFrame; i < endFrame; i++) {
+                    const noteName = song.notes[i];
+                    const pitch = PITCH_MAP[noteName];
+                    if (!pitch) continue;
+
+                    const slotIndex = i - startFrame;
+                    const x = 140 + slotIndex * 80;
+                    const y = getVerticalPosition(pitch.step);
+
+                    const isActive = (i === lessonIndex);
+                    const isPlayed = (i < lessonIndex);
+
+                    // Draw target guide highlight on staff
+                    if (isActive) {
+                        targetGuideLayer.innerHTML += `
+                            <g class="animate-bounce" transform="translate(${x}, ${y - 42})">
+                                <path d="M-6,0 L6,0 L0,10 Z" fill="${highlightColor}" />
+                                <rect x="-2" y="-12" width="4" height="12" fill="${highlightColor}" />
+                            </g>
+                            <circle cx="${x}" cy="${y}" r="22" fill="rgba(79, 70, 229, 0.08)" stroke="${highlightColor}" stroke-width="1.2" stroke-dasharray="3,3" />
+                        `;
+                        guideKeyOnPiano(noteName);
+                    }
+
+                    drawMusicNote(x, y, pitch, isPlayed ? "rgba(100, 116, 139, 0.3)" : (isActive ? highlightColor : noteFill), isActive);
+                }
+            } else {
+                // Free Play Rendering
+                historyNotes.forEach((noteName, index) => {
+                    const pitch = PITCH_MAP[noteName];
+                    if (!pitch) return;
+
+                    const x = 140 + index * 70;
+                    const y = getVerticalPosition(pitch.step);
+                    
+                    const isLatest = (index === historyNotes.length - 1);
+                    const activeColor = isLatest ? "#4f46e5" : strokeColor;
+
+                    drawMusicNote(x, y, pitch, activeColor, isLatest);
+                });
+            }
+        }
+
+        // Returns corresponding standard vertical offset relative to Treble staff lines
+        function getVerticalPosition(step) {
+            const baselineY = 120; // Y coordinate for step 0 (Middle C)
+            return baselineY - (step * 8);
+        }
+
+        // Renders complete composite vector note to SVG Canvas
+        function drawMusicNote(x, y, pitch, fillColor, animate = false) {
+            let svgContent = `<g class="${animate ? 'scale-105' : ''}">`;
+
+            // 1. Accidental (Sharp # symbol)
+            if (pitch.accidental) {
+                svgContent += `
+                    <text x="${x - 18}" y="${y + 5}" font-size="20" font-family="serif" font-weight="bold" fill="${fillColor}">♯</text>
+                `;
+            }
+
+            // 2. Ledger Lines for C4 or High Ledger Notes
+            if (y >= 120) {
+                // Middle C (Y = 120) or lower ledger markers
+                for (let ly = 120; ly <= y; ly += 16) {
+                    svgContent += `<line x1="${x - 14}" y1="${ly}" x2="${x + 14}" y2="${ly}" stroke="${fillColor}" stroke-width="1.5" />`;
+                }
+            } else if (y <= 24) {
+                // High ledger line representations above staff
+                const endL = y % 16 === 0 ? y : y + 8;
+                for (let ly = 24; ly >= endL; ly -= 16) {
+                    svgContent += `<line x1="${x - 14}" y1="${ly}" x2="${x + 14}" y2="${ly}" stroke="${fillColor}" stroke-width="1.5" />`;
+                }
+            }
+
+            // 3. Oval Note Head rotated diagonally
+            svgContent += `
+                <ellipse cx="${x}" cy="${y}" rx="8" ry="5.5" transform="rotate(-20, ${x}, ${y})" fill="${fillColor}" />
+            `;
+
+            // 4. Vertical Stem Note Tail
+            if (y >= 72) {
+                svgContent += `
+                    <line x1="${x + 7}" y1="${y}" x2="${x + 7}" y2="${y - 32}" stroke="${fillColor}" stroke-width="1.5" />
+                `;
+            } else {
+                svgContent += `
+                    <line x1="${x - 7}" y1="${y}" x2="${x - 7}" y2="${y + 32}" stroke="${fillColor}" stroke-width="1.5" />
+                `;
+            }
+
+            // Add standard pitch labels under note
+            svgContent += `
+                <text x="${x}" y="${y + 44}" font-size="9" font-family="monospace" font-weight="bold" fill="${fillColor}" text-anchor="middle">${pitch.label}</text>
+            `;
+
+            svgContent += `</g>`;
+            notesLayer.innerHTML += svgContent;
+        }
+
+        // Add visual highlight overlay onto target keys for lessons
+        function guideKeyOnPiano(targetNote) {
+            document.querySelectorAll('.active-key-effect').forEach(key => {
+                key.classList.remove('ring-4', 'ring-indigo-500', 'ring-offset-2');
+            });
+
+            const targetEl = document.getElementById(`key-${targetNote}`);
+            if (targetEl) {
+                targetEl.classList.add('ring-4', 'ring-indigo-500', 'ring-offset-2');
+            }
+        }
+
+        // Celebratory ripple circle upon correct hit
+        function triggerNoteBlastEffect(noteName) {
+            const pitch = PITCH_MAP[noteName];
+            if (!pitch) return;
+            const y = getVerticalPosition(pitch.step);
+            
+            const blastSvg = `
+                <circle cx="220" cy="${y}" r="8" fill="none" stroke="#10b981" stroke-width="2">
+                    <animate attributeName="r" from="8" to="35" dur="0.4s" begin="0s" repeatCount="1" fill="freeze" />
+                    <animate attributeName="opacity" from="1" to="0" dur="0.4s" begin="0s" repeatCount="1" fill="freeze" />
+                </circle>
+            `;
+            targetGuideLayer.innerHTML += blastSvg;
+        }
+
+        // --- COMPOSITION PLAYBACK ENGINE ---
+        function toggleCompositionPlayback() {
+            if (isPlayingComposition) {
+                stopCompositionPlayback();
+            } else {
+                startCompositionPlayback();
+            }
+        }
+
+        function startCompositionPlayback() {
+            if (composedNotes.length === 0) return;
+            
+            initAudio();
+            exitLesson(); // Exit lessons if active
+            
+            isPlayingComposition = true;
+            document.getElementById('play-composed-btn').innerHTML = `
+                <svg class="h-3.5 w-3.5 fill-current text-red-600 animate-pulse" viewBox="0 0 24 24">
+                    <rect x="4" y="4" width="16" height="16" rx="2" />
+                </svg>
+                Stop Playback
+            `;
+            document.getElementById('play-composed-btn').classList.add('bg-red-50', 'text-red-700', 'border-red-200');
+
+            document.getElementById('mode-badge').innerText = "Playback Mode";
+            document.getElementById('mode-badge').className = "text-xs font-semibold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200";
+            document.getElementById('helper-text').innerText = "Playing back your custom composition step-by-step.";
+
+            // Reset live history view so playback controls staff visuals
+            historyNotes = [];
+            renderStaff();
+
+            let playIndex = 0;
+            const tempoInterval = (60 / metronomeBpm) * 1000;
+
+            function playNextStep() {
+                if (!isPlayingComposition) return;
+                
+                if (playIndex >= composedNotes.length) {
+                    stopCompositionPlayback();
+                    return;
+                }
+
+                const currentNote = composedNotes[playIndex];
+                
+                // Play Audio and Light Key
+                playNote(currentNote);
+
+                // Auto stop slightly before the next note to ensure clean phrasing
+                setTimeout(() => {
+                    stopNote(currentNote);
+                }, tempoInterval * 0.85);
+
+                playIndex++;
+                compositionPlaybackTimeout = setTimeout(playNextStep, tempoInterval);
+            }
+
+            playNextStep();
+        }
+
+        function stopCompositionPlayback() {
+            isPlayingComposition = false;
+            clearTimeout(compositionPlaybackTimeout);
+
+            // Silence any remaining hanging voices
+            Object.keys(activeVoices).forEach(note => {
+                stopNote(note);
+            });
+
+            document.getElementById('play-composed-btn').innerHTML = `
+                <svg class="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                Play Composition
+            `;
+            document.getElementById('play-composed-btn').classList.remove('bg-red-50', 'text-red-700', 'border-red-200');
+
+            document.getElementById('mode-badge').innerText = "Free Play Mode";
+            document.getElementById('mode-badge').className = "text-xs font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200";
+            document.getElementById('helper-text').innerText = "Play keys below to see notes dynamically render on the staff.";
+
+            historyNotes = [];
+            renderStaff();
+        }
+
+        function clearComposition() {
+            stopCompositionPlayback();
+            composedNotes = [];
+            updateCompositionRecorder();
+        }
+
+        // --- LESSON MODE CONTROLS ---
+        function initLessonList() {
+            const listEl = document.getElementById('song-list');
+            listEl.innerHTML = '';
+
+            for (let [id, song] of Object.entries(SONGS)) {
+                const btn = document.createElement('button');
+                btn.className = 'flex flex-col text-left p-3 rounded-xl bg-white border border-neutral-200 hover:border-indigo-400 hover:bg-neutral-50 transition shadow-sm';
+                btn.innerHTML = `
+                    <span class="text-xs font-bold text-neutral-800 truncate max-w-full">${song.title}</span>
+                    <span class="text-[10px] text-neutral-400 mt-1 font-medium">${song.composer}</span>
+                `;
+                btn.addEventListener('click', () => startLesson(id));
+                listEl.appendChild(btn);
+            }
+        }
+
+        function startLesson(songId) {
+            stopCompositionPlayback(); // Stop composition if playing
+            currentLesson = songId;
+            lessonIndex = 0;
+
+            const song = SONGS[songId];
+            document.getElementById('current-song-title').innerText = song.title;
+            document.getElementById('current-song-author').innerText = `Composed by ${song.composer}`;
+            
+            document.getElementById('mode-badge').innerText = "Practice Mode";
+            document.getElementById('mode-badge').className = "text-xs font-semibold uppercase tracking-wider text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200";
+            
+            document.getElementById('helper-text').innerText = "Follow the guide indicators. Play the highlighted keys to advance!";
+            document.getElementById('lesson-status').classList.remove('hidden');
+
+            updateLessonUI();
+            renderStaff();
+        }
+
+        function exitLesson() {
+            currentLesson = null;
+            lessonIndex = 0;
+
+            document.getElementById('mode-badge').innerText = "Free Play Mode";
+            document.getElementById('mode-badge').className = "text-xs font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200";
+            
+            document.getElementById('helper-text').innerText = "Play piano keys to see notes instantly register on the staff.";
+            document.getElementById('lesson-status').classList.add('hidden');
+
+            document.querySelectorAll('.active-key-effect').forEach(key => {
+                key.classList.remove('ring-4', 'ring-indigo-500', 'ring-offset-2');
+            });
+
+            historyNotes = [];
+            renderStaff();
+        }
+
+        function updateLessonUI() {
+            if (!currentLesson) return;
+            const song = SONGS[currentLesson];
+            const progressVal = (lessonIndex / song.notes.length) * 100;
+            
+            document.getElementById('progress-text').innerText = `Note ${lessonIndex} / ${song.notes.length}`;
+            document.getElementById('progress-bar').style.width = `${progressVal}%`;
+        }
+
+        function triggerSongSuccess() {
+            const targetGuide = document.getElementById('target-guide-layer');
+            targetGuide.innerHTML = `
+                <rect x="100" y="20" width="600" height="120" rx="10" fill="rgba(16, 185, 129, 0.95)" />
+                <text x="400" y="70" font-size="22" font-family="sans-serif" font-weight="black" fill="white" text-anchor="middle">✨ Lesson Perfected! ✨</text>
+                <text x="400" y="102" font-size="13" font-family="sans-serif" font-weight="medium" fill="white" text-anchor="middle">Amazing! You have played the melody beautifully.</text>
+            `;
+
+            document.querySelectorAll('.active-key-effect').forEach(key => {
+                key.classList.remove('ring-4', 'ring-indigo-500', 'ring-offset-2');
+            });
+
+            setTimeout(() => {
+                exitLesson();
+            }, 3500);
+        }
+
+        // --- STUDIO METRONOME ---
+        function toggleMetronome() {
+            initAudio();
+            if (isMetronomePlaying) {
+                clearInterval(metronomeInterval);
+                isMetronomePlaying = false;
+                document.getElementById('metro-play-icon').innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                `;
+            } else {
+                isMetronomePlaying = true;
+                document.getElementById('metro-play-icon').innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                `;
+                startMetronomeTick();
+            }
+        }
+
+        function startMetronomeTick() {
+            const tickTime = (60 / metronomeBpm) * 1000;
+            metronomeInterval = setInterval(() => {
+                playMetronomeClick();
+            }, tickTime);
+        }
+
+        function playMetronomeClick() {
+            if (!audioContext) return;
+            
+            const osc = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            const isDownbeat = (metronomeBeat % 4 === 0);
+            osc.frequency.setValueAtTime(isDownbeat ? 900 : 550, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.06, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.06);
+
+            metronomeBeat++;
+        }
+
+        // --- BROWSER INITIALIZATION CONTROLLER & KEY BINDINGS ---
+        window.addEventListener('load', () => {
+            generatePiano();
+            initLessonList();
+            renderStaff();
+
+            setTimeout(() => {
+                if (!audioContext) {
+                    document.getElementById('keyboard-prompt').classList.remove('opacity-0');
+                    document.getElementById('keyboard-prompt').classList.remove('pointer-events-none');
+                }
+            }, 1000);
+        });
+
+        // Toggle keyboard bind helper view
+        document.getElementById('toggle-labels-btn').addEventListener('click', () => {
+            showKeyLabels = !showKeyLabels;
+            document.querySelectorAll('.key-bind-cap').forEach(el => {
+                if (showKeyLabels) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+            document.getElementById('toggle-labels-btn').innerText = showKeyLabels ? "Hide Key Caps" : "Show Key Caps";
+        });
+
+        // Clear buttons
+        document.getElementById('clear-staff-btn').addEventListener('click', () => {
+            historyNotes = [];
+            renderStaff();
+        });
+
+        document.getElementById('play-composed-btn').addEventListener('click', toggleCompositionPlayback);
+        document.getElementById('clear-composed-btn').addEventListener('click', clearComposition);
+
+        // exit lesson button
+        document.getElementById('exit-lesson-btn').addEventListener('click', exitLesson);
+
+        // Sound selection listener
+        document.getElementById('sound-select').addEventListener('change', (e) => {
+            activeSoundType = e.target.value;
+        });
+
+        // Sustain toggle trigger
+        const sustainBtn = document.getElementById('sustain-btn');
+        function toggleSustain() {
+            isSustainEnabled = !isSustainEnabled;
+            const indicator = document.getElementById('sustain-indicator');
+            if (isSustainEnabled) {
+                indicator.classList.remove('bg-neutral-400');
+                indicator.classList.add('bg-indigo-600');
+                sustainBtn.classList.add('border-indigo-300', 'bg-indigo-50', 'text-indigo-700');
+            } else {
+                indicator.classList.add('bg-neutral-400');
+                indicator.classList.remove('bg-indigo-600');
+                sustainBtn.classList.remove('border-indigo-300', 'bg-indigo-50', 'text-indigo-700');
+            }
+        }
+        sustainBtn.addEventListener('click', toggleSustain);
+
+        // Volume slider changes
+        document.getElementById('volume-slider').addEventListener('input', (e) => {
+            if (masterGainNode) {
+                masterGainNode.gain.setValueAtTime(parseFloat(e.target.value), audioContext.currentTime);
+            }
+        });
+
+        // Metronome control listeners
+        document.getElementById('metronome-btn').addEventListener('click', toggleMetronome);
+        document.getElementById('tempo-slider').addEventListener('input', (e) => {
+            metronomeBpm = parseInt(e.target.value);
+            document.getElementById('bpm-val').innerHTML = `${metronomeBpm} <span class="text-xs text-indigo-600">BPM</span>`;
+            if (isMetronomePlaying) {
+                clearInterval(metronomeInterval);
+                startMetronomeTick();
+            }
+        });
+
+        // Capture keyboard events smoothly
+        const pressedKeys = {};
+        
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                toggleSustain();
+                return;
+            }
+
+            const rawKey = e.key.toLowerCase();
+            const noteName = KEYBOARD_MAP[rawKey];
+            
+            if (noteName && !pressedKeys[rawKey]) {
+                pressedKeys[rawKey] = true;
+                playNote(noteName);
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const rawKey = e.key.toLowerCase();
+            const noteName = KEYBOARD_MAP[rawKey];
+            
+            if (noteName) {
+                pressedKeys[rawKey] = false;
+                stopNote(noteName);
+            }
+        });
+
+        // Handle focus resume context triggers on click anywhere
+        document.body.addEventListener('click', () => {
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        });
+    </script>
+</body>
+</html>

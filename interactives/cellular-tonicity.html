@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Cellular Tonicity & Osmosis Laboratory</title>
+    <style>
+        /* CSS Brand Palette Implementation */
+        :root {
+            --primary-blue: #00beff;
+            --dark-blue: #0056b3;
+            --yellow-accent: #ded807;
+            
+            /* Monotone Grays (7 Levels) */
+            --gray-minus3: #f6f7fa; /* sub backgrounds */
+            --gray-minus2: #e3ecf5; /* disabled text */
+            --gray-minus1: #bed2e8; /* sub text */
+            --gray: #8fb0d4;        /* annotations, footer links */
+            --gray-plus1: #6b8fbc;  /* footer titles */
+            --gray-plus2: #1e3f6b;  /* drawer bg, footer sub-background */
+            --gray-plus3: #0c2846;  /* body text, titles, dark backgrounds */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--gray-plus3);
+            color: var(--gray-minus3);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Header Navigation */
+        header {
+            background-color: rgba(12, 40, 70, 0.95);
+            border-bottom: 2px solid var(--gray-plus2);
+            padding: 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(8px);
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 190, 255, 0.3);
+        }
+
+        .logo-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: #fff;
+        }
+
+        .logo-text h1 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(to right, #ffffff, var(--primary-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text p {
+            font-size: 0.75rem;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-export {
+            background-color: var(--dark-blue);
+            color: #ffffff;
+            border: 1px solid var(--primary-blue);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-export:hover {
+            background-color: var(--primary-blue);
+            color: var(--gray-plus3);
+            box-shadow: 0 0 10px rgba(0, 190, 255, 0.4);
+        }
+
+        /* Main Workspace Grid */
+        main {
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Column: Visual Laboratory View */
+        .simulation-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .card {
+            background-color: var(--gray-plus2);
+            border-radius: 12px;
+            border: 1px solid rgba(143, 176, 212, 0.15);
+            padding: 1.25rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .canvas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .badge-tonicity {
+            background-color: var(--gray-plus3);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border: 1px solid var(--gray);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .badge-tonicity.hypotonic {
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+            box-shadow: 0 0 8px rgba(0, 190, 255, 0.15);
+        }
+
+        .badge-tonicity.isotonic {
+            border-color: #10B981;
+            color: #10B981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.15);
+        }
+
+        .badge-tonicity.hypertonic {
+            border-color: var(--yellow-accent);
+            color: var(--yellow-accent);
+            box-shadow: 0 0 8px rgba(222, 216, 7, 0.15);
+        }
+
+        /* Custom Interactive HUD Canvas Overlays */
+        .simulation-viewport {
+            position: relative;
+            background-color: #051424;
+            border-radius: 8px;
+            border: 2px solid var(--gray-plus3);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 4 / 3;
+            width: 100%;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .hud-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(12, 40, 70, 0.85);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+            max-width: 220px;
+        }
+
+        .hud-overlay p {
+            margin-bottom: 0.25rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .hud-overlay p span {
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .hud-flow {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(12, 40, 70, 0.85);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.4rem 0.6rem;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            pointer-events: none;
+        }
+
+        .flow-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Interactive Controls Card */
+        .controls-card {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            color: var(--gray-minus3);
+            font-weight: 700;
+            border-bottom: 1px solid rgba(143, 176, 212, 0.2);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title svg {
+            width: 18px;
+            height: 18px;
+            stroke: var(--primary-blue);
+        }
+
+        /* Selection Tabs (Animal vs Plant) */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .label-text {
+            font-size: 0.85rem;
+            color: var(--gray-minus1);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background-color: var(--gray-plus3);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--gray);
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        .tab-btn.active {
+            background-color: var(--gray-plus2);
+            color: var(--primary-blue);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            border: 1px solid rgba(0, 190, 255, 0.2);
+        }
+
+        /* Slider Controls Styling */
+        .slider-wrapper {
+            background-color: var(--gray-plus3);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.75rem;
+        }
+
+        .slider-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+        }
+
+        .slider-range {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--gray-plus2);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .slider-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            border: 2px solid #ffffff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 190, 255, 0.5);
+            transition: transform 0.1s ease;
+        }
+
+        .slider-range::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--gray);
+            margin-top: 0.5rem;
+        }
+
+        /* Solution Presets Grid */
+        .presets-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+
+        .preset-btn {
+            background-color: var(--gray-plus3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            padding: 0.5rem;
+            color: var(--gray-minus1);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+        }
+
+        .preset-btn.active {
+            background-color: var(--dark-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        /* Action Buttons */
+        .actions-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 0.6rem;
+            border-radius: 6px;
+            border: none;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-play-pause {
+            background-color: var(--primary-blue);
+            color: var(--gray-plus3);
+        }
+
+        .btn-play-pause:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn-reset {
+            background-color: var(--gray-plus3);
+            color: var(--gray-minus1);
+            border: 1px solid var(--gray);
+        }
+
+        .btn-reset:hover {
+            background-color: var(--gray-plus2);
+            color: #ffffff;
+        }
+
+        /* Right Column: Educational Dashboard */
+        .edu-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .analysis-box {
+            background-color: rgba(12, 40, 70, 0.4);
+            border-radius: 8px;
+            border: 1px solid rgba(143, 176, 212, 0.15);
+            padding: 1rem;
+        }
+
+        .analysis-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .analysis-text {
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: var(--gray-minus1);
+        }
+
+        /* Checkpoint Tasks (Challenge Box) */
+        .challenges-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .challenge-item {
+            background-color: var(--gray-plus3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .challenge-item.completed {
+            border-color: #10B981;
+        }
+
+        .challenge-text {
+            color: var(--gray-minus1);
+        }
+
+        .challenge-item.completed .challenge-text {
+            text-decoration: line-through;
+            color: var(--gray);
+        }
+
+        .challenge-check {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .challenge-item.completed .challenge-check {
+            background-color: #10B981;
+            border-color: #10B981;
+        }
+
+        .challenge-check::after {
+            content: '';
+            width: 5px;
+            height: 8px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+            margin-bottom: 1px;
+            display: none;
+        }
+
+        .challenge-item.completed .challenge-check::after {
+            display: block;
+        }
+
+        /* Cell State Popups / Overlay Warnings */
+        .lysis-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(12, 40, 70, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .lysis-title {
+            color: #EF4444;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .lysis-desc {
+            color: var(--gray-minus1);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            max-width: 320px;
+        }
+
+        .btn-revive {
+            background-color: var(--primary-blue);
+            color: var(--gray-plus3);
+            border: none;
+            font-weight: 700;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: transform 0.2s ease;
+        }
+
+        .btn-revive:hover {
+            transform: scale(1.05);
+        }
+
+        /* Mini Quiz Section */
+        .quiz-card {
+            background-color: var(--gray-plus2);
+            border: 1px solid rgba(143, 176, 212, 0.15);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .quiz-question {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: var(--gray-minus3);
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .quiz-option {
+            background-color: var(--gray-plus3);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            color: var(--gray-minus1);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--primary-blue);
+            color: white;
+        }
+
+        .quiz-option.correct {
+            background-color: rgba(16, 185, 129, 0.2);
+            border-color: #10B981;
+            color: white;
+        }
+
+        .quiz-option.incorrect {
+            background-color: rgba(239, 68, 68, 0.2);
+            border-color: #EF4444;
+            color: white;
+        }
+
+        .quiz-feedback {
+            font-size: 0.75rem;
+            margin-top: 0.75rem;
+            font-weight: 600;
+            display: none;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--gray-plus2);
+            border-top: 2px solid rgba(143, 176, 212, 0.15);
+            padding: 1.5rem;
+            margin-top: auto;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .footer-logo {
+            color: var(--gray-plus1);
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 0.75rem;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-blue);
+        }
+
+        .footer-copyright {
+            color: var(--gray);
+            font-size: 0.7rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header containing Logo and Self-Export Widget -->
+    <header>
+        <div class="header-container">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>SIMULAB: CELL OSMOSIS</h1>
+                    <p>Interactive Tonicity Demonstrator</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn-export" onclick="downloadSimulation()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download Sim File
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Panel Grid Layout -->
+    <main>
+        
+        <!-- Simulation & Controls Column -->
+        <div class="simulation-container">
+            
+            <!-- Canvas Viewer Card -->
+            <div class="card">
+                <div class="canvas-header">
+                    <h2 class="section-title" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        Cell Environment Microview
+                    </h2>
+                    <div id="tonicityBadge" class="badge-tonicity isotonic">
+                        <span class="flow-dot" style="background-color: #10B981;"></span>
+                        Isotonic
+                    </div>
+                </div>
+
+                <div class="simulation-viewport">
+                    <canvas id="simCanvas"></canvas>
+                    
+                    <!-- Lysis Burst Alert Screens -->
+                    <div id="lysisOverlay" class="lysis-banner">
+                        <div class="lysis-title">🚨 Cell Lysis!</div>
+                        <div class="lysis-desc">The animal cell expanded beyond limit due to excessive water intake in pure water (severe hypotonic state) and burst!</div>
+                        <button class="btn-revive" onclick="reviveCell()">Revive & Reset Cell</button>
+                    </div>
+
+                    <!-- Live HUD overlay -->
+                    <div class="hud-overlay">
+                        <p>Cell Type: <span id="hudCellType">Animal (RBC)</span></p>
+                        <p>Internal Solute: <span>0.9% NaCl</span></p>
+                        <p>External Solute: <span id="hudExtSolute">0.9% NaCl</span></p>
+                        <p>Relative Volume: <span id="hudRelVolume">100%</span></p>
+                    </div>
+
+                    <!-- Flow Direction Overlay -->
+                    <div id="hudFlowDir" class="hud-flow">
+                        <span class="flow-dot" style="background-color: var(--primary-blue);"></span>
+                        Net Water Flow: <span>Equilibrium (In = Out)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Controls -->
+            <div class="card controls-card">
+                <h2 class="section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 7h-9m-4 0H4m12 5h-4m-4 0H4m16 5h-7m-4 0H4M12 4v6m-6 3v6"></path>
+                    </svg>
+                    Simulation Controls
+                </h2>
+
+                <div class="control-group">
+                    <span class="label-text">Select Cell Model</span>
+                    <div class="btn-tabs">
+                        <button id="btnAnimal" class="tab-btn active" onclick="setCellType('animal')">
+                            🔴 Animal RBC
+                        </button>
+                        <button id="btnPlant" class="tab-btn" onclick="setCellType('plant')">
+                            🟢 Plant Elodea
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <div class="label-text">
+                        <span>External Solute Concentration</span>
+                        <span class="slider-value" id="soluteLabel">0.9%</span>
+                    </div>
+                    <div class="slider-wrapper">
+                        <input type="range" id="soluteSlider" min="0.0" max="3.0" step="0.1" value="0.9" class="slider-range" oninput="updateSolute(this.value)">
+                        <div class="slider-labels">
+                            <span>0.0% (Distilled)</span>
+                            <span>0.9% (Physiological)</span>
+                            <span>3.0% (Hyper-Saline)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <span class="label-text">Concentration Presets</span>
+                    <div class="presets-grid">
+                        <button id="presetHypo" class="preset-btn" onclick="setPreset(0.0)">0.0% Hypotonic</button>
+                        <button id="presetIso" class="preset-btn active" onclick="setPreset(0.9)">0.9% Isotonic</button>
+                        <button id="presetHyper" class="preset-btn" onclick="setPreset(3.0)">3.0% Hypertonic</button>
+                    </div>
+                </div>
+
+                <div class="actions-row">
+                    <button id="playBtn" class="btn-action btn-play-pause" onclick="togglePlay()">
+                        ⏸ Pause Physics
+                    </button>
+                    <button class="btn-action btn-reset" onclick="resetSimulation()">
+                        🔄 Reset Sandbox
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Hand Column: Concept analysis and checks -->
+        <div class="edu-container">
+            
+            <!-- Real-time Physiological Diagnostics -->
+            <div class="card">
+                <h2 class="section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                    </svg>
+                    Physiological Analysis
+                </h2>
+                <div class="analysis-box">
+                    <div id="diagnosticsTitle" class="analysis-title">Dynamic Equilibrium</div>
+                    <p id="diagnosticsDesc" class="analysis-text">The extracellular fluid has the same solute concentration as the cytoplasm. There is no net movement of water. The cell maintains its stable, functional morphology.</p>
+                </div>
+            </div>
+
+            <!-- Learning Challenges Checkbox -->
+            <div class="card">
+                <h2 class="section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Active Learning Tasks
+                </h2>
+                <p class="label-text" style="margin-bottom: 0.5rem;">Perform actions inside the simulator to complete tasks:</p>
+                <div class="challenges-list">
+                    <div id="task1" class="challenge-item">
+                        <span class="challenge-text">Create dynamic equilibrium in both cells</span>
+                        <div class="challenge-check"></div>
+                    </div>
+                    <div id="task2" class="challenge-item">
+                        <span class="challenge-text">Trigger Lysis (bursting) in the Animal Cell</span>
+                        <div class="challenge-check"></div>
+                    </div>
+                    <div id="task3" class="challenge-item">
+                        <span class="challenge-text">Trigger Plasmolysis in the Plant Cell</span>
+                        <div class="challenge-check"></div>
+                    </div>
+                    <div id="task4" class="challenge-item">
+                        <span class="challenge-text">Achieve fully Turgid (flourishing) state in the Plant cell</span>
+                        <div class="challenge-check"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Concept Quiz -->
+            <div class="quiz-card">
+                <h2 class="section-title" style="border-bottom:none; margin-bottom: 0;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    Understanding Check
+                </h2>
+                <div id="quizContainer">
+                    <div class="quiz-question" id="quizQuestion">Loading question...</div>
+                    <div class="quiz-options" id="quizOptions"></div>
+                    <div class="quiz-feedback" id="quizFeedback"></div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Professional Footer -->
+    <footer>
+        <div class="footer-content">
+            <span class="footer-logo">Simulab Osmotic Biophysics Laboratory</span>
+            <div class="footer-links">
+                <a href="#rules" onclick="event.preventDefault(); alert('Osmosis Principles:\n1. Solutes drag water towards them.\n2. Animal cells lack cell walls and risk lysing.\n3. Plant cell walls prevent bursting and support structural turgor pressure.');">Physiology Laws</a>
+                <a href="#about" onclick="event.preventDefault(); alert('Simulation Physics Sandbox v2.4.\nBuilt using Vanilla JS, HTML Canvas, and inline dynamic physics calculation algorithms.');">Sim Version Details</a>
+            </div>
+            <p class="footer-copyright">© 2026 Interactive Science Media. Pacaged and compiled in real-time under curriculum standards.</p>
+        </div>
+    </footer>
+
+    <!-- Interactive Logic & Physics Engine -->
+    <script>
+        // Core Simulation Parameters
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Dynamic Resolution Adjuster
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        // State Machine Object
+        const state = {
+            cellType: 'animal', // 'animal' or 'plant'
+            concentration: 0.9, // 0.0 to 3.0%
+            isPlaying: true,
+            isLysed: false,
+            scale: 1.0,         // Target scale based on concentration
+            currentScale: 1.0,  // Smoothly interpolated scale
+            particles: [],      // Dynamic array of molecules
+            lastTime: 0,
+            plantDeformX: 0,    // Plant plasma membrane deformation factor
+            cellWallRadius: 0
+        };
+
+        // Tasks Completed State
+        const completedTasks = {
+            task1: false, // Isotonic
+            task2: false, // Animal Lysis
+            task3: false, // Plant Plasmolysis
+            task4: false  // Plant Turgid
+        };
+
+        // Particle Class
+        class Particle {
+            constructor(type, x, y, isInsideCell) {
+                this.type = type; // 'water' (blue) or 'solute' (gold)
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = (Math.random() - 0.5) * 1.5;
+                this.isInside = isInsideCell;
+                this.radius = type === 'water' ? 3 : 5;
+            }
+
+            update(width, height) {
+                if (!state.isPlaying) return;
+
+                // Move
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Dynamic drift direction depending on tonicity
+                if (this.type === 'water') {
+                    const centerX = width / 2;
+                    const centerY = height / 2;
+                    const dx = this.x - centerX;
+                    const dy = this.y - centerY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    // If hypotonic (concentration < 0.9), water drifts inwards
+                    if (state.concentration < 0.9) {
+                        const drift = (0.9 - state.concentration) * 0.04;
+                        this.vx -= (dx / dist) * drift;
+                        this.vy -= (dy / dist) * drift;
+                    } 
+                    // If hypertonic (concentration > 0.9), water drifts outwards
+                    else if (state.concentration > 0.9) {
+                        const drift = (state.concentration - 0.9) * 0.04;
+                        this.vx += (dx / dist) * drift;
+                        this.vy += (dy / dist) * drift;
+                    }
+                }
+
+                // Drag speed limiter
+                const maxSpeed = 2.5;
+                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                if (speed > maxSpeed) {
+                    this.vx = (this.vx / speed) * maxSpeed;
+                    this.vy = (this.vy / speed) * maxSpeed;
+                }
+
+                // Bounce off Canvas Boundaries
+                if (this.x - this.radius < 0) { this.x = this.radius; this.vx *= -1; }
+                if (this.x + this.radius > width) { this.x = width - this.radius; this.vx *= -1; }
+                if (this.y - this.radius < 0) { this.y = this.radius; this.vy *= -1; }
+                if (this.y + this.radius > height) { this.y = height - this.radius; this.vy *= -1; }
+            }
+
+            draw(ctx) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                if (this.type === 'water') {
+                    ctx.fillStyle = '#00beff';
+                    ctx.shadowColor = '#00beff';
+                    ctx.shadowBlur = 4;
+                } else {
+                    ctx.fillStyle = '#ded807';
+                    ctx.shadowColor = '#ded807';
+                    ctx.shadowBlur = 5;
+                }
+                ctx.fill();
+                ctx.shadowBlur = 0; // Reset shadow
+            }
+        }
+
+        // Initialize particles
+        function initParticles() {
+            state.particles = [];
+            const canvasWidth = canvas.clientWidth;
+            const canvasHeight = canvas.clientHeight;
+            const centerX = canvasWidth / 2;
+            const centerY = canvasHeight / 2;
+
+            // Define interior vs exterior zones
+            const innerRadius = 75;
+
+            // 1. Water molecules (dynamic movement representation)
+            for (let i = 0; i < 45; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * (canvasWidth * 0.45);
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+                const isInside = radius < innerRadius;
+                state.particles.push(new Particle('water', x, y, isInside));
+            }
+
+            // 2. Solute molecules inside cell (constant physiological level of solutes)
+            const numInsideSolute = state.cellType === 'plant' ? 18 : 12;
+            for (let i = 0; i < numInsideSolute; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * (innerRadius - 15);
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+                state.particles.push(new Particle('solute', x, y, true));
+            }
+
+            // 3. Solute molecules outside cell (scaled exponentially based on current slider setting)
+            const numExtSolutes = Math.floor(state.concentration * 22);
+            for (let i = 0; i < numExtSolutes; i++) {
+                // Generate outside the cell
+                let x, y, dist;
+                do {
+                    x = Math.random() * canvasWidth;
+                    y = Math.random() * canvasHeight;
+                    const dx = x - centerX;
+                    const dy = y - centerY;
+                    dist = Math.sqrt(dx * dx + dy * dy);
+                } while (dist < innerRadius + 15);
+
+                state.particles.push(new Particle('solute', x, y, false));
+            }
+        }
+
+        // UI Event Hooks
+        function setCellType(type) {
+            state.cellType = type;
+            document.getElementById('btnAnimal').classList.toggle('active', type === 'animal');
+            document.getElementById('btnPlant').classList.toggle('active', type === 'plant');
+            document.getElementById('hudCellType').innerText = type === 'animal' ? 'Animal (RBC)' : 'Plant Elodea';
+            
+            state.isLysed = false;
+            document.getElementById('lysisOverlay').style.display = 'none';
+
+            // Reset simulation scale defaults
+            state.currentScale = 1.0;
+            state.scale = 1.0;
+
+            initParticles();
+            evaluateTonicityAndTasks();
+        }
+
+        function updateSolute(val) {
+            const numVal = parseFloat(val);
+            state.concentration = numVal;
+            document.getElementById('soluteLabel').innerText = numVal.toFixed(1) + '%';
+            document.getElementById('hudExtSolute').innerText = numVal.toFixed(1) + '%';
+            
+            // Adjust Preset Selection highlight dynamically
+            document.getElementById('presetHypo').classList.toggle('active', numVal === 0.0);
+            document.getElementById('presetIso').classList.toggle('active', numVal === 0.9);
+            document.getElementById('presetHyper').classList.toggle('active', numVal === 3.0);
+            document.getElementById('soluteSlider').value = numVal;
+
+            evaluateTonicityAndTasks();
+            initParticles();
+        }
+
+        function setPreset(val) {
+            updateSolute(val);
+        }
+
+        function togglePlay() {
+            state.isPlaying = !state.isPlaying;
+            document.getElementById('playBtn').innerText = state.isPlaying ? '⏸ Pause Physics' : '▶ Resume Physics';
+        }
+
+        function resetSimulation() {
+            state.concentration = 0.9;
+            state.currentScale = 1.0;
+            state.scale = 1.0;
+            state.isLysed = false;
+            state.isPlaying = true;
+            document.getElementById('playBtn').innerText = '⏸ Pause Physics';
+            document.getElementById('lysisOverlay').style.display = 'none';
+            updateSolute(0.9);
+            initParticles();
+        }
+
+        function reviveCell() {
+            state.isLysed = false;
+            document.getElementById('lysisOverlay').style.display = 'none';
+            state.scale = 1.0;
+            state.currentScale = 1.0;
+            setPreset(0.9);
+        }
+
+        // Core Tonicity Physics Evaluator
+        function evaluateTonicityAndTasks() {
+            const label = document.getElementById('tonicityBadge');
+            const flowText = document.querySelector('#hudFlowDir span');
+            const diagnosticsTitle = document.getElementById('diagnosticsTitle');
+            const diagnosticsDesc = document.getElementById('diagnosticsDesc');
+
+            // Reset classes
+            label.className = 'badge-tonicity';
+
+            if (state.concentration < 0.8) {
+                // HYPOTONIC
+                label.classList.add('hypotonic');
+                label.innerHTML = `<span class="flow-dot" style="background-color: var(--primary-blue);"></span>Hypotonic Environment`;
+                flowText.innerText = 'Inward Flux (H₂O In)';
+                
+                // Scale calculation: Lower concentration makes animal cells swell, eventually lyse
+                state.scale = 1.0 + (0.9 - state.concentration) * 0.45;
+
+                if (state.cellType === 'animal') {
+                    diagnosticsTitle.innerText = 'Osmotic Swelling / Lysis Threat';
+                    diagnosticsDesc.innerText = 'The intracellular concentration exceeds the external environment. Net water flux flows rapidly inward. Without a restrictive cell wall, the cell membrane swells and will eventually undergo Hemolysis (burst).';
+                    
+                    // Lysis Threshold
+                    if (state.concentration < 0.3) {
+                        state.isLysed = true;
+                        document.getElementById('lysisOverlay').style.display = 'flex';
+                        triggerTaskComplete('task2');
+                    }
+                } else {
+                    diagnosticsTitle.innerText = 'Turgidity (Healthy Normal Plant State)';
+                    diagnosticsDesc.innerText = 'Water moves inwards into the large central vacuole of the plant cell. The expanding vacuole exerts Turgor Pressure outward against the rigid cell wall. This keeps the plant structurally sound, firm, and healthy.';
+                    triggerTaskComplete('task4');
+                }
+            } 
+            else if (state.concentration >= 0.8 && state.concentration <= 1.0) {
+                // ISOTONIC
+                label.classList.add('isotonic');
+                label.innerHTML = `<span class="flow-dot" style="background-color: #10B981;"></span>Isotonic Environment`;
+                flowText.innerText = 'Dynamic Equilibrium (In = Out)';
+                state.scale = 1.0;
+
+                if (state.cellType === 'animal') {
+                    diagnosticsTitle.innerText = 'Stable Homeostasis (Normal RBC)';
+                    diagnosticsDesc.innerText = 'The concentrations match. Molecules move across the membrane dynamically, but net volume does not change. Cell remains in its highly functioning biconcave shape.';
+                } else {
+                    diagnosticsTitle.innerText = 'Flaccid (Mild Structural Loss)';
+                    diagnosticsDesc.innerText = 'With no net water movement, the plant vacuole is neither swollen nor plasmolyzed. The plant tissues lose firmness (turgor pressure decreases) and can begin to wilt.';
+                }
+                triggerTaskComplete('task1');
+            } 
+            else {
+                // HYPERTONIC
+                label.classList.add('hypertonic');
+                label.innerHTML = `<span class="flow-dot" style="background-color: var(--yellow-accent);"></span>Hypertonic Environment`;
+                flowText.innerText = 'Outward Flux (H₂O Out)';
+                
+                // Scale calculation: higher concentration makes cells shrivel
+                state.scale = 1.0 - (state.concentration - 0.9) * 0.18;
+
+                if (state.cellType === 'animal') {
+                    diagnosticsTitle.innerText = 'Crenation (Cell Shriveling)';
+                    diagnosticsDesc.innerText = 'Extracellular solute concentration is high. Water rushes out of the cell via osmosis to try and balance osmolarity. This causes the animal cell to shrivel up and develop spikes (Crenation).';
+                } else {
+                    diagnosticsTitle.innerText = 'Plasmolysis';
+                    diagnosticsDesc.innerText = 'Water exits the plant cell central vacuole. The protoplast collapses and pulls away from the static, rigid cellulose cell wall (Plasmolysis). The plant loses all structure and collapses.';
+                    triggerTaskComplete('task3');
+                }
+            }
+        }
+
+        // Completed Task visual updater
+        function triggerTaskComplete(id) {
+            if (!completedTasks[id]) {
+                completedTasks[id] = true;
+                const element = document.getElementById(id);
+                element.classList.add('completed');
+                
+                // Brief spark effect
+                element.style.borderColor = '#10B981';
+                setTimeout(() => {
+                    element.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                }, 1000);
+            }
+        }
+
+        // Canvas Painter Engine
+        function drawCell() {
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Interpolate scaling smoothly for luxurious high-end feel
+            state.currentScale += (state.scale - state.currentScale) * 0.1;
+            document.getElementById('hudRelVolume').innerText = Math.round(state.currentScale * 100) + '%';
+
+            if (state.cellType === 'animal') {
+                if (state.isLysed) {
+                    // Draw cell remnants (Lysis bursts)
+                    ctx.strokeStyle = '#EF4444';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([4, 8]);
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, 90, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // Draw burst debris dots
+                    ctx.fillStyle = '#EF4444';
+                    for (let i = 0; i < 12; i++) {
+                        const angle = (i / 12) * Math.PI * 2;
+                        const dist = 100 + Math.sin(Date.now() * 0.005 + i) * 15;
+                        ctx.beginPath();
+                        ctx.arc(centerX + Math.cos(angle) * dist, centerY + Math.sin(angle) * dist, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else {
+                    const baseRadius = 75 * state.currentScale;
+
+                    // Draw Animal Red Blood Cell
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    ctx.shadowBlur = 15;
+
+                    ctx.beginPath();
+                    
+                    if (state.concentration > 1.0) {
+                        // Drawing Spiky Crenated Structure
+                        const numSpikes = 14;
+                        for (let i = 0; i <= numSpikes * 2; i++) {
+                            const angle = (i / (numSpikes * 2)) * Math.PI * 2;
+                            const amp = i % 2 === 0 ? baseRadius : baseRadius * 0.75;
+                            const rx = centerX + Math.cos(angle) * amp;
+                            const ry = centerY + Math.sin(angle) * amp;
+                            if (i === 0) ctx.moveTo(rx, ry);
+                            else ctx.lineTo(rx, ry);
+                        }
+                    } else {
+                        // Smooth Round Swollen/Isotonic Cell with soft pulse
+                        const numVertices = 36;
+                        for (let i = 0; i <= numVertices; i++) {
+                            const angle = (i / numVertices) * Math.PI * 2;
+                            // Add minor membrane dynamic wobble
+                            const wobble = Math.sin(Date.now() * 0.003 + angle * 5) * (state.concentration < 0.8 ? 0.8 : 1.5);
+                            const rx = centerX + Math.cos(angle) * (baseRadius + wobble);
+                            const ry = centerY + Math.sin(angle) * (baseRadius + wobble);
+                            if (i === 0) ctx.moveTo(rx, ry);
+                            else ctx.lineTo(rx, ry);
+                        }
+                    }
+
+                    ctx.closePath();
+                    // RBC Color styling gradient
+                    const gradient = ctx.createRadialGradient(centerX, centerY, baseRadius * 0.2, centerX, centerY, baseRadius);
+                    gradient.addColorStop(0, '#ff6b6b');
+                    gradient.addColorStop(0.5, '#dc2626');
+                    gradient.addColorStop(1, '#991b1b');
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+
+                    // Inner biconcave contour line (only visible if not extremely swollen)
+                    if (state.concentration >= 0.8) {
+                        ctx.beginPath();
+                        ctx.arc(centerX, centerY, baseRadius * 0.42, 0, Math.PI * 2);
+                        ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)';
+                        ctx.lineWidth = 4;
+                        ctx.stroke();
+
+                        ctx.fillStyle = 'rgba(153, 27, 27, 0.3)';
+                        ctx.fill();
+                    }
+
+                    // Soft specular light reflex
+                    ctx.beginPath();
+                    ctx.ellipse(centerX - baseRadius * 0.3, centerY - baseRadius * 0.3, baseRadius * 0.15, baseRadius * 0.08, Math.PI / 4, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.fill();
+
+                    ctx.shadowBlur = 0;
+                }
+            } 
+            else {
+                // DRAWING PLANT CELL
+                // 1. Static Outside Cellulose Cell Wall
+                const wallW = 280;
+                const wallH = 200;
+                ctx.strokeStyle = '#059669'; // Emerald deep green
+                ctx.lineWidth = 10;
+                ctx.lineJoin = 'round';
+                ctx.strokeRect(centerX - wallW / 2, centerY - wallH / 2, wallW, wallH);
+
+                ctx.strokeStyle = '#34D399'; // Bright light green border accent
+                ctx.lineWidth = 2;
+                ctx.strokeRect(centerX - wallW / 2 + 5, centerY - wallH / 2 + 5, wallW - 10, wallH - 10);
+
+                // 2. Protoplast / Plasma Membrane
+                // Shrinks massively away from wall in Hypertonic
+                const membraneScale = Math.min(1.0, state.currentScale);
+                const memW = (wallW - 12) * membraneScale;
+                const memH = (wallH - 12) * membraneScale;
+
+                ctx.fillStyle = 'rgba(16, 185, 129, 0.2)'; // Faint translucent green protoplast space
+                ctx.fillRect(centerX - memW / 2, centerY - memH / 2, memW, memH);
+
+                ctx.strokeStyle = '#10B981'; // Plasma Membrane outline
+                ctx.lineWidth = 3;
+                ctx.strokeRect(centerX - memW / 2, centerY - memH / 2, memW, memH);
+
+                // 3. Central Vacuole (water storage)
+                const vacuoleScale = Math.max(0.2, state.currentScale * 0.95);
+                const vacW = (wallW - 60) * vacuoleScale;
+                const vacH = (wallH - 60) * vacuoleScale;
+
+                // Rich Radial Blue Gradient for Vacuole Water
+                const vacGrad = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, vacW / 2);
+                vacGrad.addColorStop(0, '#60a5fa');
+                vacGrad.addColorStop(1, '#1d4ed8');
+                ctx.fillStyle = vacGrad;
+                ctx.fillRect(centerX - vacW / 2, centerY - vacH / 2, vacW, vacH);
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(centerX - vacW / 2, centerY - vacH / 2, vacW, vacH);
+
+                // Draw Chloroplast organelles scattered in protoplast
+                ctx.fillStyle = '#047857';
+                const chloroplastCount = 12;
+                for (let i = 0; i < chloroplastCount; i++) {
+                    // Distribute around the membrane perimeter
+                    const angle = (i / chloroplastCount) * Math.PI * 2;
+                    const rx = centerX + Math.cos(angle) * (memW / 2 - 15);
+                    const ry = centerY + Math.sin(angle) * (memH / 2 - 15);
+                    ctx.beginPath();
+                    ctx.ellipse(rx, ry, 12, 6, angle, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Plant Turgor Pressure / Osmosis indicators overlay texts
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 10px monospace';
+                ctx.textAlign = 'center';
+                if (state.concentration < 0.8) {
+                    ctx.fillText("HIGH TURGOR PRESSURE", centerX, centerY - 5);
+                } else if (state.concentration > 1.0) {
+                    ctx.fillStyle = varColor('--yellow-accent');
+                    ctx.fillText("PLASMOLYZED VACUOLE", centerX, centerY - 5);
+                }
+            }
+
+            // Draw and update molecules (Molecules only rendered if cell is healthy/not exploded)
+            state.particles.forEach(p => {
+                p.update(width, height);
+                p.draw(ctx);
+            });
+        }
+
+        // Helper to grab custom property hex colors dynamically
+        function varColor(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        // Animation Loop Hook
+        function loop(timestamp) {
+            drawCell();
+            requestAnimationFrame(loop);
+        }
+
+        // COMPREHENSION QUIZ SYSTEM (Vanishing states, fully structured)
+        const quizData = [
+            {
+                q: "What happens when a red blood cell is placed in an extremely Hypotonic solution?",
+                options: [
+                    "Water leaves the cell, causing it to crenate (shrivel).",
+                    "Water rushes inside the cell, causing it to swell and undergo Hemolysis (burst).",
+                    "No net change occurs because solutes are balanced.",
+                    "Active transport pumps solutes out immediately to save the membrane."
+                ],
+                correctIndex: 1,
+                explanation: "Correct! In a hypotonic environment (like pure distilled water), the external concentration is lower, forcing water inside until animal cells lyse."
+            },
+            {
+                q: "Why do plant cells thrive and stand strong in Hypotonic (0.0%) environments?",
+                options: [
+                    "They can actively pump out water as fast as it enters.",
+                    "They possess a thick waxy cuticle that blocks water entry.",
+                    "The rigid cellulose cell wall restricts swelling and creates structural Turgor Pressure.",
+                    "The chloroplasts quickly consume excess water for photosynthesis."
+                ],
+                correctIndex: 2,
+                explanation: "Correct! The cell wall exerts a counter-pressure that stops water intake before bursting, giving herbaceous plants their structural integrity."
+            },
+            {
+                q: "What is Plasmolysis in plant cells?",
+                options: [
+                    "The explosion of the chloroplasts due to low solar energy.",
+                    "The shrinking of the cytoplasm and pulling away of the cell membrane from the cell wall in hypertonic solutions.",
+                    "The equal movement of oxygen and glucose molecules.",
+                    "A chemical process that turns the cell wall into salt."
+                ],
+                correctIndex: 1,
+                explanation: "Correct! In hypertonic solutions, plant vacuoles lose water, causing the inner membrane to shrivel completely away from the rigid wall."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+
+        function loadQuestion() {
+            const data = quizData[currentQuestionIndex];
+            document.getElementById('quizQuestion').innerText = `Q${currentQuestionIndex + 1}: ${data.q}`;
+            
+            const optionsBox = document.getElementById('quizOptions');
+            optionsBox.innerHTML = '';
+            
+            const feedback = document.getElementById('quizFeedback');
+            feedback.style.display = 'none';
+
+            data.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-option';
+                btn.innerText = opt;
+                btn.onclick = () => submitAnswer(idx, btn);
+                optionsBox.appendChild(btn);
+            });
+        }
+
+        function submitAnswer(idx, clickedBtn) {
+            const data = quizData[currentQuestionIndex];
+            const buttons = document.querySelectorAll('.quiz-option');
+            const feedback = document.getElementById('quizFeedback');
+
+            // Disable further clicks
+            buttons.forEach(b => b.removeAttribute('onclick'));
+
+            if (idx === data.correctIndex) {
+                clickedBtn.classList.add('correct');
+                feedback.innerHTML = `🟢 ${data.explanation}`;
+                feedback.style.color = '#10B981';
+            } else {
+                clickedBtn.classList.add('incorrect');
+                buttons[data.correctIndex].classList.add('correct');
+                feedback.innerHTML = `❌ Incorrect. ${data.explanation}`;
+                feedback.style.color = '#EF4444';
+            }
+            feedback.style.display = 'block';
+
+            // Cycle through questions after a slight delay
+            setTimeout(() => {
+                currentQuestionIndex = (currentQuestionIndex + 1) % quizData.length;
+                loadQuestion();
+            }, 6000);
+        }
+
+        // HTML Sandboxed Exporter Core File (Direct self download execution)
+        function downloadSimulation() {
+            // Re-grab full HTML code block
+            const currentHTML = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            const blob = new Blob([currentHTML], { type: 'text/html;charset=utf-8' });
+            
+            // Build data URL and click
+            const anchor = document.createElement('a');
+            anchor.href = URL.createObjectURL(blob);
+            anchor.download = 'Cellular_Osmosis_Tonicity_Lab.html';
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+            URL.revokeObjectURL(anchor.href);
+        }
+
+        // Entry initialization points on window ready
+        window.onload = function() {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Set default presets
+            resetSimulation();
+            loadQuestion();
+            
+            // Start simulation frame request loop
+            requestAnimationFrame(loop);
+        }
+    </script>
+</body>
+</html>

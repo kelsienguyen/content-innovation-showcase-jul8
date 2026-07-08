@@ -1,0 +1,631 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Force Table Simulation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #CCEEFF; 
+            --panel-bg: #ffffff;
+            --text-main: #333333;
+            --border-color: #dddddd;
+            --primary-accent: #0066cc;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .branding-header {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+        }
+
+        .branding-logo {
+            height: 50px; 
+            max-width: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .window-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-family: 'Open Sans', sans-serif;
+            transition: opacity 0.2s;
+        }
+        .window-btn:hover {
+            opacity: 0.8;
+        }
+
+        .fullscreen-btn {
+            background-color: #495057;
+            color: white;
+        }
+
+        .close-tab-btn {
+            background-color: #d90429;
+            color: white;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            width: 100%;
+            align-items: flex-start;
+            flex-wrap: wrap; 
+            justify-content: center;
+        }
+
+        .simulation-area {
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1 1 400px;
+            min-width: 300px;
+            max-width: 600px;
+            box-sizing: border-box;
+        }
+
+        .controls-area {
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 20px;
+            flex: 1 1 350px;
+            min-width: 300px; 
+            max-width: 600px;
+            box-sizing: border-box;
+        }
+
+        .stage {
+            position: relative;
+            width: 100%; 
+            max-width: 560px; 
+            aspect-ratio: 1 / 1; 
+            margin-top: 10px;
+            border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        #staticTableBase, #forceCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%; 
+            height: 100%;
+        }
+
+        #staticTableBase {
+            z-index: 1;
+            pointer-events: none; 
+        }
+
+        #forceCanvas {
+            z-index: 2;
+            cursor: grab;
+            background: transparent; 
+            touch-action: none; 
+        }
+        #forceCanvas:active { cursor: grabbing; }
+
+        h2 { margin-top: 0; font-size: 1.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+        h3 { margin-top: 0; font-size: 1.2rem; color: #495057; }
+
+        .settings-panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .setting-row { display: flex; align-items: center; justify-content: space-between; font-weight: 500; font-size: 0.95rem; flex-wrap: wrap; gap: 10px;}
+        .setting-row select { padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); font-family: 'Open Sans', sans-serif;}
+
+        .force-input-group {
+            display: flex; gap: 8px; margin-bottom: 10px; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 6px; border-left: 5px solid var(--primary-accent); flex-wrap: wrap; 
+        }
+        .input-cluster { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+        .force-input-group label { font-size: 0.85rem; font-weight: bold; }
+        .force-input-group input { width: 60px; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px; font-family: 'Open Sans', sans-serif;}
+        
+        .stats-readout {
+            font-size: 0.85rem; color: #495057; background: #ffffff; padding: 4px 8px; border-radius: 4px; border: 1px solid #ced4da; margin-left: auto; display: flex; gap: 10px; font-family: monospace; flex-wrap: wrap;
+        }
+
+        button { background-color: var(--primary-accent); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: 'Open Sans', sans-serif;}
+        button:hover { background-color: #005bb5; }
+        .remove-btn { background-color: #cc0000; padding: 6px 10px; margin-left: auto;}
+        .remove-btn:hover { background-color: #a30000; }
+
+        .results-panel { margin-top: 20px; padding: 15px; background-color: #e8f4f8; border-radius: 6px; border: 1px solid #b6d4fe; }
+        .results-panel p { margin: 5px 0; font-size: 1.1rem; }
+
+        .formula-box { background-color: #f8f9fa; border-color: var(--border-color); overflow-x: auto; }
+        .formula-box p { display: block; font-size: 1rem; margin-bottom: 15px; text-align: center; }
+        .formula-box strong { color: var(--primary-accent); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 5px; }
+
+        @media (max-width: 600px) {
+            .stats-readout { margin-left: 0; width: 100%; justify-content: space-between; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="branding-header">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAABACAYAAAD1Xam+AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAQAElEQVR4AeydCYBcRbWGv7o9W0ImDCRBgYAQCPsOsoZkOhMCsiPCA5FNZXuyiqwKRlGeIA/RyBoR8xCFKCIigZBlsrG+8Ngij+WBimzZyD5JZqa73n+6M5klvd3bnUyWvjl/V92qc06dOrfq3Lp1uycBpTwafS+m+92Z4I9ioj+dSf7rNPpvKH+OcIrKhwm78bivLWWzG4Qu7x1jfX/56yb57RWhSfkWpX8XRstvh28Q/Sx3Yp3yQHEBYJzfQoPzqxqc92uC/w3PHJp5DceT6uVvhVEqu0/n9yv/sNJxBLxOrfgm+fc0wP8o+SuEvRnjY+LZOGmGr2QiX6eGN+Sv6+WnveWIHspXKN1OOJOACfLTf/GC763zMpU9UBIPhA8AY321BuKRwh+p4F1Z8V8anOdo0O6qfI0QUz5IAdW0wSlvgBhQrfrtNcBPUv6nSl+iL68riHyPaX6AyjYeGuOrWMi3CLhbna4TAvnDKe1Idl6lgtNp4k+M85soX6ayB4r2QFCwBhuok/wxuktNlMzjGqQn4bC7UUznpscGqbIFkpc0GvYoIDiqJGUBZAQtzFAguFurgx1VtmGT94EC377yxI/U0UohH9mKYDCVfD8fY7m+7IF8HrD6wD7yYoLfSQP1AfGNEQ4R7A5emKyYCySniRAT7C54Hp5pWmVcwXO+R4Hy6x/bM9gy/yYZHuaOboHiwo1upSQnlan0Hsg9ie/Vs+kUf7zu02PV9KlCTyG3jBiKIlsZOGLA54SbWc7DjPfbKr+BkTb9qqhVwDuM8EeN9lqODi9Wlih7oLMHsk/mMbrz7siFJPgNsL1gy08la42cWqoRjlY4eEwbjXspv+HQGIXVJPuqQxZUlYSiQNIHhZIoM5c9kMEDmQPAE74nm3MJjh9Lpk7IzKeKtUAVehzYm4AHFQR2WwvtrZ0m+sm76MEqSmu2SvJsHkW0LFP2gHmgDatP7Jm+il6cpeH5XVAO5ejmwxEDdiNgFFP9lsqv/1SvsBYwP1JHHF7/FkWSLQuVPdDBA50DgH0ZZTbDSPIDHLXis2W4knWC7BFkf1r5jw1kYzDJMl7VRF5B+COpYDgjvFhZouyBzh7oHAAa2UnVPxT6CqWY/K3Ss0yDPKm0FFQtJcfSxDFK129yzusdwAIF2hcjdMT8al+2Pic/wAAAP//QkM6agAAAAZJREFUAwBA4wTQZG1KegAAAABJRU5ErkJggg==" alt="Brand Logo" class="branding-logo">
+        <div class="window-controls">
+            <button id="fullscreenBtn" class="window-btn fullscreen-btn">Enter Fullscreen</button>
+            <button id="closeBtn" class="window-btn close-tab-btn">X Close</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="simulation-area">
+            <h2>Force Table</h2>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Drag arrowheads to adjust vectors.</p>
+            
+            <div class="stage">
+                <svg id="staticTableBase" viewBox="0 0 560 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"></svg>
+                <canvas id="forceCanvas" width="560" height="560"></canvas>
+            </div>
+        </div>
+
+        <div class="controls-area">
+            <h2>Controls</h2>
+            
+            <div class="settings-panel">
+                <div class="setting-row">
+                    <label for="vectorScale">Visual Scale:</label>
+                    <select id="vectorScale">
+                        <option value="0.5">1 px = 0.5 g (Zoomed In)</option>
+                        <option value="1" selected>1 px = 1.0 g (Standard)</option>
+                        <option value="2">1 px = 2.0 g (Zoomed Out)</option>
+                        <option value="5">1 px = 5.0 g (Large Masses)</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label for="showComponents">Show X/Y Components:</label>
+                    <input type="checkbox" id="showComponents">
+                </div>
+                <div class="setting-row">
+                    <label for="challengeMode">Challenge Mode (Hide Auto-Equilibrant):</label>
+                    <input type="checkbox" id="challengeMode">
+                </div>
+            </div>
+
+            <div id="forcesContainer"></div>
+            <button id="addForceBtn" style="margin-top:10px;">+ Add Force</button>
+
+            <div class="results-panel">
+                <h3>System Status</h3>
+                <p>Net Force ($F_{net}$): <span id="resMass">0</span> g</p>
+                <p>Status: <span id="balanceStatus" style="font-weight:bold; color:#cc0000;">Unbalanced</span></p>
+            </div>
+            
+            <div class="results-panel formula-box">
+                <h3>Key Physics Formulas</h3>
+                <p><strong>Vector Components</strong><br>
+                $$ F_x = F \cos(\theta) \quad \text{and} \quad F_y = F \sin(\theta) $$</p>
+                
+                <p><strong>Magnitude of Net Force</strong><br>
+                $$ F_{net} = \sqrt{(\sum F_x)^2 + (\sum F_y)^2} $$</p>
+                
+                <p><strong>Condition for Equilibrium</strong><br>
+                $$ \sum \vec{F} = 0 $$</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const closeBtn = document.getElementById('closeBtn');
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.warn(`Error attempting to enable fullscreen: ${err.message}`);
+                    alert("Fullscreen is not supported or was blocked by the browser.");
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                fullscreenBtn.innerText = "Enter Fullscreen";
+            } else {
+                fullscreenBtn.innerText = "Exit Fullscreen";
+            }
+        });
+
+        closeBtn.addEventListener('click', () => {
+            window.close();
+            setTimeout(() => {
+                console.warn("Script was unable to close the tab. This usually happens if the user navigated to the page manually rather than clicking a script-generated link.");
+            }, 300);
+        });
+
+        let forces = [
+            { id: 1, mass: 150, angle: 0, color: '#0066cc' },
+            { id: 2, mass: 200, angle: 120, color: '#2b9348' }
+        ];
+        let nextId = 3;
+        const GRAVITY = 9.806; 
+        
+        let isChallengeMode = false;
+        let showComponents = false;
+        let currentScale = 1; 
+        
+        let draggedForceId = null;
+        let targetRingOffsetX = 0;
+        let targetRingOffsetY = 0;
+        let currentRingOffsetX = 0;
+        let currentRingOffsetY = 0;
+
+        const canvas = document.getElementById('forceCanvas');
+        const ctx = canvas.getContext('2d');
+        const forcesContainer = document.getElementById('forcesContainer');
+        const challengeToggle = document.getElementById('challengeMode');
+        const componentsToggle = document.getElementById('showComponents');
+        const scaleSelect = document.getElementById('vectorScale');
+        
+        const centerX = 560 / 2;
+        const centerY = 560 / 2;
+        const tableRadius = 240;
+
+        function generateStaticSVG() {
+            const svg = document.getElementById('staticTableBase');
+            let svgHTML = `
+                <circle cx="${centerX}" cy="${centerY}" r="${tableRadius}" fill="#e9ecef" stroke="#adb5bd" stroke-width="2"/>
+                <line x1="${centerX - tableRadius}" y1="${centerY}" x2="${centerX + tableRadius}" y2="${centerY}" stroke="#dee2e6" stroke-width="1"/>
+                <line x1="${centerX}" y1="${centerY - tableRadius}" x2="${centerX}" y2="${centerY + tableRadius}" stroke="#dee2e6" stroke-width="1"/>
+                <circle cx="${centerX}" cy="${centerY}" r="6" fill="#adb5bd"/>
+            `;
+
+            for (let i = 0; i < 360; i += 5) {
+                let rad = i * (Math.PI / 180);
+                let is30 = (i % 30 === 0);
+                let is10 = (i % 10 === 0);
+                
+                let tickLength = is30 ? 18 : (is10 ? 10 : 5);
+                let startX = centerX + (tableRadius - tickLength) * Math.cos(rad);
+                let startY = centerY - (tableRadius - tickLength) * Math.sin(rad);
+                let endX = centerX + tableRadius * Math.cos(rad);
+                let endY = centerY - tableRadius * Math.sin(rad);
+
+                let strokeWidth = is30 ? 2 : 1;
+                svgHTML += `<line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="#495057" stroke-width="${strokeWidth}"/>`;
+
+                if (is30) {
+                    let textX = centerX + (tableRadius - 32) * Math.cos(rad);
+                    let textY = centerY - (tableRadius - 32) * Math.sin(rad);
+                    svgHTML += `<text x="${textX}" y="${textY}" font-family="'Open Sans', sans-serif" font-size="16" font-weight="bold" fill="#495057" text-anchor="middle" dominant-baseline="central">${i}</text>`;
+                } else if (is10) {
+                    let textX = centerX + (tableRadius - 22) * Math.cos(rad);
+                    let textY = centerY - (tableRadius - 22) * Math.sin(rad);
+                    svgHTML += `<text x="${textX}" y="${textY}" font-family="'Open Sans', sans-serif" font-size="10" fill="#495057" text-anchor="middle" dominant-baseline="central">${i}</text>`;
+                }
+            }
+            svg.innerHTML = svgHTML;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            let physics = updatePhysics();
+            currentRingOffsetX += (targetRingOffsetX - currentRingOffsetX) * 0.15;
+            currentRingOffsetY += (targetRingOffsetY - currentRingOffsetY) * 0.15;
+            drawSimulation(physics);
+        }
+
+        function updatePhysics() {
+            let fx = 0, fy = 0;
+            forces.forEach(f => {
+                let rad = f.angle * (Math.PI / 180);
+                fx += f.mass * Math.cos(rad);
+                fy += f.mass * Math.sin(rad);
+            });
+
+            let netMass = Math.sqrt(fx**2 + fy**2);
+            let netAngle = Math.atan2(fy, fx) * (180 / Math.PI);
+            if (netAngle < 0) netAngle += 360;
+
+            let eqAngle = (netAngle + 180) % 360;
+
+            document.getElementById('resMass').innerText = netMass.toFixed(1);
+            const statusEl = document.getElementById('balanceStatus');
+            
+            if (netMass < 2) { 
+                statusEl.innerText = "Balanced!";
+                statusEl.style.color = "#2b9348";
+                targetRingOffsetX = 0;
+                targetRingOffsetY = 0;
+            } else {
+                statusEl.innerText = "Unbalanced";
+                statusEl.style.color = "#cc0000";
+                
+                let maxDisplacement = 20;
+                let displacementScale = Math.min(netMass / 100, 1) * maxDisplacement;
+                let pullRad = netAngle * (Math.PI / 180);
+                targetRingOffsetX = displacementScale * Math.cos(pullRad);
+                targetRingOffsetY = -displacementScale * Math.sin(pullRad);
+            }
+
+            return { fx, fy, netMass, netAngle, eqMass: netMass, eqAngle };
+        }
+
+        function drawSimulation(physics) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            forces.forEach(f => {
+                drawVector(f.mass, f.angle, f.color, false, currentRingOffsetX, currentRingOffsetY);
+            });
+
+            if (!isChallengeMode && forces.length > 0 && physics.eqMass > 2) {
+                drawVector(physics.eqMass, physics.eqAngle, '#e63946', true, currentRingOffsetX, currentRingOffsetY);
+            }
+
+            ctx.beginPath();
+            ctx.arc(centerX + currentRingOffsetX, centerY + currentRingOffsetY, 12, 0, 2 * Math.PI);
+            ctx.strokeStyle = physics.netMass < 2 ? '#2b9348' : '#343a40'; 
+            ctx.fillStyle = "rgba(255,255,255,0.8)"; 
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            updateComponentMathReadouts();
+        }
+
+        function drawVector(magnitude, angleDeg, color, isDashed, offsetX, offsetY) {
+            let rad = angleDeg * (Math.PI / 180);
+            let startX = centerX + offsetX;
+            let startY = centerY + offsetY;
+            
+            let scaledVisualLength = magnitude / currentScale;
+
+            let endX = startX + scaledVisualLength * Math.cos(rad);
+            let endY = startY - scaledVisualLength * Math.sin(rad); 
+
+            if (showComponents && !isDashed) {
+                ctx.beginPath();
+                ctx.moveTo(endX, endY); ctx.lineTo(endX, startY);
+                ctx.moveTo(endX, endY); ctx.lineTo(startX, endY);
+                ctx.strokeStyle = color;
+                ctx.globalAlpha = 0.4;
+                ctx.setLineDash([4, 4]);
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                ctx.globalAlpha = 1.0;
+                ctx.setLineDash([]);
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.setLineDash(isDashed ? [5, 5] : []);
+            ctx.stroke();
+
+            let headlen = 12;
+            let arrowAngle = Math.atan2(-(endY - startY), endX - startX);
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - headlen * Math.cos(arrowAngle - Math.PI / 6), endY + headlen * Math.sin(arrowAngle - Math.PI / 6));
+            ctx.lineTo(endX - headlen * Math.cos(arrowAngle + Math.PI / 6), endY + headlen * Math.sin(arrowAngle + Math.PI / 6));
+            ctx.lineTo(endX, endY);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.setLineDash([]); 
+        }
+
+        function getPointerPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            let clientX = e.clientX;
+            let clientY = e.clientY;
+            
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            }
+            
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function handlePointerDown(e) {
+            const pos = getPointerPos(e);
+
+            for (let f of forces) {
+                let rad = f.angle * (Math.PI / 180);
+                let scaledVisualLength = f.mass / currentScale;
+                let endX = (centerX + currentRingOffsetX) + scaledVisualLength * Math.cos(rad);
+                let endY = (centerY + currentRingOffsetY) - scaledVisualLength * Math.sin(rad); 
+                
+                let dist = Math.sqrt((pos.x - endX)**2 + (pos.y - endY)**2);
+                if (dist < 25) { 
+                    draggedForceId = f.id; 
+                    break; 
+                }
+            }
+        }
+
+        function handlePointerMove(e) {
+            if (draggedForceId !== null) {
+                if (e.cancelable) { e.preventDefault(); }
+
+                const pos = getPointerPos(e);
+
+                let dx = pos.x - (centerX + currentRingOffsetX);
+                let dy = -(pos.y - (centerY + currentRingOffsetY)); 
+
+                let newMass = Math.sqrt(dx**2 + dy**2) * currentScale;
+                let newAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+                if (newAngle < 0) newAngle += 360;
+
+                let force = forces.find(f => f.id === draggedForceId);
+                force.mass = newMass;
+                force.angle = newAngle;
+
+                renderUIInputsOnly();
+            }
+        }
+
+        function handlePointerUp() { draggedForceId = null; }
+
+        canvas.addEventListener('mousedown', handlePointerDown);
+        canvas.addEventListener('touchstart', handlePointerDown, {passive: false});
+        
+        canvas.addEventListener('mousemove', handlePointerMove);
+        canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+        
+        window.addEventListener('mouseup', handlePointerUp);
+        window.addEventListener('touchend', handlePointerUp);
+        canvas.addEventListener('mouseleave', handlePointerUp);
+        canvas.addEventListener('touchcancel', handlePointerUp);
+
+        function updateComponentMathReadouts() {
+            forces.forEach(f => {
+                const statSpan = document.getElementById(`stats-${f.id}`);
+                if (statSpan) {
+                    let forceN = (f.mass / 1000) * GRAVITY; 
+                    let rad = f.angle * (Math.PI / 180);
+                    let fxN = forceN * Math.cos(rad);
+                    let fyN = forceN * Math.sin(rad);
+                    statSpan.innerHTML = `<span><strong>F:</strong> ${forceN.toFixed(2)}N</span> <span><strong>F<sub>x</sub>:</strong> ${fxN.toFixed(2)}N</span> <span><strong>F<sub>y</sub>:</strong> ${fyN.toFixed(2)}N</span>`;
+                }
+            });
+        }
+
+        function renderUIInputsOnly() {
+            forces.forEach(f => {
+                document.getElementById(`mass-${f.id}`).value = Math.round(f.mass);
+                document.getElementById(`angle-${f.id}`).value = Math.round(f.angle);
+            });
+        }
+
+        function renderUI() {
+            forcesContainer.innerHTML = '';
+            forces.forEach((f, index) => {
+                const group = document.createElement('div');
+                group.className = 'force-input-group';
+                group.style.borderLeftColor = f.color;
+
+                group.innerHTML = `
+                    <div class="input-cluster">
+                        <label style="color: ${f.color};">F${index + 1}:</label>
+                        <input type="number" id="mass-${f.id}" value="${Math.round(f.mass)}" data-id="${f.id}" class="mass-input" step="5">
+                        <label>g at</label>
+                        <input type="number" id="angle-${f.id}" value="${Math.round(f.angle)}" data-id="${f.id}" class="angle-input">
+                        <label>&deg;</label>
+                    </div>
+                    <div class="stats-readout" id="stats-${f.id}"></div>
+                    <button class="remove-btn" data-id="${f.id}">X</button>
+                `;
+                forcesContainer.appendChild(group);
+            });
+            attachUIEvents();
+        }
+
+        function attachUIEvents() {
+            document.querySelectorAll('.mass-input, .angle-input').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    let id = parseInt(e.target.getAttribute('data-id'));
+                    let force = forces.find(f => f.id === id);
+                    let val = parseFloat(e.target.value) || 0;
+
+                    if (e.target.classList.contains('angle-input')) {
+                        if (val >= 360) val = val % 360;
+                        if (val < 0) val = (val % 360) + 360;
+                        e.target.value = val;
+                        force.angle = val;
+                    } else {
+                        if (val < 0) val = 0;
+                        e.target.value = val;
+                        force.mass = val;
+                    }
+                });
+            });
+
+            document.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    let id = parseInt(e.target.getAttribute('data-id'));
+                    forces = forces.filter(f => f.id !== id);
+                    renderUI();
+                });
+            });
+        }
+
+        challengeToggle.addEventListener('change', (e) => { isChallengeMode = e.target.checked; });
+        componentsToggle.addEventListener('change', (e) => { showComponents = e.target.checked; });
+        scaleSelect.addEventListener('change', (e) => { currentScale = parseFloat(e.target.value); });
+
+        document.getElementById('addForceBtn').addEventListener('click', () => {
+            const colors = ['#0066cc', '#2b9348', '#f4a261', '#7209b7', '#ffb703', '#e07a5f'];
+            forces.push({
+                id: nextId++, mass: 100 * currentScale, angle: 90, color: colors[forces.length % colors.length]
+            });
+            renderUI();
+        });
+
+        generateStaticSVG(); 
+        renderUI();
+        animate();
+
+    </script>
+</body>
+</html>

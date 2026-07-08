@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Titration Lab</title>
+    <!-- Tailwind CSS for high quality light responsive layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            150: '#eef2f6',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar matching light aesthetic */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Specialized Layout Rules when running inside an Embed / Iframe Frame Container */
+        body.is-embedded {
+            background-color: #ffffff; /* Seamless integration with parent white backgrounds */
+        }
+        body.is-embedded header {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom-width: 1px;
+        }
+        body.is-embedded header h1 {
+            font-size: 1.25rem;
+        }
+        body.is-embedded main {
+            padding: 1rem;
+            gap: 1rem;
+        }
+        body.is-embedded .grid-gap-optimized {
+            gap: 1rem;
+        }
+        body.is-embedded .apparatus-card-optimized {
+            min-h: 420px;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col antialiased">
+
+    <!-- Premium Clean Header -->
+    <header class="border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+                <div class="p-2.5 bg-pink-50 border border-pink-100 rounded-xl text-pink-500 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">
+                        Titration Lab
+                    </h1>
+                </div>
+            </div>
+            
+            <!-- Segmented Control for Mode selection -->
+            <div class="flex items-center gap-4">
+                <div class="inline-flex rounded-xl p-1 bg-slate-100 border border-slate-200/80 shadow-sm">
+                    <button id="standardModeBtn" class="px-4 py-2 rounded-lg text-xs font-semibold bg-white text-slate-900 shadow-sm transition duration-150">
+                        Standard Practice
+                    </button>
+                    <button id="challengeModeBtn" class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 transition duration-150">
+                        Unknown Challenge
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Lab Apparatus Dashboard -->
+        <section class="lg:col-span-7 xl:col-span-8 flex flex-col gap-6">
+            
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 bg-white border border-slate-200/80 rounded-2xl p-6 relative overflow-hidden shadow-sm grid-gap-optimized">
+                
+                <!-- Apparatus Illustration Canvas Column -->
+                <div class="md:col-span-6 flex flex-col items-center justify-between min-h-[490px] bg-slate-50 rounded-xl border border-slate-200/60 p-4 relative select-none apparatus-card-optimized">
+                    <div class="absolute top-3 left-3 text-sm font-bold tracking-widest text-slate-300 uppercase pointer-events-none">Lab Setup</div>
+                    
+                    <!-- Dynamic Readouts Overlay -->
+                    <div class="absolute top-3 right-3 flex flex-col gap-1 items-end pointer-events-none">
+                        <div class="bg-white border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-sm">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="text-[10px] font-bold text-slate-400 tracking-wider">pH METER</span>
+                            <span id="pHOldDisplay" class="text-sm font-bold text-indigo-600 code-font">1.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Render Container -->
+                    <div class="relative w-full flex-grow flex items-center justify-center py-4 cursor-pointer" title="Click stopcock to add a single drop manually">
+                        <canvas id="apparatusCanvas" width="340" height="420" class="max-w-full"></canvas>
+                    </div>
+
+                    <!-- Stirrer Status Panel -->
+                    <div class="w-full bg-white border border-slate-200 rounded-lg p-3 flex items-center justify-between text-xs shadow-sm pointer-events-none">
+                        <div class="flex items-center gap-2">
+                            <div class="relative flex h-2.5 w-2.5">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                <span id="magneticStirrerDot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
+                            </div>
+                            <span class="text-slate-505 font-medium text-slate-500">Stirrer Motor</span>
+                        </div>
+                        <span id="stirrerSpeedLabel" class="text-slate-700 font-semibold uppercase tracking-wider text-[11px]">Active (Medium)</span>
+                    </div>
+                </div>
+
+                <!-- Control Console Column -->
+                <div class="md:col-span-6 flex flex-col justify-between gap-5">
+                    
+                    <!-- Concentration & Standard configuration settings -->
+                    <div class="bg-slate-50/50 rounded-xl border border-slate-200 p-4 flex flex-col gap-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                                Solution Strengths
+                            </h3>
+                            
+                            <!-- Integrated Clean Reset Button -->
+                            <button id="resetLabBtn" class="text-[11px] font-bold text-slate-400 hover:text-indigo-600 transition flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.25 15M20 20v-5h-5" />
+                                </svg>
+                                RESET LAB
+                            </button>
+                        </div>
+                        
+                        <!-- Reactants details -->
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+                                <p class="text-slate-400 font-medium text-[10px] uppercase">In Buret (Base)</p>
+                                <p class="text-sm font-bold text-indigo-600 mt-0.5">Sodium Hydroxide</p>
+                                <p class="text-xs font-bold text-slate-700 mt-1 font-mono">0.100 M NaOH</p>
+                            </div>
+                            <div class="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+                                <p class="text-slate-400 font-medium text-[10px] uppercase">In Flask (Acid)</p>
+                                <p class="text-sm font-bold text-pink-600 mt-0.5">Hydrochloric Acid</p>
+                                <p class="text-xs font-bold text-slate-700 mt-1 font-mono">25.00 mL HCl</p>
+                            </div>
+                        </div>
+
+                        <!-- Variable parameters (Disabled in challenge mode) -->
+                        <div id="standardSetupPanel" class="flex flex-col gap-2 mt-1">
+                            <div class="flex justify-between text-xs font-semibold text-slate-600">
+                                <span>Acid Strength (HCl Molarity):</span>
+                                <span id="analyteConcVal" class="text-indigo-600 font-bold code-font">0.100 M</span>
+                            </div>
+                            <input id="analyteConcSlider" type="range" min="0.050" max="0.200" step="0.005" value="0.100" class="w-full accent-indigo-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg appearance-none">
+                        </div>
+
+                        <!-- Indicator setting -->
+                        <div class="border-t border-slate-200 pt-2 flex items-center justify-between text-xs">
+                            <span class="text-slate-505 font-medium text-slate-500">Chemical Indicator:</span>
+                            <span class="font-bold text-pink-500 flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span>
+                                Phenolphthalein
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Flow Control Valves -->
+                    <div class="bg-slate-50/50 rounded-xl border border-slate-200 p-4 flex flex-col gap-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                Drip Speed
+                            </h3>
+                            <span class="text-[10px] text-slate-400 font-medium">Or click stopcock to drip</span>
+                        </div>
+
+                        <!-- Drip Rate slider -->
+                        <div class="flex flex-col gap-2">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-slate-505 font-medium text-slate-500">Buret Flow Rate:</span>
+                                <span id="flowRateVal" class="text-slate-400 font-bold tracking-wider">OFF</span>
+                            </div>
+                            <input id="flowRateSlider" type="range" min="0" max="4" step="1" value="0" class="w-full accent-emerald-500 cursor-pointer h-2 bg-slate-200 rounded-lg appearance-none">
+                        </div>
+                    </div>
+
+                    <!-- Lab Equipment Utility settings -->
+                    <div class="bg-slate-50/50 rounded-xl border border-slate-200 p-4 flex flex-col gap-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                            Stirrer Speed
+                        </h3>
+
+                        <!-- Stirrer Control -->
+                        <div class="flex flex-col gap-1.5">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-550 font-medium text-slate-500">Stirring Speed:</span>
+                                <span id="stirrerSpeedVal" class="text-indigo-600 font-semibold">Medium</span>
+                            </div>
+                            <input id="stirrerSpeedSlider" type="range" min="0" max="3" step="1" value="2" class="w-full accent-indigo-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg appearance-none">
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Analysis & Calculations Area -->
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-6 relative overflow-hidden shadow-sm">
+                <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    Real-Time Chemistry Metrics
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 flex flex-col justify-between">
+                        <span class="text-xs text-slate-505 font-medium text-slate-500">Base Liquid Added (NaOH)</span>
+                        <div class="flex items-baseline gap-1 mt-2">
+                            <span id="volumeAddedDisplay" class="text-2xl font-bold text-indigo-600 code-font">0.00</span>
+                            <span class="text-xs font-semibold text-slate-400">mL</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 flex flex-col justify-between">
+                        <span class="text-xs text-slate-505 font-medium text-slate-500">pH (Acidity Level)</span>
+                        <div class="flex items-baseline gap-1 mt-2">
+                            <span id="pHDisplay" class="text-2xl font-bold text-emerald-600 code-font">1.00</span>
+                            <span class="text-xs font-semibold text-slate-400">pH</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 flex flex-col justify-between">
+                        <span class="text-xs text-slate-505 font-medium text-slate-500">Total Liquid in Flask</span>
+                        <div class="flex items-baseline gap-1 mt-2">
+                            <span id="analyteVolDisplay" class="text-2xl font-bold text-pink-400 code-font">25.00</span>
+                            <span class="text-xs font-semibold text-slate-400">mL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Log Event Console -->
+                <div class="mt-4">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                        Lab Action History
+                    </h3>
+                    <div id="eventConsole" class="h-28 bg-slate-50 border border-slate-200 rounded-xl p-3 overflow-y-auto font-mono text-[11px] text-slate-600 flex flex-col gap-1">
+                        <!-- Events generated dynamically will load here -->
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Right Column: Interactive Graphs & Challenge Mode -->
+        <section class="lg:col-span-5 xl:col-span-4 flex flex-col gap-6">
+            
+            <!-- Dynamic pH Titration Curve Card -->
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-6 relative overflow-hidden shadow-sm flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        pH Titration Chart
+                    </h2>
+                    <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono">Live Plot</span>
+                </div>
+
+                <!-- Canvas Chart Wrapper -->
+                <div id="chartContainer" class="relative w-full aspect-[4/3] bg-slate-50 rounded-xl border border-slate-200 p-2 overflow-hidden">
+                    <canvas id="chartCanvas" class="w-full h-full"></canvas>
+                </div>
+                
+                <!-- Chart Legends & Indicators -->
+                <div class="flex flex-col gap-2 mt-4 text-[11px] text-slate-555 text-slate-500">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-1 bg-indigo-500 rounded"></span>
+                            <span>Recorded Acid-Base Curve</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-1.5 border-t border-dashed border-pink-300 rounded bg-pink-100/50"></span>
+                            <span>Endpoint Range (pH 8.2-10)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Challenge Mode card Panel -->
+            <div id="challengeCard" class="bg-indigo-50/40 border border-indigo-100 rounded-2xl p-6 relative overflow-hidden shadow-sm flex flex-col gap-4 hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-pink-500/5 pointer-events-none"></div>
+                
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 bg-indigo-100 border border-indigo-200 rounded-xl text-indigo-600 shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 leading-tight">Identify the Unknown</h2>
+                        <p class="text-xs text-indigo-600">Determine unknown Acid Concentration</p>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-xl p-3.5 text-xs text-slate-600 flex flex-col gap-2 shadow-sm">
+                    <p class="font-bold text-slate-800">Your Objective:</p>
+                    <p class="leading-relaxed">Add Base to the 25.00 mL Acid solution until it turns the **faintest pink** possible (the perfect endpoint, pH 8.2 to 10). Note down the volume of base added, then calculate and enter the unknown Acid Strength.</p>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3 shadow-sm">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-semibold text-slate-700">Enter Acid Strength Estimate (M):</label>
+                        <div class="flex gap-2">
+                            <input id="challengeAnswerInput" type="number" step="0.0001" placeholder="e.g. 0.125" class="bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl px-3 py-2 text-sm text-slate-800 font-mono w-full focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <button id="submitAnswerBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition">Submit</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom inline status notification -->
+                <div id="challengeFeedback" class="hidden rounded-xl p-4 text-xs flex flex-col gap-2 border">
+                    <!-- Dynamic validation templates injected here -->
+                </div>
+            </div>
+
+            <!-- Standard Educational Theory Reference Panel -->
+            <div id="educationalTheoryCard" class="bg-slate-50 border border-slate-200 rounded-2xl p-6 relative overflow-hidden flex flex-col gap-4">
+                <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wider">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    Titration Guide
+                </h2>
+
+                <div class="flex flex-col gap-3 text-xs text-slate-600 leading-relaxed">
+                    <p><strong class="text-slate-800">Meniscus Reading:</strong> Volumetric glass is designed to be read from the bottom curve of the liquid level (the meniscus).</p>
+                    <p><strong class="text-slate-800">Perfect Endpoint:</strong> Phenolphthalein turns a delicate faint pink when the solution is very slightly basic (pH 8.2 – 10.0). Adding too much base saturates the indicator, turning the solution dark pink or magenta.</p>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 mt-1 shadow-sm">
+                        <p class="font-semibold text-slate-700 mb-1">Volumetric Formula:</p>
+                        <p class="code-font text-indigo-600 text-[11px] text-center">Strength of Acid × Volume of Acid = Strength of Base × Volume of Base</p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer Status Bar -->
+    <footer class="border-t border-slate-200 bg-white py-3 px-6 text-center text-xs text-slate-400">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p>Interactions support standard mouse clicks, scroll wheels, and mobile taps. Click the buret stopcock to release single drops.</p>
+            <p class="flex items-center gap-1">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-indigo-500/40 animate-pulse"></span>
+                Synthesizer Connected
+            </p>
+        </div>
+    </footer>
+
+    <!-- Client-Side Simulation Logic & Graphic Engines -->
+    <script>
+        // Detection hook for embedded frames (iframes)
+        function checkFrameEmbed() {
+            try {
+                if (window.self !== window.top) {
+                    document.body.classList.add('is-embedded');
+                }
+            } catch (e) {
+                // Fail-safe cross-origin block means we are absolutely inside an embedded frame/iframe
+                document.body.classList.add('is-embedded');
+            }
+        }
+        checkFrameEmbed();
+
+        // Setup state variables
+        const state = {
+            isChallengeMode: false,
+            // Acid Parameters (HCl)
+            analyteVolume: 25.00, // mL
+            analyteMolarity: 0.100, // M
+            // Base Parameters (NaOH)
+            titrantMolarity: 0.100, // M
+            volumeAdded: 0.00, // mL
+            maxBuretVolume: 50.00, // mL
+            
+            // Interaction parameters
+            flowRateLevel: 0, // 0: OFF, 1: Micro-drop, 2: Slow, 3: Medium, 4: Fast
+            stirrerSpeedLevel: 2, // 0: OFF, 1: Low, 2: Medium, 3: High
+            
+            // Transient localized swirling
+            swirlIntensity: 0, // dynamic temporary indicator color localized near drop impact
+            
+            // Challenge specific variables
+            challengeTargetMolarity: 0.00,
+            challengeComplete: false,
+            
+            // Logs
+            events: [],
+            // Data logging history for charts
+            history: [{ x: 0, y: 1.00 }]
+        };
+
+        // DOM elements
+        const standardModeBtn = document.getElementById('standardModeBtn');
+        const challengeModeBtn = document.getElementById('challengeModeBtn');
+        const resetLabBtn = document.getElementById('resetLabBtn');
+        const standardSetupPanel = document.getElementById('standardSetupPanel');
+        const analyteConcSlider = document.getElementById('analyteConcSlider');
+        const analyteConcVal = document.getElementById('analyteConcVal');
+        const flowRateSlider = document.getElementById('flowRateSlider');
+        const flowRateVal = document.getElementById('flowRateVal');
+        const stirrerSpeedSlider = document.getElementById('stirrerSpeedSlider');
+        const stirrerSpeedVal = document.getElementById('stirrerSpeedVal');
+        const volumeAddedDisplay = document.getElementById('volumeAddedDisplay');
+        const pHDisplay = document.getElementById('pHDisplay');
+        const pHOldDisplay = document.getElementById('pHOldDisplay');
+        const analyteVolDisplay = document.getElementById('analyteVolDisplay');
+        const eventConsole = document.getElementById('eventConsole');
+        const challengeCard = document.getElementById('challengeCard');
+        const challengeAnswerInput = document.getElementById('challengeAnswerInput');
+        const submitAnswerBtn = document.getElementById('submitAnswerBtn');
+        const challengeFeedback = document.getElementById('challengeFeedback');
+        const stirrerSpeedLabel = document.getElementById('stirrerSpeedLabel');
+        const magneticStirrerDot = document.getElementById('magneticStirrerDot');
+
+        // Canvases
+        const apparatusCanvas = document.getElementById('apparatusCanvas');
+        const appCtx = apparatusCanvas.getContext('2d');
+        const chartCanvas = document.getElementById('chartCanvas');
+        const chartCtx = chartCanvas.getContext('2d');
+        const chartContainer = document.getElementById('chartContainer');
+
+        // Buret coordinate configurations
+        const bY = 70;
+        const bLen = 150;
+        const stopcockY = bY + bLen + 10; // 230
+        const nozzleTipY = bY + bLen + 45; // 265 (5px inside the flask neck opening)
+
+        // Dynamic Fluid Physics Simulation Arrays
+        let physicalParticles = [];
+        let physicalDrops = [];
+        let physicalRipples = []; // fluid ripple ripples
+        let stirrerAngle = 0;
+        let lastTimestamp = 0;
+        let dripTimer = 0;
+        
+        // Elastic droplet growth state at nozzle tip
+        let dropGrowth = 0.0; // 0.0 to 1.0 until a droplet pinches off
+
+        // Initialize dynamic responsive audio setup via Web Audio API
+        let audioCtx = null;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Play synthetic titration drip sound effect
+        function playDripSound() {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(520, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.08);
+                
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.12);
+            } catch (e) {
+                // Audio initialization blocked
+            }
+        }
+
+        // Play subtle humming frequency for dynamic stirrer speed feedback
+        let stirrerOscillator = null;
+        let stirrerGainNode = null;
+
+        function updateStirrerAudio() {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+
+                if (!stirrerOscillator) {
+                    stirrerOscillator = audioCtx.createOscillator();
+                    stirrerGainNode = audioCtx.createGain();
+                    
+                    stirrerOscillator.type = 'triangle';
+                    stirrerOscillator.frequency.value = 50; 
+                    
+                    stirrerGainNode.gain.value = 0;
+                    
+                    stirrerOscillator.connect(stirrerGainNode);
+                    stirrerGainNode.connect(audioCtx.destination);
+                    stirrerOscillator.start();
+                }
+
+                let frequency = 45;
+                let volume = 0;
+                
+                if (state.stirrerSpeedLevel === 1) {
+                    frequency = 48;
+                    volume = 0.015;
+                } else if (state.stirrerSpeedLevel === 2) {
+                    frequency = 55;
+                    volume = 0.03;
+                } else if (state.stirrerSpeedLevel === 3) {
+                    frequency = 65;
+                    volume = 0.05;
+                }
+
+                stirrerOscillator.frequency.setTargetAtTime(frequency, audioCtx.currentTime, 0.1);
+                stirrerGainNode.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.15);
+            } catch (e) {}
+        }
+
+        // Chemistry Simulation Formulas
+        function computepH(volAdded) {
+            const Kw = 1e-14;
+            const Va = state.analyteVolume / 1000; // in Liters
+            const Ma = state.analyteMolarity;
+            const Vb = volAdded / 1000; // in Liters
+            const Mb = state.titrantMolarity;
+
+            const molesA = Ma * Va;
+            const molesB = Mb * Vb;
+
+            const totalVol = Va + Vb;
+
+            if (molesA > molesB) {
+                // Acid excess
+                const excessH = molesA - molesB;
+                const concH = excessH / totalVol;
+                const correction = Math.sqrt(concH * concH + 4 * Kw);
+                const actualH = (concH + correction) / 2;
+                return -Math.log10(actualH);
+            } else if (molesA === molesB) {
+                // Absolute stoichiometric Neutral equivalence point
+                return 7.00;
+            } else {
+                // Base excess
+                const excessOH = molesB - molesA;
+                const concOH = excessOH / totalVol;
+                const correction = Math.sqrt(concOH * concOH + 4 * Kw);
+                const actualOH = (concOH + correction) / 2;
+                const pOH = -Math.log10(actualOH);
+                return 14.00 - pOH;
+            }
+        }
+
+        // Helper to calculate current liquid surface Y coordinate
+        function getLiquidTopY() {
+            const currentTotalVolume = state.analyteVolume + state.volumeAdded; 
+            const liquidMaxHeight = 85; 
+            const liquidPct = Math.min(1.0, currentTotalVolume / 80);
+            const liquidHeight = liquidPct * liquidMaxHeight;
+            return 380 - liquidHeight; // flaskBaseY is 380
+        }
+
+        // Fully opaque dynamic indicator color mapping based on actual pH
+        // We blend smoothly from a distinct very light grey (acidic) to basic magenta pink
+        function getIndicatorColor(pH, swirlIntensity = 0) {
+            // Very light gray base solution
+            const R0 = 238, G0 = 240, B0 = 243;
+            
+            // Target basic deep magenta color representation
+            const R1 = 219, G1 = 39, B1 = 119;
+            
+            // Incorporate localized physical swirl hotspots
+            const basePh = Math.max(pH, swirlIntensity * 12);
+            
+            let t = 0;
+            if (basePh >= 8.2) {
+                // Smooth interpolation between pH 8.2 (blush pink) and 11.0 (saturated magenta)
+                t = (basePh - 8.2) / (11.0 - 8.2);
+                if (t > 1.0) t = 1.0;
+            }
+            
+            // Smooth RGB lerp yielding solid, rich color opacity
+            const r = Math.round(R0 + t * (R1 - R0));
+            const g = Math.round(G0 + t * (G1 - G0));
+            const b = Math.round(B0 + t * (B1 - B0));
+            
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        // Setup Logger Console Helper
+        function logEvent(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            let typeColor = 'text-slate-600';
+            if (type === 'success') typeColor = 'text-emerald-600 font-semibold';
+            if (type === 'warning') typeColor = 'text-pink-600 font-semibold';
+            if (type === 'danger') typeColor = 'text-rose-600 font-bold';
+            if (type === 'alert') typeColor = 'text-indigo-600 font-semibold';
+
+            const logElement = document.createElement('div');
+            logElement.innerHTML = `<span class="text-slate-400">[${timestamp}]</span> <span class="${typeColor}">${message}</span>`;
+            eventConsole.appendChild(logElement);
+            eventConsole.scrollTop = eventConsole.scrollHeight;
+        }
+
+        // Initialize standard state values
+        function resetSimulation() {
+            state.volumeAdded = 0.00;
+            state.flowRateLevel = 0;
+            state.swirlIntensity = 0;
+            flowRateSlider.value = 0;
+            flowRateVal.textContent = "OFF";
+            flowRateVal.className = "text-slate-400 font-bold";
+            
+            physicalParticles = [];
+            physicalDrops = [];
+            physicalRipples = [];
+            dropGrowth = 0.0;
+
+            if (state.isChallengeMode) {
+                // Challenge concentrations randomized: 0.060 M to 0.180 M
+                state.analyteMolarity = 0.060 + Math.random() * 0.120;
+                state.titrantMolarity = 0.100;
+                state.challengeComplete = false;
+                challengeFeedback.className = "hidden";
+                challengeAnswerInput.value = '';
+                logEvent("New unknown Acid solution loaded! Reach the faint pink endpoint to find the concentration.", "alert");
+            } else {
+                state.analyteMolarity = parseFloat(analyteConcSlider.value);
+                state.titrantMolarity = 0.100;
+                logEvent("Laboratory setup initialized successfully.", "success");
+            }
+
+            state.history = [{ x: 0, y: computepH(0) }];
+            updateStatsDisplays();
+            drawChart();
+            
+            if (audioCtx) {
+                updateStirrerAudio();
+            }
+        }
+
+        // Segmented Control Mode Selector
+        function setLabMode(isChallenge) {
+            initAudio();
+            state.isChallengeMode = isChallenge;
+            
+            if (isChallenge) {
+                challengeModeBtn.className = "px-4 py-2 rounded-lg text-xs font-semibold bg-white text-slate-900 shadow-sm transition duration-150";
+                standardModeBtn.className = "px-4 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 transition duration-150";
+                
+                standardSetupPanel.classList.add('hidden');
+                challengeCard.classList.remove('hidden');
+            } else {
+                standardModeBtn.className = "px-4 py-2 rounded-lg text-xs font-semibold bg-white text-slate-900 shadow-sm transition duration-150";
+                challengeModeBtn.className = "px-4 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 transition duration-150";
+                
+                standardSetupPanel.classList.remove('hidden');
+                challengeCard.classList.add('hidden');
+            }
+            resetSimulation();
+        }
+
+        standardModeBtn.addEventListener('click', () => setLabMode(false));
+        challengeModeBtn.addEventListener('click', () => setLabMode(true));
+
+        // Handle State Adjustments via interactive UI
+        analyteConcSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            analyteConcVal.textContent = val.toFixed(3) + " M";
+            state.analyteMolarity = val;
+            resetSimulation();
+            logEvent(`Acid Strength altered to standard: ${val.toFixed(3)} M`, 'info');
+        });
+
+        resetLabBtn.addEventListener('click', () => {
+            initAudio();
+            resetSimulation();
+        });
+
+        // Flow rate mapping controller
+        flowRateSlider.addEventListener('input', (e) => {
+            initAudio();
+            const level = parseInt(e.target.value);
+            state.flowRateLevel = level;
+            
+            const textMap = ["OFF", "Micro-drop", "Slow Drips", "Medium Flow", "Rapid Stream"];
+            const colorMap = ["text-slate-400", "text-emerald-500", "text-amber-500", "text-orange-500", "text-rose-500"];
+            
+            flowRateVal.textContent = textMap[level];
+            flowRateVal.className = `${colorMap[level]} font-bold`;
+
+            if (level > 0) {
+                logEvent(`Stopcock open speed: ${textMap[level]}`, 'info');
+            } else {
+                logEvent("Stopcock closed.", "alert");
+            }
+        });
+
+        // Magnetic stirrer controller
+        stirrerSpeedSlider.addEventListener('input', (e) => {
+            initAudio();
+            const level = parseInt(e.target.value);
+            state.stirrerSpeedLevel = level;
+            
+            const textMap = ["OFF", "Low", "Medium", "High"];
+            stirrerSpeedVal.textContent = textMap[level];
+
+            if (level === 0) {
+                stirrerSpeedLabel.textContent = "Inactive";
+                magneticStirrerDot.className = "relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-400";
+                logEvent("Stirring turned off.", "warning");
+            } else {
+                const speeds = ["", "Low", "Medium", "High"];
+                stirrerSpeedLabel.textContent = speeds[level];
+                magneticStirrerDot.className = "relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500";
+            }
+            updateStirrerAudio();
+        });
+
+        // Handle addition calculations safely
+        function addVolume(amount) {
+            if (state.volumeAdded >= state.maxBuretVolume) {
+                state.volumeAdded = state.maxBuretVolume;
+                state.flowRateLevel = 0;
+                flowRateSlider.value = 0;
+                flowRateVal.textContent = "OFF";
+                flowRateVal.className = "text-slate-400 font-bold";
+                logEvent("Buret is completely empty!", "danger");
+                return;
+            }
+
+            const prevPH = computepH(state.volumeAdded);
+            state.volumeAdded = Math.min(state.maxBuretVolume, state.volumeAdded + amount);
+            const nextPH = computepH(state.volumeAdded);
+
+            // Log chemical transitions with simpler descriptions
+            if (prevPH < 7 && nextPH >= 7) {
+                logEvent("The neutral point (pH 7.00) was crossed!", "success");
+            }
+            if (prevPH < 8.2 && nextPH >= 8.2) {
+                logEvent("The solution has turned FAINT PINK! (Perfect Endpoint reached!)", "success");
+            }
+            if (prevPH < 10.0 && nextPH >= 10.0) {
+                logEvent("The solution has turned DEEP PINK! (Over-titrated!)", "danger");
+            }
+
+            // Generate temporary swirling localized reaction intensity
+            const reactionImpact = amount * 12; 
+            state.swirlIntensity = Math.min(2.0, state.swirlIntensity + reactionImpact);
+
+            // Append real-time history
+            state.history.push({ x: state.volumeAdded, y: nextPH });
+            
+            updateStatsDisplays();
+            drawChart();
+        }
+
+        function updateStatsDisplays() {
+            const curPH = computepH(state.volumeAdded);
+            
+            volumeAddedDisplay.textContent = state.volumeAdded.toFixed(2);
+            pHDisplay.textContent = curPH.toFixed(2);
+            pHOldDisplay.textContent = curPH.toFixed(2);
+            analyteVolDisplay.textContent = (state.analyteVolume + state.volumeAdded).toFixed(2);
+        }
+
+        // Canvas Drawings: Glassware & Molecular Physics Swirl Particle Mechanics
+        function spawnPhysicalDrop() {
+            physicalDrops.push({
+                x: 170, // center alignment of buret nozzle
+                y: nozzleTipY, // start position directly below forming bulb (265)
+                velY: 1.2, // initial downward release speed
+                size: 3.5
+            });
+        }
+
+        function spawnSwirlParticles(impactX) {
+            const count = state.stirrerSpeedLevel * 4 + 2;
+            const fluidTopY = getLiquidTopY();
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 0.5 + Math.random() * (state.stirrerSpeedLevel * 1.5);
+                physicalParticles.push({
+                    x: impactX + (Math.random() - 0.5) * 12,
+                    y: fluidTopY + (Math.random() - 0.5) * 6, // aligned with dynamic liquid surface
+                    velX: Math.cos(angle) * speed,
+                    velY: Math.sin(angle) * speed,
+                    life: 1.0, 
+                    decay: 0.015 + Math.random() * 0.02
+                });
+            }
+        }
+
+        // Stopcock Canvas Manual Click Handler
+        apparatusCanvas.addEventListener('click', (e) => {
+            const rect = apparatusCanvas.getBoundingClientRect();
+            // Translate click position to original 340x420 scaling layout
+            const clickX = (e.clientX - rect.left) * (340 / rect.width);
+            const clickY = (e.clientY - rect.top) * (420 / rect.height);
+            
+            // Stopcock coordinates checked dynamically using dynamic layout heights
+            const dx = clickX - 170;
+            const dy = clickY - stopcockY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance <= 22) {
+                initAudio();
+                if (state.volumeAdded < state.maxBuretVolume) {
+                    addVolume(0.05);
+                    spawnPhysicalDrop();
+                    playDripSound();
+                } else {
+                    logEvent("Buret is empty!", "danger");
+                }
+            }
+        });
+
+        // High fidelity visualization canvas animation loop
+        function tick(timestamp) {
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const delta = (timestamp - lastTimestamp) / 1000;
+            lastTimestamp = timestamp;
+
+            // Handle drip scheduler based on flow level
+            if (state.flowRateLevel > 0) {
+                // Growth rate mapped smoothly to flow speeds
+                const speedRates = [0, 0.8, 4.0, 15.0, 50.0];
+                dropGrowth += speedRates[state.flowRateLevel] * delta;
+                
+                if (dropGrowth >= 1.0) {
+                    dropGrowth = 0.0;
+                    const dAmounts = [0, 0.01, 0.05, 0.05, 0.05]; 
+                    addVolume(dAmounts[state.flowRateLevel]);
+                    spawnPhysicalDrop();
+                    
+                    if (state.flowRateLevel < 3 || Math.random() < 0.25) {
+                        playDripSound();
+                    }
+                }
+            } else {
+                // Gradually decay drop progress back to 0 if flow turned off
+                dropGrowth = Math.max(0.0, dropGrowth - delta * 2.0);
+            }
+
+            // Decay swirling transient hotspots based on stirrer mixing
+            const swirlDecayRate = 0.5 + (state.stirrerSpeedLevel * 2.2); 
+            state.swirlIntensity = Math.max(0, state.swirlIntensity - delta * swirlDecayRate);
+
+            // Update physical drop positions with fluid tear stretching
+            for (let i = physicalDrops.length - 1; i >= 0; i--) {
+                const drop = physicalDrops[i];
+                // Apply subtle gravitational acceleration
+                drop.velY += 400 * delta;
+                drop.y += drop.velY * delta * 50; 
+                
+                const fluidTopY = getLiquidTopY();
+                
+                if (drop.y >= fluidTopY) {
+                    // Trigger dynamic splash ripples
+                    physicalRipples.push({
+                        x: drop.x,
+                        y: fluidTopY,
+                        radius: 1,
+                        maxRadius: 18 + Math.random() * 8,
+                        alpha: 1.0
+                    });
+                    
+                    physicalDrops.splice(i, 1);
+                    spawnSwirlParticles(drop.x);
+                }
+            }
+
+            // Update surface ripples
+            for (let i = physicalRipples.length - 1; i >= 0; i--) {
+                const r = physicalRipples[i];
+                r.radius += 55 * delta; // expansion speed
+                r.alpha -= 2.2 * delta; // fade speed
+                if (r.alpha <= 0) {
+                    physicalRipples.splice(i, 1);
+                }
+            }
+
+            // Update particle dynamics
+            for (let i = physicalParticles.length - 1; i >= 0; i--) {
+                const p = physicalParticles[i];
+                
+                if (state.stirrerSpeedLevel > 0) {
+                    const centerX = 170;
+                    const centerY = 374; // Centered near spinning magnetic bar at base (380)
+                    const dx = p.x - centerX;
+                    const dy = p.y - centerY;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    const force = (state.stirrerSpeedLevel * 1.0) / (dist + 5);
+                    p.velX += -dy * force;
+                    p.velY += dx * force;
+                }
+
+                p.x += p.velX;
+                p.y += p.velY;
+                
+                p.velX *= 0.94;
+                p.velY *= 0.94;
+
+                p.life -= p.decay * (1.0 + state.stirrerSpeedLevel * 0.5);
+                if (p.life <= 0) {
+                    physicalParticles.splice(i, 1);
+                }
+            }
+
+            if (state.stirrerSpeedLevel > 0) {
+                const speedRad = [0, 0.08, 0.22, 0.45];
+                stirrerAngle += speedRad[state.stirrerSpeedLevel];
+            }
+
+            drawApparatus();
+            requestAnimationFrame(tick);
+        }
+
+        // Adaptive shape calculation for Erlenmeyer flask sloped glass walls
+        function getFlaskHalfWidth(y) {
+            const flaskBaseY = 380;
+            const flaskHeight = 120;
+            const neckHeight = 50;
+            
+            const neckY = flaskBaseY - neckHeight; // 330
+            const lipY = flaskBaseY - flaskHeight; // 260
+            
+            if (y > flaskBaseY) return 55;
+            if (y < neckY) return 12; // straight neck width
+            
+            // Interpolate width of the sloped pyramid shape
+            const pct = (flaskBaseY - y) / neckHeight; 
+            return 55 - pct * (55 - 12);
+        }
+
+        function drawApparatus() {
+            appCtx.clearRect(0, 0, apparatusCanvas.width, apparatusCanvas.height);
+            
+            // 1. Stand Structures (Sleek light design)
+            appCtx.lineWidth = 6;
+            appCtx.strokeStyle = '#94a3b8'; // Slate 400 stand
+            appCtx.beginPath();
+            appCtx.moveTo(70, 400);
+            appCtx.lineTo(70, 30);
+            appCtx.stroke();
+
+            appCtx.fillStyle = '#e2e8f0'; // Clean slate base plate
+            appCtx.beginPath();
+            appCtx.roundRect(40, 395, 180, 15, 6);
+            appCtx.fill();
+
+            // Clamps holding the buret (Stand vertical bar is at x=70, Buret is at x=170)
+            appCtx.fillStyle = '#94a3b8'; // Slate clamp rod
+            appCtx.fillRect(70, 90, 93, 4);
+            appCtx.fillRect(70, 160, 93, 4);
+
+            // Detailed buret clamp wrapping around buret
+            appCtx.strokeStyle = '#475569';
+            appCtx.lineWidth = 2.5;
+            appCtx.beginPath();
+            appCtx.arc(170, 92, 7, -Math.PI * 0.7, Math.PI * 0.7);
+            appCtx.stroke();
+            appCtx.beginPath();
+            appCtx.arc(170, 162, 7, -Math.PI * 0.7, Math.PI * 0.7);
+            appCtx.stroke();
+            
+            // 2. Erlenmeyer Flask Geometry & Opaque Liquid Render
+            const flaskX = 170;
+            const flaskBaseY = 380;
+            const baseWidth = 110;
+            const neckWidth = 24;
+            const neckHeight = 50;
+            const flaskHeight = 120;
+
+            const liquidTopY = getLiquidTopY();
+            const liquidHeight = flaskBaseY - liquidTopY;
+
+            // Save state and define chemical clipping region
+            appCtx.save();
+            appCtx.beginPath();
+            appCtx.moveTo(flaskX - neckWidth/2, flaskBaseY - flaskHeight);
+            appCtx.lineTo(flaskX + neckWidth/2, flaskBaseY - flaskHeight);
+            appCtx.lineTo(flaskX + neckWidth/2, flaskBaseY - neckHeight);
+            appCtx.lineTo(flaskX + baseWidth/2, flaskBaseY);
+            appCtx.lineTo(flaskX - baseWidth/2, flaskBaseY);
+            appCtx.lineTo(flaskX - neckWidth/2, flaskBaseY - neckHeight);
+            appCtx.closePath();
+            appCtx.clip();
+
+            // Render Dynamic Fully Opaque Solid Solution Base
+            const currentPH = computepH(state.volumeAdded);
+            appCtx.fillStyle = getIndicatorColor(currentPH, state.swirlIntensity);
+            appCtx.fillRect(flaskX - baseWidth, liquidTopY, baseWidth * 2, liquidHeight + 10);
+
+            // Draw Meniscus Top curved ellipse for organic liquid interface feel
+            const meniscusHalfW = getFlaskHalfWidth(liquidTopY);
+            appCtx.fillStyle = getIndicatorColor(currentPH, state.swirlIntensity);
+            appCtx.beginPath();
+            appCtx.ellipse(flaskX, liquidTopY, meniscusHalfW, 3.5, 0, 0, Math.PI * 2);
+            appCtx.fill();
+
+            // Localized high-pH swirls (pink spots diffusing outward)
+            for (let p of physicalParticles) {
+                appCtx.fillStyle = `rgba(219, 39, 119, ${p.life * 0.8})`; 
+                appCtx.beginPath();
+                appCtx.arc(p.x, p.y, 4 * p.life, 0, Math.PI*2);
+                appCtx.fill();
+            }
+
+            // Draw surface splash ripples
+            for (let r of physicalRipples) {
+                appCtx.strokeStyle = `rgba(219, 39, 119, ${r.alpha})`;
+                appCtx.lineWidth = 1.5;
+                appCtx.beginPath();
+                appCtx.ellipse(r.x, r.y, r.radius, r.radius * 0.25, 0, 0, Math.PI * 2);
+                appCtx.stroke();
+            }
+
+            // Draw ceramic magnetic stir bar
+            appCtx.save();
+            appCtx.translate(flaskX, flaskBaseY - 6);
+            appCtx.rotate(stirrerAngle);
+            appCtx.fillStyle = '#ffffff'; 
+            appCtx.strokeStyle = '#94a3b8';
+            appCtx.lineWidth = 1.5;
+            appCtx.beginPath();
+            appCtx.roundRect(-15, -4, 30, 8, 3);
+            appCtx.fill();
+            appCtx.stroke();
+            appCtx.restore();
+
+            // Stirring motion lines (subtle)
+            if (state.stirrerSpeedLevel > 0) {
+                appCtx.strokeStyle = 'rgba(71, 85, 105, 0.12)';
+                appCtx.lineWidth = 1.5;
+                appCtx.beginPath();
+                appCtx.ellipse(flaskX, flaskBaseY - 12, 18, 4, 0, 0, Math.PI * 2);
+                appCtx.stroke();
+            }
+
+            appCtx.restore();
+
+            // 3. Draw glass contour of Flask
+            appCtx.strokeStyle = '#475569'; // High-contrast clean dark outline
+            appCtx.lineWidth = 2.5;
+            appCtx.beginPath();
+            appCtx.moveTo(flaskX - neckWidth/2, flaskBaseY - flaskHeight);
+            appCtx.lineTo(flaskX + neckWidth/2, flaskBaseY - flaskHeight);
+            appCtx.lineTo(flaskX + neckWidth/2, flaskBaseY - neckHeight);
+            appCtx.lineTo(flaskX + baseWidth/2, flaskBaseY);
+            appCtx.lineTo(flaskX - baseWidth/2, flaskBaseY);
+            appCtx.lineTo(flaskX - neckWidth/2, flaskBaseY - neckHeight);
+            appCtx.closePath();
+            appCtx.stroke();
+
+            // Lip ring of flask (Matches mouth of flask at y = 260)
+            appCtx.beginPath();
+            appCtx.ellipse(flaskX, flaskBaseY - flaskHeight, neckWidth/2 + 2, 2.5, 0, 0, Math.PI * 2);
+            appCtx.stroke();
+
+            // Volumetric tick markings on flask wall
+            appCtx.strokeStyle = 'rgba(71, 85, 105, 0.4)';
+            appCtx.lineWidth = 1;
+            const tickLevels = [25, 50, 75];
+            tickLevels.forEach(vol => {
+                const tickY = flaskBaseY - (vol / 80) * 85; // liquidMaxHeight is 85
+                appCtx.beginPath();
+                appCtx.moveTo(flaskX + 18, tickY);
+                appCtx.lineTo(flaskX + 26, tickY);
+                appCtx.stroke();
+                
+                appCtx.fillStyle = '#64748b';
+                appCtx.font = '7px Fira Code';
+                appCtx.fillText(`${vol}mL`, flaskX + 30, tickY + 2.5);
+            });
+
+            // 4. Render growing droplet at buret nozzle tip (y = nozzleTipY)
+            if (dropGrowth > 0.05) {
+                const bulbRadius = Math.min(3.5, dropGrowth * 3.5);
+                appCtx.save();
+                appCtx.fillStyle = 'rgba(56, 189, 248, 0.9)';
+                appCtx.strokeStyle = '#0284c7';
+                appCtx.lineWidth = 1;
+                appCtx.beginPath();
+                // Draw drop bulb hanging from tip
+                appCtx.arc(170, nozzleTipY + bulbRadius*0.4, bulbRadius, 0, Math.PI*2);
+                appCtx.fill();
+                appCtx.stroke();
+                appCtx.restore();
+            }
+
+            // 5. Falling Base teardrop physical elements
+            for (let drop of physicalDrops) {
+                appCtx.save();
+                appCtx.translate(drop.x, drop.y);
+                
+                // Stretch scale based on velocity to simulate high-fidelity speed stretch
+                const scaleY = Math.min(2.0, 1 + drop.velY * 0.03);
+                appCtx.scale(1, scaleY);
+                
+                appCtx.fillStyle = 'rgba(56, 189, 248, 0.9)';
+                appCtx.strokeStyle = '#0284c7';
+                appCtx.lineWidth = 1;
+                
+                // Draw a beautiful fluid teardrop curve path
+                appCtx.beginPath();
+                appCtx.moveTo(0, -drop.size);
+                appCtx.bezierCurveTo(drop.size, -drop.size, drop.size * 1.5, drop.size, 0, drop.size * 1.5);
+                appCtx.bezierCurveTo(-drop.size * 1.5, drop.size, -drop.size, -drop.size, 0, -drop.size);
+                appCtx.fill();
+                appCtx.stroke();
+                
+                appCtx.restore();
+            }
+
+            // 6. Graduated Buret Drawing
+            const bX = 170;
+            const bWidth = 12;
+
+            const buretPctRemaining = 1.0 - (state.volumeAdded / state.maxBuretVolume);
+            const buretLiquidHeight = bLen * buretPctRemaining;
+            const buretLiquidTop = bY + (bLen - buretLiquidHeight);
+
+            // Translucent bluish base liquid in buret
+            appCtx.fillStyle = 'rgba(56, 189, 248, 0.25)'; 
+            appCtx.fillRect(bX - bWidth/2 + 1, buretLiquidTop, bWidth - 2, buretLiquidHeight);
+
+            // Buret structural tube outline
+            appCtx.strokeStyle = '#475569';
+            appCtx.lineWidth = 2.5;
+            appCtx.beginPath();
+            appCtx.moveTo(bX - bWidth/2, bY);
+            appCtx.lineTo(bX - bWidth/2, bY + bLen);
+            appCtx.lineTo(bX - 2, bY + bLen + 20);
+            appCtx.lineTo(bX - 2, nozzleTipY); // lowered nozzle tip
+            appCtx.moveTo(bX + bWidth/2, bY);
+            appCtx.lineTo(bX + bWidth/2, bY + bLen);
+            appCtx.lineTo(bX + 2, bY + bLen + 20);
+            appCtx.lineTo(bX + 2, nozzleTipY); // lowered nozzle tip
+            appCtx.stroke();
+
+            // Graduation tick markings on buret
+            appCtx.strokeStyle = 'rgba(71, 85, 105, 0.5)';
+            appCtx.lineWidth = 1;
+            for (let ml = 0; ml <= 50; ml += 5) {
+                const mlY = bY + (ml / 50) * bLen;
+                appCtx.beginPath();
+                appCtx.moveTo(bX + bWidth/2 - 4, mlY);
+                appCtx.lineTo(bX + bWidth/2, mlY);
+                appCtx.stroke();
+
+                if (ml % 10 === 0) {
+                    appCtx.fillStyle = '#475569';
+                    appCtx.font = '6.5px Fira Code';
+                    appCtx.fillText(`${ml}`, bX + bWidth/2 + 4, mlY + 2);
+                }
+            }
+
+            // Draw Stopcock Mechanical Valve (centered at stopcockY)
+            const isValveOpen = state.flowRateLevel > 0;
+            appCtx.fillStyle = isValveOpen ? '#10b981' : '#ef4444'; // Green active, Red off
+            appCtx.beginPath();
+            appCtx.arc(bX, stopcockY, 5, 0, Math.PI*2);
+            appCtx.fill();
+
+            // Rotating mechanical valve indicator handle (Stopcock)
+            appCtx.save();
+            appCtx.translate(bX, stopcockY);
+            if (isValveOpen) {
+                appCtx.rotate(Math.PI / 2);
+            }
+            appCtx.strokeStyle = '#475569';
+            appCtx.lineWidth = 3;
+            appCtx.beginPath();
+            appCtx.moveTo(-9, 0);
+            appCtx.lineTo(9, 0);
+            appCtx.stroke();
+            appCtx.restore();
+
+            // Add simple visual ring highlighting buret stopcock to signal clickability
+            appCtx.strokeStyle = 'rgba(79, 70, 229, 0.3)';
+            appCtx.lineWidth = 1.2;
+            appCtx.setLineDash([2, 2]);
+            appCtx.beginPath();
+            appCtx.arc(bX, stopcockY, 14, 0, Math.PI * 2);
+            appCtx.stroke();
+            appCtx.setLineDash([]);
+        }
+
+        // Custom High-Performance HTML5 Canvas Plotter for Titration Curve
+        function drawChart() {
+            const width = chartCanvas.parentElement.clientWidth;
+            const height = chartCanvas.parentElement.clientHeight;
+            chartCanvas.width = width * window.devicePixelRatio;
+            chartCanvas.height = height * window.devicePixelRatio;
+            chartCanvas.style.width = width + "px";
+            chartCanvas.style.height = height + "px";
+
+            chartCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            chartCtx.clearRect(0, 0, width, height);
+
+            const paddingLeft = 32;
+            const paddingRight = 16;
+            const paddingTop = 20;
+            const paddingBottom = 28;
+
+            const plotWidth = width - paddingLeft - paddingRight;
+            const plotHeight = height - paddingTop - paddingBottom;
+
+            const maxValX = 50.00;
+            const maxValY = 14.00;
+
+            function getCanvasX(valX) {
+                return paddingLeft + (valX / maxValX) * plotWidth;
+            }
+
+            function getCanvasY(valY) {
+                return paddingTop + plotHeight - (valY / maxValY) * plotHeight;
+            }
+
+            // Y-axis grid markers (pH 0 to 14)
+            chartCtx.strokeStyle = '#e2e8f0';
+            chartCtx.lineWidth = 1;
+            chartCtx.fillStyle = '#64748b';
+            chartCtx.font = '8px Fira Code';
+
+            for (let ph = 0; ph <= 14; ph += 2) {
+                const y = getCanvasY(ph);
+                chartCtx.beginPath();
+                chartCtx.moveTo(paddingLeft, y);
+                chartCtx.lineTo(width - paddingRight, y);
+                chartCtx.stroke();
+                chartCtx.fillText(ph.toString().padStart(2, ' '), 10, y + 3);
+            }
+
+            // X-axis grid markers (Volume added 0 to 50 mL)
+            for (let vol = 0; vol <= 50; vol += 10) {
+                const x = getCanvasX(vol);
+                chartCtx.beginPath();
+                chartCtx.moveTo(x, paddingTop);
+                chartCtx.lineTo(x, height - paddingBottom);
+                chartCtx.stroke();
+                chartCtx.fillText(`${vol}mL`, x - 10, height - 12);
+            }
+
+            // Shaded Indicator Transition Band (pH 8.2 to 10.0)
+            const y82 = getCanvasY(8.2);
+            const y100 = getCanvasY(10.0);
+            chartCtx.fillStyle = 'rgba(219, 39, 119, 0.05)';
+            chartCtx.fillRect(paddingLeft, y100, plotWidth, y82 - y100);
+
+            // Shaded Indicator dashed limits
+            chartCtx.strokeStyle = 'rgba(219, 39, 119, 0.25)';
+            chartCtx.lineWidth = 1;
+            chartCtx.setLineDash([2, 3]);
+            chartCtx.beginPath();
+            chartCtx.moveTo(paddingLeft, y82);
+            chartCtx.lineTo(width - paddingRight, y82);
+            chartCtx.moveTo(paddingLeft, y100);
+            chartCtx.lineTo(width - paddingRight, y100);
+            chartCtx.stroke();
+            chartCtx.setLineDash([]);
+
+            // Draw Neutral line (pH = 7.00 dashed representation)
+            chartCtx.strokeStyle = 'rgba(79, 70, 229, 0.25)';
+            chartCtx.lineWidth = 1;
+            chartCtx.setLineDash([4, 4]);
+            chartCtx.beginPath();
+            chartCtx.moveTo(paddingLeft, getCanvasY(7.0));
+            chartCtx.lineTo(width - paddingRight, getCanvasY(7.0));
+            chartCtx.stroke();
+            chartCtx.setLineDash([]); 
+
+            // Draw Recorded Analytical pH Curve Path
+            if (state.history.length > 1) {
+                chartCtx.strokeStyle = '#4f46e5'; // Elegant deep indigo curve line
+                chartCtx.lineWidth = 3;
+                chartCtx.beginPath();
+                chartCtx.moveTo(getCanvasX(state.history[0].x), getCanvasY(state.history[0].y));
+                
+                for (let i = 1; i < state.history.length; i++) {
+                    chartCtx.lineTo(getCanvasX(state.history[i].x), getCanvasY(state.history[i].y));
+                }
+                chartCtx.stroke();
+            }
+
+            // Highlight latest node representation
+            const lastData = state.history[state.history.length - 1];
+            if (lastData) {
+                const cx = getCanvasX(lastData.x);
+                const cy = getCanvasY(lastData.y);
+
+                chartCtx.fillStyle = '#ef4444';
+                chartCtx.beginPath();
+                chartCtx.arc(cx, cy, 4, 0, Math.PI*2);
+                chartCtx.fill();
+
+                chartCtx.strokeStyle = '#ffffff';
+                chartCtx.lineWidth = 1.5;
+                chartCtx.beginPath();
+                chartCtx.arc(cx, cy, 5.5, 0, Math.PI*2);
+                chartCtx.stroke();
+            }
+        }
+
+        // Handle Challenge Mode Submission & Validations
+        submitAnswerBtn.addEventListener('click', () => {
+            initAudio();
+            const rawInput = challengeAnswerInput.value.trim();
+            if (!rawInput) return;
+
+            const studentEstimate = parseFloat(rawInput);
+            const actualMolarity = state.analyteMolarity;
+            
+            const marginOfError = Math.abs(studentEstimate - actualMolarity) / actualMolarity;
+            const percentError = marginOfError * 100;
+            const isCorrect = percentError <= 2.5;
+
+            // Ideal stoichiometric volume needed
+            const equivalenceVolume = (actualMolarity * state.analyteVolume) / state.titrantMolarity;
+
+            challengeFeedback.classList.remove('hidden');
+
+            if (isCorrect) {
+                challengeFeedback.className = "rounded-xl p-4 text-xs border border-emerald-200 bg-emerald-50 text-emerald-800 flex flex-col gap-2";
+                challengeFeedback.innerHTML = `
+                    <div class="flex items-center gap-1.5 font-bold text-sm text-emerald-900">
+                        <svg class="h-4 w-4 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 10-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        Excellent Titration!
+                    </div>
+                    <p>Your calculated concentration of <strong class="text-slate-900">${studentEstimate.toFixed(3)} M</strong> is extremely accurate. Your error margin was only <strong class="text-slate-900">${percentError.toFixed(2)}%</strong>.</p>
+                    <div class="bg-white p-2.5 rounded-lg border border-emerald-100 mt-1 text-[11px] text-emerald-950">
+                        <span class="font-bold text-slate-800 block mb-1">Step-by-Step Solution Math:</span>
+                        <p class="leading-relaxed">
+                            1. Perfect Endpoint Volume observed = <strong>${equivalenceVolume.toFixed(2)} mL</strong><br>
+                            2. Equation: Strength of Acid × 25.00 mL = 0.100 M Base × ${equivalenceVolume.toFixed(2)} mL<br>
+                            3. Solve: Strength of Acid = \frac{0.100 \text{ M} \times ${equivalenceVolume.toFixed(2)} \text{ mL}}{25.00 \text{ mL}} = \mathbf{${actualMolarity.toFixed(3)} \text{ M}}
+                        </p>
+                    </div>
+                `;
+                logEvent(`CHALLENGE COMPLETED! Est: ${studentEstimate.toFixed(3)} M, Act: ${actualMolarity.toFixed(3)} M. Well done!`, 'success');
+            } else {
+                challengeFeedback.className = "rounded-xl p-4 text-xs border border-rose-200 bg-rose-50 text-rose-800 flex flex-col gap-2";
+                challengeFeedback.innerHTML = `
+                    <div class="flex items-center gap-1.5 font-bold text-sm text-rose-900">
+                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        Off Target
+                    </div>
+                    <p>Your estimate of <strong class="text-slate-900">${studentEstimate.toFixed(3)} M</strong> has a <strong class="text-slate-900">${percentError.toFixed(1)}% error</strong>. Keep titrating carefully to find the exact faint pink endpoint.</p>
+                    <div class="bg-white p-2.5 rounded-lg border border-rose-100 mt-1 text-[11px] text-rose-950">
+                        <span class="font-bold text-slate-800 block mb-1">Interactive Hints:</span>
+                        <ul class="list-disc pl-4 space-y-1">
+                            <li>Look at the graph: locate the volume where the pH curve shoots upward. This inflection volume is your endpoint volume.</li>
+                            <li>Your target concentration is calculated as: $\text{Acid Molarity} = \frac{0.100 \times \text{Base Volume Added}}{25.00}$</li>
+                        </ul>
+                    </div>
+                `;
+                logEvent(`Challenge entry submitted (${studentEstimate.toFixed(3)} M). Difference is off target. Try again!`, 'danger');
+            }
+        });
+
+        // Use ResizeObserver for highly adaptive embed charting resizes
+        if (window.ResizeObserver) {
+            const chartResizeObserver = new ResizeObserver(() => {
+                drawChart();
+            });
+            chartResizeObserver.observe(chartContainer);
+        } else {
+            window.addEventListener('resize', drawChart);
+        }
+
+        // Start animation loops on load
+        window.onload = function() {
+            resetSimulation();
+            requestAnimationFrame(tick);
+        };
+    </script>
+
+</body>
+</html>

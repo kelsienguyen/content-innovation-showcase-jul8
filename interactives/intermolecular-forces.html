@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intermolecular Forces Simulation</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* --- GLOBAL THEME VARIABLES --- */
+        :root {
+            --bg-color: #CCEEFF; 
+            --panel-bg: #ffffff;
+            --text-main: #333333;
+            --border-color: #dddddd;
+            --primary-accent: #0066cc;
+            --accent-hover: #005bb5;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* --- TEACHER CONTROLS --- */
+        .teacher-controls {
+            background: #ffeaa7;
+            padding: 15px 25px;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #f1c40f;
+        }
+
+        .teacher-controls-title {
+            font-weight: bold;
+            color: #d35400;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            user-select: none;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #d35400;
+        }
+
+        /* --- SIMULATION SECTIONS --- */
+        .sim-section {
+            background: var(--panel-bg);
+            border-radius: 10px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sim-header {
+            background: var(--primary-accent);
+            color: white;
+            padding: 15px 20px;
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .sim-body {
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .canvas-wrapper {
+            flex: 1 1 60%; /* Takes up 60% of width on large screens */
+            min-width: 300px;
+            position: relative;
+            background: #f8f9fa;
+            border-right: 1px solid var(--border-color);
+            min-height: 400px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .controls-wrapper {
+            flex: 1 1 40%; /* Takes up 40% of width on large screens */
+            min-width: 300px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: #ffffff;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #444;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .slider-val {
+            color: var(--primary-accent);
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary-accent);
+        }
+
+        select {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-family: inherit;
+            font-size: 1rem;
+            background-color: #f9f9f9;
+            cursor: pointer;
+        }
+        select:focus {
+            outline: 2px solid var(--primary-accent);
+            border-color: transparent;
+        }
+
+        .readout-panel {
+            margin-top: auto;
+            padding: 15px 20px;
+            background: #eef7ff;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary-accent);
+        }
+
+        .readout-title {
+            font-weight: 700;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: var(--primary-accent);
+            letter-spacing: 0.5px;
+        }
+
+        .readout-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #222;
+        }
+
+        .hidden-label {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        /* EPM Legend */
+        .epm-legend {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+        .epm-gradient {
+            flex: 1;
+            height: 12px;
+            background: linear-gradient(to right, #ff4d4d, #dddddd, #4d4dff);
+            border-radius: 6px;
+        }
+
+        @media (max-width: 800px) {
+            .canvas-wrapper {
+                min-height: 300px;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        
+        <!-- TEACHER CONTROLS -->
+        <div class="teacher-controls">
+            <div class="teacher-controls-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                Instructor Toggles:
+            </div>
+            <label class="toggle-label"><input type="checkbox" id="toggleVectors" checked> Show Force Vectors</label>
+            <label class="toggle-label"><input type="checkbox" id="toggleEPM" checked> Show EPM Colors</label>
+            <label class="toggle-label"><input type="checkbox" id="toggleLabels" checked> Show IMF Labels</label>
+        </div>
+
+        <!-- CONTAINER 1: IDEALIZED SANDBOX -->
+        <div class="sim-section">
+            <h2 class="sim-header">Container 1: Idealized Particles & Polarizability</h2>
+            <div class="sim-body">
+                <div class="canvas-wrapper">
+                    <canvas id="canvas-ideal"></canvas>
+                </div>
+                <div class="controls-wrapper">
+                    <p style="margin-top:0; font-size:0.9rem; color:#555;">Drag the particles to see how distance affects interaction. Adjust polarizability to see how neutral particles can be "induced" to have a temporary dipole.</p>
+                    
+                    <div class="control-group">
+                        <label>Particle 1 Charge (Dipole): <span id="val-q1" class="slider-val">+0.8</span></label>
+                        <input type="range" id="ideal-q1" min="-1" max="1" step="0.1" value="0.8">
+                    </div>
+                    <div class="control-group">
+                        <label>Particle 2 Charge (Dipole): <span id="val-q2" class="slider-val">Neutral (0.0)</span></label>
+                        <input type="range" id="ideal-q2" min="-1" max="1" step="0.1" value="0">
+                    </div>
+                    <div class="control-group">
+                        <label>P2 Polarizability (Squishiness): <span id="val-pol" class="slider-val">High</span></label>
+                        <input type="range" id="ideal-pol" min="0" max="1" step="0.1" value="0.8">
+                    </div>
+
+                    <div class="epm-legend">
+                        <span>Electron Rich ($\delta^-$)</span>
+                        <div class="epm-gradient"></div>
+                        <span>Electron Poor ($\delta^+$)</span>
+                    </div>
+
+                    <div class="readout-panel">
+                        <div class="readout-title">Interaction Details</div>
+                        <div id="ideal-readout" class="readout-value">Strong Attraction</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTAINER 2: REAL-WORLD MOLECULES -->
+        <div class="sim-section">
+            <h2 class="sim-header">Container 2: Real-World Molecules</h2>
+            <div class="sim-body">
+                <div class="canvas-wrapper">
+                    <canvas id="canvas-real"></canvas>
+                </div>
+                <div class="controls-wrapper">
+                    <p style="margin-top:0; font-size:0.9rem; color:#555;">Select different molecules to observe the predominant intermolecular forces. EPM colors map molecular polarity.</p>
+                    
+                    <div class="control-group">
+                        <label>Select Molecule 1:</label>
+                        <select id="mol1-select">
+                            <option value="H2O">Water (H₂O) - Polar</option>
+                            <option value="HCl">Hydrochloric Acid (HCl) - Polar</option>
+                            <option value="NH3">Ammonia (NH₃) - Polar</option>
+                            <option value="CO2">Carbon Dioxide (CO₂) - Nonpolar</option>
+                            <option value="Hexane">Hexane (C₆H₁₄) - Nonpolar</option>
+                            <option value="Na">Sodium Ion (Na⁺) - Ion</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Select Molecule 2:</label>
+                        <select id="mol2-select">
+                            <option value="H2O" selected>Water (H₂O) - Polar</option>
+                            <option value="HCl">Hydrochloric Acid (HCl) - Polar</option>
+                            <option value="NH3">Ammonia (NH₃) - Polar</option>
+                            <option value="CO2">Carbon Dioxide (CO₂) - Nonpolar</option>
+                            <option value="Hexane">Hexane (C₆H₁₄) - Nonpolar</option>
+                            <option value="Na">Sodium Ion (Na⁺) - Ion</option>
+                        </select>
+                    </div>
+
+                    <div class="epm-legend">
+                        <span>Red = $\delta^-$</span>
+                        <div class="epm-gradient"></div>
+                        <span>Blue = $\delta^+$</span>
+                    </div>
+
+                    <div class="readout-panel">
+                        <div class="readout-title">Predominant Force</div>
+                        <div id="real-readout" class="readout-value">Hydrogen Bonding</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // GLOBAL STATE & TEACHER CONTROLS
+        // ==========================================
+        let showVectors = true;
+        let showEPM = true;
+        let showLabels = true;
+
+        const toggleVectors = document.getElementById('toggleVectors');
+        const toggleEPM = document.getElementById('toggleEPM');
+        const toggleLabels = document.getElementById('toggleLabels');
+
+        toggleVectors.addEventListener('change', (e) => showVectors = e.target.checked);
+        toggleEPM.addEventListener('change', (e) => showEPM = e.target.checked);
+        toggleLabels.addEventListener('change', (e) => {
+            showLabels = e.target.checked;
+            updateRealReadout();
+            updateIdealReadout();
+        });
+
+        // Utilities
+        function getEpmColor(chargeValue) {
+            // chargeValue from -1 (red) to 1 (blue)
+            // Neutral (0) is gray (#dddddd)
+            if (!showEPM) return '#cccccc';
+            
+            // Map -1 to 1 into RGB
+            let r, g, b;
+            if (chargeValue < 0) {
+                // Negative (Red)
+                let intensity = Math.abs(chargeValue);
+                r = 255;
+                g = Math.round(221 - (221 * intensity) + (77 * intensity)); // Interpolate to #ff4d4d
+                b = g; 
+            } else {
+                // Positive (Blue)
+                let intensity = chargeValue;
+                b = 255;
+                r = Math.round(221 - (221 * intensity) + (77 * intensity)); // Interpolate to #4d4dff
+                g = r;
+            }
+            return `rgb(${r},${g},${b})`;
+        }
+
+
+        // ==========================================
+        // CANVAS ENGINE BOILERPLATE
+        // ==========================================
+        function setupCanvas(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            let particles = [];
+            let isDragging = false;
+            let dragTarget = null;
+
+            // Handle Resize
+            function resize() {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height || 400;
+            }
+            window.addEventListener('resize', resize);
+            resize(); // Initial sizing
+
+            // Interaction
+            function getMousePos(evt) {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: evt.clientX - rect.left,
+                    y: evt.clientY - rect.top
+                };
+            }
+
+            canvas.addEventListener('mousedown', (e) => {
+                const pos = getMousePos(e);
+                particles.forEach(p => {
+                    const dist = Math.sqrt((pos.x - p.x)**2 + (pos.y - p.y)**2);
+                    if (dist < p.radius) {
+                        isDragging = true;
+                        dragTarget = p;
+                    }
+                });
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (isDragging && dragTarget) {
+                    const pos = getMousePos(e);
+                    // Keep inside bounds
+                    dragTarget.x = Math.max(dragTarget.radius, Math.min(canvas.width - dragTarget.radius, pos.x));
+                    dragTarget.y = Math.max(dragTarget.radius, Math.min(canvas.height - dragTarget.radius, pos.y));
+                }
+            });
+
+            canvas.addEventListener('mouseup', () => { isDragging = false; dragTarget = null; });
+            canvas.addEventListener('mouseleave', () => { isDragging = false; dragTarget = null; });
+
+            return { canvas, ctx, particles, getParticles: () => particles };
+        }
+
+
+        // ==========================================
+        // CONTAINER 1: IDEALIZED SIMULATION
+        // ==========================================
+        const idealSim = setupCanvas('canvas-ideal');
+        
+        // Initialize position based on canvas width
+        setTimeout(() => {
+            idealSim.particles = [
+                { id: 1, x: idealSim.canvas.width * 0.3, y: idealSim.canvas.height / 2, radius: 50, q: 0.8 },
+                { id: 2, x: idealSim.canvas.width * 0.7, y: idealSim.canvas.height / 2, radius: 50, q: 0, pol: 0.8 }
+            ];
+            drawIdeal();
+        }, 100);
+
+        // Slider logic
+        const q1Slider = document.getElementById('ideal-q1');
+        const q2Slider = document.getElementById('ideal-q2');
+        const polSlider = document.getElementById('ideal-pol');
+        
+        function updateIdealUI() {
+            document.getElementById('val-q1').innerText = (q1Slider.value > 0 ? "+" : "") + q1Slider.value;
+            document.getElementById('val-q2').innerText = q2Slider.value == 0 ? "Neutral (0.0)" : (q2Slider.value > 0 ? "+" : "") + q2Slider.value;
+            
+            let pVal = parseFloat(polSlider.value);
+            let polText = pVal < 0.3 ? "Low" : (pVal < 0.7 ? "Medium" : "High");
+            document.getElementById('val-pol').innerText = polText;
+        }
+
+        q1Slider.addEventListener('input', updateIdealUI);
+        q2Slider.addEventListener('input', updateIdealUI);
+        polSlider.addEventListener('input', updateIdealUI);
+
+        function updateIdealReadout() {
+            if (!showLabels) {
+                document.getElementById('ideal-readout').innerHTML = '<span class="hidden-label">Hidden by Instructor</span>';
+                return;
+            }
+
+            const p1 = idealSim.particles[0];
+            const p2 = idealSim.particles[1];
+            if (!p1 || !p2) return;
+
+            const dist = Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2);
+            let interaction = "";
+
+            if (p1.q !== 0 && p2.q !== 0) {
+                if ((p1.q > 0 && p2.q > 0) || (p1.q < 0 && p2.q < 0)) interaction = "Repulsion (Like Charges)";
+                else interaction = "Attraction (Opposite Charges)";
+            } else if (p1.q !== 0 || p2.q !== 0) {
+                // One is charged, one is neutral
+                let charged = p1.q !== 0 ? p1 : p2;
+                let neutral = p1.q === 0 ? p1 : p2;
+                
+                if (parseFloat(polSlider.value) > 0 && dist < 250) {
+                    interaction = "Attraction (Charge - Induced Dipole)";
+                } else {
+                    interaction = "No Significant Interaction";
+                }
+            } else {
+                interaction = "No Permanent Charges";
+            }
+
+            document.getElementById('ideal-readout').innerText = interaction;
+        }
+
+        function drawIdeal() {
+            if (!idealSim.particles[0]) return requestAnimationFrame(drawIdeal);
+
+            idealSim.ctx.clearRect(0, 0, idealSim.canvas.width, idealSim.canvas.height);
+            
+            const p1 = idealSim.particles[0];
+            const p2 = idealSim.particles[1];
+            
+            p1.q = parseFloat(q1Slider.value);
+            p2.q = parseFloat(q2Slider.value);
+            const polarizability = parseFloat(polSlider.value);
+
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            // Calculate Induced Charge for P2 (simplified physics)
+            // If P1 is charged, it induces a dipole on P2 based on distance and polarizability
+            let inducedQ2_sideFacingP1 = 0; 
+            if (p2.q === 0 && p1.q !== 0 && showEPM) {
+                // closer = stronger induction. Cap at dist = 250
+                let effect = Math.max(0, 250 - dist) / 250; 
+                inducedQ2_sideFacingP1 = -1 * p1.q * effect * polarizability;
+            }
+
+            // Draw Particles
+            idealSim.particles.forEach((p, index) => {
+                const ctx = idealSim.ctx;
+                ctx.save();
+                ctx.translate(p.x, p.y);
+
+                ctx.beginPath();
+                ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
+                
+                if (index === 1 && p.q === 0 && Math.abs(inducedQ2_sideFacingP1) > 0.05 && showEPM) {
+                    // P2 is neutral but experiencing induction. Draw linear gradient facing P1.
+                    const angleToP1 = Math.atan2(p1.y - p.y, p1.x - p.x);
+                    ctx.rotate(angleToP1);
+                    
+                    const grad = ctx.createLinearGradient(-p.radius, 0, p.radius, 0);
+                    // Side facing P1 (at +radius because we rotated towards it)
+                    grad.addColorStop(1, getEpmColor(inducedQ2_sideFacingP1)); 
+                    // Center
+                    grad.addColorStop(0.5, getEpmColor(0));
+                    // Far side
+                    grad.addColorStop(0, getEpmColor(-inducedQ2_sideFacingP1));
+                    
+                    ctx.fillStyle = grad;
+                } else {
+                    // Normal solid/radial color for permanent charges
+                    ctx.fillStyle = getEpmColor(p.q);
+                }
+                
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#999';
+                ctx.stroke();
+
+                // Reset rotation for text
+                ctx.restore(); 
+
+                // Labels
+                if (p.q !== 0 && showEPM) {
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 22px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    let sign = p.q > 0 ? '+' : '-';
+                    ctx.fillText(`${sign}${Math.abs(p.q).toFixed(1)}`, p.x, p.y);
+                } else if (index === 1 && Math.abs(inducedQ2_sideFacingP1) > 0.05 && showEPM) {
+                    // Draw induced dipole delta symbols
+                    ctx.fillStyle = '#333';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    // Offset towards P1
+                    const angle = Math.atan2(p1.y - p.y, p1.x - p.x);
+                    const offset = p.radius * 0.6;
+                    
+                    let signNear = inducedQ2_sideFacingP1 > 0 ? 'δ+' : 'δ-';
+                    let signFar = inducedQ2_sideFacingP1 > 0 ? 'δ-' : 'δ+';
+                    
+                    ctx.fillText(signNear, p.x + Math.cos(angle)*offset, p.y + Math.sin(angle)*offset);
+                    ctx.fillText(signFar, p.x - Math.cos(angle)*offset, p.y - Math.sin(angle)*offset);
+                }
+            });
+
+            // Draw force vector
+            if (showVectors && dist > (p1.radius + p2.radius) && dist < 300) {
+                let forceMagnitude = 0;
+                let isAttraction = false;
+
+                if (p1.q !== 0 && p2.q !== 0) {
+                    forceMagnitude = Math.abs(p1.q * p2.q);
+                    isAttraction = (p1.q * p2.q) < 0;
+                } else if (p1.q !== 0 && p2.q === 0 && Math.abs(inducedQ2_sideFacingP1) > 0) {
+                    forceMagnitude = Math.abs(inducedQ2_sideFacingP1) * 0.5;
+                    isAttraction = true; // Induced dipoles always attract
+                }
+
+                if (forceMagnitude > 0.05) {
+                    idealSim.ctx.beginPath();
+                    idealSim.ctx.lineWidth = 2 + (forceMagnitude * 3);
+                    idealSim.ctx.strokeStyle = isAttraction ? '#2ecc71' : '#e74c3c';
+                    
+                    // Gap between particles
+                    const angle = Math.atan2(dy, dx);
+                    const startX = p1.x + Math.cos(angle) * (p1.radius + 5);
+                    const startY = p1.y + Math.sin(angle) * (p1.radius + 5);
+                    const endX = p2.x - Math.cos(angle) * (p2.radius + 5);
+                    const endY = p2.y - Math.sin(angle) * (p2.radius + 5);
+
+                    if (isAttraction) {
+                        idealSim.ctx.setLineDash([8, 4]);
+                        idealSim.ctx.moveTo(startX, startY);
+                        idealSim.ctx.lineTo(endX, endY);
+                    } else {
+                        // Repulsion: draw arrows pushing away from centers
+                        idealSim.ctx.setLineDash([]);
+                        idealSim.ctx.moveTo(p1.x - Math.cos(angle)*p1.radius, p1.y - Math.sin(angle)*p1.radius);
+                        idealSim.ctx.lineTo(p1.x - Math.cos(angle)*(p1.radius+30), p1.y - Math.sin(angle)*(p1.radius+30));
+                        
+                        idealSim.ctx.moveTo(p2.x + Math.cos(angle)*p2.radius, p2.y + Math.sin(angle)*p2.radius);
+                        idealSim.ctx.lineTo(p2.x + Math.cos(angle)*(p2.radius+30), p2.y + Math.sin(angle)*(p2.radius+30));
+                    }
+                    
+                    idealSim.ctx.stroke();
+                    idealSim.ctx.setLineDash([]);
+                }
+            }
+
+            updateIdealReadout();
+            requestAnimationFrame(drawIdeal);
+        }
+
+
+        // ==========================================
+        // CONTAINER 2: REAL MOLECULES
+        // ==========================================
+        const realSim = setupCanvas('canvas-real');
+        
+        // Molecule Dictionary
+        // polarity format: 1=positive/blue, -1=negative/red, 0=neutral/gray
+        const moleculeData = {
+            "H2O": { type: "polar", hBond: true, name: "Water", radius: 45, 
+                     render: (ctx, x, y, r, showEPM) => {
+                         // Bent EPM: Oxygen (red) top/center, Hydrogens (blue) bottom
+                         let grad = ctx.createLinearGradient(x, y - r, x, y + r);
+                         grad.addColorStop(0, showEPM ? getEpmColor(-0.9) : '#ccc');
+                         grad.addColorStop(1, showEPM ? getEpmColor(0.8) : '#ccc');
+                         ctx.fillStyle = grad;
+                         ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                         // Overlay shape
+                         ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                         ctx.beginPath(); ctx.arc(x, y-5, 12, 0, Math.PI*2); ctx.fill(); // O
+                         ctx.beginPath(); ctx.arc(x-15, y+15, 8, 0, Math.PI*2); ctx.fill(); // H
+                         ctx.beginPath(); ctx.arc(x+15, y+15, 8, 0, Math.PI*2); ctx.fill(); // H
+                     }},
+            "HCl": { type: "polar", hBond: false, name: "HCl", radius: 40,
+                     render: (ctx, x, y, r, showEPM) => {
+                         let grad = ctx.createLinearGradient(x - r, y, x + r, y);
+                         grad.addColorStop(0, showEPM ? getEpmColor(-0.6) : '#ccc'); // Cl
+                         grad.addColorStop(1, showEPM ? getEpmColor(0.6) : '#ccc');  // H
+                         ctx.fillStyle = grad;
+                         ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                         ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                         ctx.beginPath(); ctx.arc(x-8, y, 15, 0, Math.PI*2); ctx.fill(); // Cl
+                         ctx.beginPath(); ctx.arc(x+18, y, 7, 0, Math.PI*2); ctx.fill(); // H
+                     }},
+            "NH3": { type: "polar", hBond: true, name: "Ammonia", radius: 42,
+                     render: (ctx, x, y, r, showEPM) => {
+                         let grad = ctx.createRadialGradient(x, y, 5, x, y, r);
+                         grad.addColorStop(0, showEPM ? getEpmColor(-0.8) : '#ccc'); // N center
+                         grad.addColorStop(1, showEPM ? getEpmColor(0.7) : '#ccc');  // H edges
+                         ctx.fillStyle = grad;
+                         ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                         ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                         ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI*2); ctx.fill(); // N
+                     }},
+            "CO2": { type: "nonpolar", hBond: false, name: "Carbon Dioxide", radius: 48,
+                     render: (ctx, x, y, r, showEPM) => {
+                         let grad = ctx.createLinearGradient(x - r, y, x + r, y);
+                         grad.addColorStop(0, showEPM ? getEpmColor(-0.5) : '#ccc'); // O
+                         grad.addColorStop(0.5, showEPM ? getEpmColor(0.2) : '#ccc'); // C
+                         grad.addColorStop(1, showEPM ? getEpmColor(-0.5) : '#ccc'); // O
+                         ctx.fillStyle = grad;
+                         // Make it an oval to represent linear shape
+                         ctx.beginPath(); ctx.ellipse(x, y, r, r*0.6, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                         ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                         ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI*2); ctx.fill(); // C
+                         ctx.beginPath(); ctx.arc(x-20, y, 10, 0, Math.PI*2); ctx.fill(); // O
+                         ctx.beginPath(); ctx.arc(x+20, y, 10, 0, Math.PI*2); ctx.fill(); // O
+                     }},
+            "Hexane":{ type: "nonpolar", hBond: false, name: "Hexane", radius: 55,
+                     render: (ctx, x, y, r, showEPM) => {
+                         ctx.fillStyle = showEPM ? getEpmColor(0) : '#ccc'; // Nonpolar
+                         ctx.beginPath(); ctx.ellipse(x, y, r, r*0.5, 0.2, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                         // Zig zag
+                         ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 3;
+                         ctx.beginPath();
+                         ctx.moveTo(x-30, y+5); ctx.lineTo(x-15, y-10); ctx.lineTo(x, y+5); 
+                         ctx.lineTo(x+15, y-10); ctx.lineTo(x+30, y+5);
+                         ctx.stroke(); ctx.lineWidth = 1; ctx.strokeStyle = '#333';
+                     }},
+            "Na":  { type: "ion", hBond: false, name: "Sodium Ion", radius: 30,
+                     render: (ctx, x, y, r, showEPM) => {
+                         ctx.fillStyle = showEPM ? getEpmColor(1) : '#ccc'; // Full positive
+                         ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+                         ctx.fillStyle = 'white'; ctx.font = 'bold 20px Arial';
+                         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                         ctx.fillText("Na+", x, y);
+                     }}
+        };
+
+        function updateRealParticles() {
+            const m1Id = document.getElementById('mol1-select').value;
+            const m2Id = document.getElementById('mol2-select').value;
+            const d1 = moleculeData[m1Id];
+            const d2 = moleculeData[m2Id];
+
+            const w = realSim.canvas.width;
+            const h = realSim.canvas.height;
+
+            // Preserve positions if they already exist, otherwise reset
+            let p1x = w * 0.3; let p1y = h / 2;
+            let p2x = w * 0.7; let p2y = h / 2;
+
+            if (realSim.particles.length === 2) {
+                p1x = realSim.particles[0].x; p1y = realSim.particles[0].y;
+                p2x = realSim.particles[1].x; p2y = realSim.particles[1].y;
+            }
+
+            realSim.particles = [
+                { id: m1Id, data: d1, x: p1x, y: p1y, radius: d1.radius },
+                { id: m2Id, data: d2, x: p2x, y: p2y, radius: d2.radius }
+            ];
+            updateRealReadout();
+        }
+
+        document.getElementById('mol1-select').addEventListener('change', updateRealParticles);
+        document.getElementById('mol2-select').addEventListener('change', updateRealParticles);
+        
+        // Init Real Canvas
+        setTimeout(() => {
+            updateRealParticles();
+            drawReal();
+        }, 150);
+
+        function determineIMF(m1, m2) {
+            if (!showLabels) return '<span class="hidden-label">Hidden by Instructor</span>';
+
+            const types = [m1.type, m2.type];
+            if (types.includes("ion")) {
+                if (types.includes("ion") && m1.name !== m2.name) return "Ion - Ion Interaction";
+                if (types.includes("polar")) return "Ion - Dipole Interaction";
+                if (types.includes("nonpolar")) return "Ion - Induced Dipole";
+            }
+            if (m1.hBond && m2.hBond) return "Hydrogen Bonding (Strong Dipole)";
+            if (types.includes("polar") && types.includes("polar")) return "Dipole - Dipole Interaction";
+            if (types.includes("polar") && types.includes("nonpolar")) return "Dipole - Induced Dipole";
+            return "London Dispersion Forces (LDF)";
+        }
+
+        function updateRealReadout() {
+            if(realSim.particles.length < 2) return;
+            const m1Id = document.getElementById('mol1-select').value;
+            const m2Id = document.getElementById('mol2-select').value;
+            document.getElementById('real-readout').innerHTML = determineIMF(moleculeData[m1Id], moleculeData[m2Id]);
+        }
+
+        function drawReal() {
+            if(realSim.particles.length < 2) return requestAnimationFrame(drawReal);
+
+            realSim.ctx.clearRect(0, 0, realSim.canvas.width, realSim.canvas.height);
+            const ctx = realSim.ctx;
+            
+            // Draw interaction line first so it goes "behind" the particles
+            const p1 = realSim.particles[0];
+            const p2 = realSim.particles[1];
+            const dist = Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2);
+            
+            if (showVectors && dist > (p1.radius + p2.radius) && dist < 280) {
+                ctx.beginPath();
+                
+                // Style line based on IMF
+                const types = [p1.data.type, p2.data.type];
+                let isLDF = (!types.includes("ion") && !types.includes("polar"));
+                let isHBond = (p1.data.hBond && p2.data.hBond);
+
+                if (isHBond) {
+                    ctx.strokeStyle = '#e84393'; // Pink for H-Bond
+                    ctx.lineWidth = 4;
+                    ctx.setLineDash([8, 8]);
+                } else if (isLDF) {
+                    ctx.strokeStyle = '#7f8c8d'; // Gray for LDF
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([2, 4]);
+                } else {
+                    ctx.strokeStyle = '#0066cc'; // Blue for standard dipole/ion
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                }
+
+                if(!showLabels) {
+                    // Hide specific line styling if teacher hides labels
+                    ctx.strokeStyle = '#666'; 
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]); 
+                }
+
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.lineWidth = 1;
+            }
+
+            // Render Molecules
+            realSim.particles.forEach((p) => {
+                ctx.save();
+                // Face them towards each other slightly if they are interacting dipoles
+                // This is a visual trick to make alignment look natural without complex 2D rotation physics
+                if (p.data.type === 'polar' || p.data.type === 'ion') {
+                    const otherP = p === p1 ? p2 : p1;
+                    if (dist < 300) {
+                        let angle = Math.atan2(otherP.y - p.y, otherP.x - p.x);
+                        // Align H2O correctly (Oxygen towards positive, H towards negative. Simplified here to just point)
+                        ctx.translate(p.x, p.y);
+                        if(p.id === 'H2O' && otherP.data.type === 'ion') {
+                            // Point oxygen (red side) towards Na+
+                            angle += Math.PI/2; 
+                        }
+                        ctx.rotate(angle);
+                        ctx.translate(-p.x, -p.y);
+                    }
+                }
+
+                p.data.render(ctx, p.x, p.y, p.radius, showEPM);
+                ctx.restore();
+
+                // Molecule Text Label
+                ctx.fillStyle = showEPM ? '#fff' : '#000';
+                if(p.id !== 'Na' && p.id !== 'H2O' && p.id !== 'HCl' && p.id !== 'CO2') {
+                    // Only draw text if the render function didn't already draw a clear shape/label
+                    ctx.font = 'bold 12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                    ctx.shadowBlur = 4;
+                    ctx.fillText(p.id, p.x, p.y + p.radius + 15);
+                    ctx.shadowBlur = 0; // reset
+                }
+            });
+
+            requestAnimationFrame(drawReal);
+        }
+
+    </script>
+</body>
+</html>

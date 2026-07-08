@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gas Laws V3: Visual Interactives</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #e2e8f0; 
+            --panel-bg: #ffffff;
+            --text-main: #1e293b;
+            --border-color: #cbd5e1;
+            --primary: #0f172a;
+            --heavy-color: #2563eb; 
+            --light-color: #dc2626; 
+        }
+
+        /* Optimized for Iframe embedding */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Prevents double scrollbars in LMS */
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--panel-bg);
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .app-title { margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+        .close-btn { padding: 6px 12px; cursor: pointer; border-radius: 4px; border: 1px solid var(--border-color); background: white; }
+
+        .workspace {
+            display: flex;
+            gap: 10px;
+            flex-grow: 1;
+            min-height: 0; /* Important for flexbox scrolling inside iframe */
+        }
+
+        .panel {
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* LEFT SIDE - VISUAL SIMULATION */
+        .simulation-panel {
+            flex: 2;
+            padding: 10px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .canvas-container {
+            flex-grow: 1;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            cursor: default;
+        }
+        
+        .heat-control-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .heat-control-container label { font-weight: 700; margin-bottom: 10px; display: block; color: #475569; }
+        input[type=range] { width: 80%; cursor: pointer; accent-color: var(--primary); }
+
+        /* RIGHT SIDE - CONTROLS & CHARTS */
+        .controls-panel {
+            flex: 1;
+            padding: 15px;
+            min-width: 280px;
+            max-width: 350px;
+            overflow-y: auto;
+        }
+
+        .section-title {
+            font-size: 1rem; margin-top: 0; margin-bottom: 12px;
+            padding-bottom: 5px; border-bottom: 2px solid var(--bg-color);
+        }
+
+        .control-group { margin-bottom: 20px; }
+
+        .btn-group { display: flex; gap: 8px; margin-bottom: 15px; }
+        .btn {
+            flex: 1; padding: 10px; color: white; border: none;
+            border-radius: 4px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn:active { transform: translateY(1px); }
+        .btn-heavy { background-color: var(--heavy-color); }
+        .btn-light { background-color: var(--light-color); }
+
+        .radio-group { display: flex; flex-direction: column; gap: 8px; }
+        .radio-label {
+            display: flex; align-items: center; cursor: pointer;
+            background: #f8fafc; padding: 8px 12px; border-radius: 4px;
+            font-size: 0.9rem; border: 1px solid var(--border-color);
+        }
+        .radio-label input { margin-right: 10px; }
+
+        .readout {
+            display: flex; justify-content: space-between;
+            background: #f1f5f9; padding: 8px 12px;
+            border-radius: 4px; margin-bottom: 8px;
+            font-weight: 600; font-size: 0.95rem; border: 1px solid #e2e8f0;
+        }
+
+        .hist-container {
+            width: 100%; height: 180px; background: #fafafa;
+            border: 1px solid var(--border-color); border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <h1 class="app-title">Gas Properties: Visual Lab</h1>
+        <button class="close-btn" onclick="window.close()">Close</button>
+    </header>
+
+    <div class="workspace">
+        
+        <!-- LEFT: VISUAL SIMULATION -->
+        <div class="panel simulation-panel">
+            <div class="canvas-container">
+                <canvas id="gasCanvas" width="800" height="500"></canvas>
+            </div>
+            
+            <div class="heat-control-container">
+                <label>Heat / Cool</label>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px;">
+                    <span style="color: #0284c7; font-weight: bold;">Ice</span>
+                    <input type="range" id="tempSlider" min="50" max="1000" value="300" step="1">
+                    <span style="color: #ea580c; font-weight: bold;">Fire</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: CONTROLS -->
+        <div class="panel controls-panel">
+            
+            <div class="control-group">
+                <h3 class="section-title">Measurements</h3>
+                <div class="readout"><span>Pressure:</span> <span id="p-val">0.00 atm</span></div>
+                <div class="readout"><span>Temperature:</span> <span id="t-val">300 K</span></div>
+                <div class="readout"><span>Volume:</span> <span id="v-val">400 L</span></div>
+            </div>
+
+            <div class="control-group">
+                <h3 class="section-title">Pump Gas</h3>
+                <div class="btn-group">
+                    <button class="btn btn-heavy" id="addHeavyBtn">Heavy</button>
+                    <button class="btn btn-light" id="addLightBtn">Light</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3 class="section-title">Hold Constant</h3>
+                <div class="radio-group">
+                    <label class="radio-label"><input type="radio" name="constant" value="none" checked> None</label>
+                    <label class="radio-label"><input type="radio" name="constant" value="volume"> Volume (V)</label>
+                    <label class="radio-label"><input type="radio" name="constant" value="temperature"> Temp (T)</label>
+                    <label class="radio-label"><input type="radio" name="constant" value="pressure"> Pressure (P)</label>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3 class="section-title">Speed Distribution</h3>
+                <p style="font-size:0.75rem; color:#64748b; margin: 0 0 5px 0;">Dynamic scale based on max speed</p>
+                <canvas id="histCanvas" class="hist-container" width="300" height="180"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        //        GAS LAWS V3 ENGINE
+        // ==========================================
+        
+        const canvas = document.getElementById('gasCanvas');
+        const ctx = canvas.getContext('2d');
+        const histCanvas = document.getElementById('histCanvas');
+        const histCtx = histCanvas.getContext('2d');
+        
+        // UI Elements
+        const tempSlider = document.getElementById('tempSlider');
+        const constantRadios = document.getElementsByName('constant');
+        const pVal = document.getElementById('p-val');
+        const tVal = document.getElementById('t-val');
+        const vVal = document.getElementById('v-val');
+
+        // Physics & Drawing Constants
+        const R = 0.05; 
+        const OFFSET_X = 150; // Space on left for pump/thermometer
+        const OFFSET_Y = 120; // Space on top for pressure gauge
+        const CHAMBER_MAX_W = 550;
+        const CHAMBER_MIN_W = 150;
+        const CHAMBER_H = 300;
+
+        let particles = [];
+        let state = {
+            V: 400, // Current chamber width
+            T: 300,
+            P: 0.00,
+            constant: 'none',
+            targetP: 0
+        };
+
+        // Interaction State
+        let isDraggingWall = false;
+        let pumpAnim = 0; // 0 to 1 for pump handle animation
+        
+        // Particle Specs
+        const TYPE_HEAVY = { mass: 28, radius: 10, color: '#2563eb' }; 
+        const TYPE_LIGHT = { mass: 4, radius: 5, color: '#dc2626' };  
+
+        class Particle {
+            constructor(type, x, y, angle, baseTemp) {
+                this.type = type;
+                this.mass = type.mass;
+                this.r = type.radius;
+                this.color = type.color;
+                this.x = x;
+                this.y = y;
+                
+                const speedScale = 0.6; 
+                let speed = Math.sqrt(baseTemp / this.mass) * speedScale;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+            }
+
+            scaleSpeedForTempChange(oldT, newT) {
+                if (oldT === 0) return;
+                const scale = Math.sqrt(newT / oldT);
+                this.vx *= scale;
+                this.vy *= scale;
+            }
+            
+            getSpeed() {
+                return Math.sqrt(this.vx*this.vx + this.vy*this.vy);
+            }
+        }
+
+        // --- Core Logic ---
+
+        function updateReadouts() {
+            if (state.V === 0) return;
+            state.P = (particles.length * R * state.T) / state.V;
+            
+            pVal.innerText = state.P.toFixed(2) + " atm";
+            tVal.innerText = Math.round(state.T) + " K";
+            vVal.innerText = Math.round(state.V) + " L"; // Using pixel width as 'Liters' for simplicity
+            
+            tempSlider.value = state.T;
+        }
+
+        function calculateVolumeForConstantPressure() {
+            if (state.targetP === 0) return state.V; 
+            let requiredV = (particles.length * R * state.T) / state.targetP;
+            if (requiredV > CHAMBER_MAX_W) requiredV = CHAMBER_MAX_W;
+            if (requiredV < CHAMBER_MIN_W) requiredV = CHAMBER_MIN_W;
+            return requiredV;
+        }
+
+        function setHoldState(newConstant) {
+            state.constant = newConstant;
+            tempSlider.disabled = false;
+
+            if (newConstant === 'temperature') {
+                tempSlider.disabled = true;
+            } else if (newConstant === 'pressure') {
+                state.targetP = state.P || 0.01; 
+            }
+        }
+
+        function pushParticlesInward() {
+            let rightWall = OFFSET_X + state.V;
+            for (let p of particles) {
+                if (p.x + p.r > rightWall) {
+                    p.x = rightWall - p.r - 1;
+                    p.vx = -Math.abs(p.vx);
+                }
+            }
+        }
+
+        // --- Mouse Interaction (Draggable Wall) ---
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleX;
+
+            let handleX = OFFSET_X + state.V;
+            let handleY = OFFSET_Y + CHAMBER_H / 2;
+
+            // Check if mouse is over the handle (generous hitbox)
+            if (Math.abs(mouseX - handleX) < 20 && Math.abs(mouseY - handleY) < 40) {
+                if (state.constant !== 'volume' && state.constant !== 'pressure') {
+                    isDraggingWall = true;
+                    canvas.style.cursor = 'ew-resize';
+                }
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDraggingWall = false;
+            canvas.style.cursor = 'default';
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            
+            // Hover effect cursor
+            let handleX = OFFSET_X + state.V;
+            if (!isDraggingWall) {
+                if (Math.abs(mouseX - handleX) < 20 && state.constant !== 'volume' && state.constant !== 'pressure') {
+                    canvas.style.cursor = 'ew-resize';
+                } else {
+                    canvas.style.cursor = 'default';
+                }
+            }
+
+            if (isDraggingWall) {
+                let newV = mouseX - OFFSET_X;
+                newV = Math.max(CHAMBER_MIN_W, Math.min(newV, CHAMBER_MAX_W));
+                state.V = newV;
+                pushParticlesInward();
+                updateReadouts();
+            }
+        });
+
+        // --- Buttons & Inputs ---
+
+        function injectParticles(type, count) {
+            pumpAnim = 1; // Trigger animation
+            for(let i=0; i<count; i++) {
+                let angle = (Math.random() * Math.PI/4) - Math.PI/8;
+                let newP = new Particle(type, OFFSET_X + type.radius + 5, OFFSET_Y + CHAMBER_H - 30, angle, state.T);
+                newP.vx = Math.abs(newP.vx) + 1; // force inward
+                particles.push(newP);
+            }
+            
+            if (state.constant === 'pressure') {
+                state.V = calculateVolumeForConstantPressure();
+                state.P = (particles.length * R * state.T) / state.V;
+            } else {
+                updateReadouts(); 
+            }
+        }
+
+        document.getElementById('addHeavyBtn').addEventListener('click', () => injectParticles(TYPE_HEAVY, 20));
+        document.getElementById('addLightBtn').addEventListener('click', () => injectParticles(TYPE_LIGHT, 20));
+
+        constantRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => setHoldState(e.target.value));
+        });
+
+        tempSlider.addEventListener('input', (e) => {
+            let newT = parseFloat(e.target.value);
+            let oldT = state.T;
+            state.T = newT;
+            for (let p of particles) p.scaleSpeedForTempChange(oldT, newT);
+            
+            if (state.constant === 'pressure') {
+                state.V = calculateVolumeForConstantPressure();
+                pushParticlesInward();
+                state.P = (particles.length * R * state.T) / state.V;
+            } else {
+                updateReadouts();
+            }
+        });
+
+        // --- Physics Engine ---
+
+        function resolveCollisions() {
+            // Particle vs Particle
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    let p1 = particles[i], p2 = particles[j];
+                    let dx = p2.x - p1.x, dy = p2.y - p1.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    let min_dist = p1.r + p2.r;
+                    
+                    if (dist < min_dist && dist > 0) {
+                        let overlap = min_dist - dist;
+                        let nx = dx / dist, ny = dy / dist;
+                        
+                        let totalMass = p1.mass + p2.mass;
+                        let r1 = p2.mass / totalMass, r2 = p1.mass / totalMass;
+                        
+                        p1.x -= nx * overlap * r1; p1.y -= ny * overlap * r1;
+                        p2.x += nx * overlap * r2; p2.y += ny * overlap * r2;
+                        
+                        let dvx = p2.vx - p1.vx, dvy = p2.vy - p1.vy;
+                        let velAlongNormal = dvx * nx + dvy * ny;
+                        if (velAlongNormal > 0) continue;
+                        
+                        let j_impulse = -(2) * velAlongNormal / (1/p1.mass + 1/p2.mass);
+                        let ix = j_impulse * nx, iy = j_impulse * ny;
+                        
+                        p1.vx -= ix / p1.mass; p1.vy -= iy / p1.mass;
+                        p2.vx += ix / p2.mass; p2.vy += iy / p2.mass;
+                    }
+                }
+            }
+            
+            // Particle vs Wall
+            let rightWall = OFFSET_X + state.V;
+            let bottomWall = OFFSET_Y + CHAMBER_H;
+            
+            for (let p of particles) {
+                if (p.x - p.r < OFFSET_X) { p.x = OFFSET_X + p.r; p.vx = Math.abs(p.vx); }
+                else if (p.x + p.r > rightWall) { p.x = rightWall - p.r; p.vx = -Math.abs(p.vx); }
+                
+                if (p.y - p.r < OFFSET_Y) { p.y = OFFSET_Y + p.r; p.vy = Math.abs(p.vy); }
+                else if (p.y + p.r > bottomWall) { p.y = bottomWall - p.r; p.vy = -Math.abs(p.vy); }
+            }
+        }
+
+        // --- Drawing Routines ---
+
+        function drawThermometer() {
+            let tx = OFFSET_X - 50;
+            let ty = OFFSET_Y + 40;
+            let th = 200;
+            
+            // Background
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(tx, ty, 16, th);
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(tx, ty, 16, th);
+            
+            // Bulb
+            ctx.beginPath();
+            ctx.arc(tx + 8, ty + th + 10, 15, 0, Math.PI*2);
+            ctx.fillStyle = '#f8fafc';
+            ctx.fill();
+            ctx.stroke();
+
+            // Liquid Level (Map T 0-1000 to height)
+            let fillPercent = Math.max(0.1, Math.min(state.T / 1000, 1));
+            let fillH = th * fillPercent;
+            
+            ctx.fillStyle = '#ef4444'; // Red liquid
+            ctx.beginPath();
+            ctx.arc(tx + 8, ty + th + 10, 11, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillRect(tx + 3, ty + th - fillH, 10, fillH);
+        }
+
+        function drawPressureGauge() {
+            let cx = OFFSET_X + state.V / 2;
+            let cy = OFFSET_Y - 5;
+            let r = 50;
+
+            // Gauge Body
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#334155';
+            ctx.stroke();
+
+            // Ticks
+            ctx.lineWidth = 2;
+            for(let i=0; i<=5; i++) {
+                let ang = Math.PI + (i/5) * Math.PI;
+                ctx.beginPath();
+                ctx.moveTo(cx + Math.cos(ang)*(r-10), cy + Math.sin(ang)*(r-10));
+                ctx.lineTo(cx + Math.cos(ang)*r, cy + Math.sin(ang)*r);
+                ctx.stroke();
+            }
+
+            // Needle (Map P 0-20 to angle)
+            let maxP = 20;
+            let pClamped = Math.min(state.P, maxP);
+            let needleAng = Math.PI + (pClamped / maxP) * Math.PI;
+            
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(needleAng)*(r-5), cy + Math.sin(needleAng)*(r-5));
+            ctx.strokeStyle = '#dc2626';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Pin
+            ctx.beginPath();
+            ctx.arc(cx, cy, 5, 0, Math.PI*2);
+            ctx.fillStyle = '#334155';
+            ctx.fill();
+        }
+
+        function drawHeatCool() {
+            let cx = OFFSET_X + state.V / 2;
+            let cy = OFFSET_Y + CHAMBER_H + 5;
+            
+            if (state.T > 300) {
+                // Fire
+                let intensity = Math.min((state.T - 300) / 700, 1);
+                ctx.fillStyle = `rgba(234, 88, 12, ${intensity})`; // Orange
+                for(let i=-2; i<=2; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(cx + i*20, cy);
+                    ctx.lineTo(cx + i*20 + 10, cy + 30);
+                    ctx.lineTo(cx + i*20 - 10, cy + 30);
+                    ctx.fill();
+                }
+            } else if (state.T < 300) {
+                // Ice
+                let intensity = Math.min((300 - state.T) / 250, 1);
+                ctx.fillStyle = `rgba(56, 189, 248, ${intensity})`; // Light blue
+                ctx.fillRect(cx - 30, cy + 5, 20, 20);
+                ctx.fillRect(cx + 10, cy + 5, 20, 20);
+                ctx.fillRect(cx - 10, cy + 25, 20, 20);
+            }
+        }
+
+        function drawPump() {
+            let px = OFFSET_X - 60;
+            let py = OFFSET_Y + CHAMBER_H - 20;
+            
+            // Handle animation decay
+            if (pumpAnim > 0) pumpAnim -= 0.05;
+            if (pumpAnim < 0) pumpAnim = 0;
+
+            // Pump shaft
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(px + 15, py - 60, 10, 60);
+            
+            // Moving Handle
+            let handleY = py - 60 + (pumpAnim * 30); // Goes down when pressed
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(px, handleY - 10, 40, 10); // horizontal grip
+            ctx.fillRect(px + 17, handleY, 6, 60 - (pumpAnim*30)); // plunger inner
+            
+            // Nozzle connecting to chamber
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(px + 25, py - 15, 35, 10);
+        }
+
+        // --- Speed Histogram ---
+        function drawHistogram() {
+            histCtx.clearRect(0, 0, histCanvas.width, histCanvas.height);
+            if (particles.length === 0) return;
+
+            // Dynamically find max speed for the X-axis bounds
+            let maxCurrentSpeed = Math.max(...particles.map(p => p.getSpeed()));
+            // Keep a minimum reasonable scale so it doesn't zoom in crazy far if particles are slow
+            let dynamicMaxSpeed = Math.max(10, maxCurrentSpeed * 1.2); 
+
+            const numBins = 25;
+            let heavyBins = new Array(numBins).fill(0);
+            let lightBins = new Array(numBins).fill(0);
+            let maxCount = 1;
+
+            for (let p of particles) {
+                let binIndex = Math.floor((p.getSpeed() / dynamicMaxSpeed) * numBins);
+                if (binIndex >= numBins) binIndex = numBins - 1; // Catch outliers
+                
+                if (p.type === TYPE_HEAVY) {
+                    heavyBins[binIndex]++;
+                    if (heavyBins[binIndex] > maxCount) maxCount = heavyBins[binIndex];
+                } else {
+                    lightBins[binIndex]++;
+                    if (lightBins[binIndex] > maxCount) maxCount = lightBins[binIndex];
+                }
+            }
+
+            const binWidth = histCanvas.width / numBins;
+            
+            histCtx.fillStyle = "rgba(37, 99, 235, 0.7)"; // Blue
+            for (let i = 0; i < numBins; i++) {
+                let h = (heavyBins[i] / maxCount) * (histCanvas.height - 10);
+                histCtx.fillRect(i * binWidth, histCanvas.height - h, binWidth, h);
+            }
+
+            histCtx.fillStyle = "rgba(220, 38, 38, 0.7)"; // Red
+            for (let i = 0; i < numBins; i++) {
+                let h = (lightBins[i] / maxCount) * (histCanvas.height - 10);
+                histCtx.fillRect(i * binWidth, histCanvas.height - h, binWidth, h);
+            }
+        }
+
+        // --- Main Loop ---
+        let frame = 0;
+        function render() {
+            frame++;
+            
+            // Move physics
+            for (let p of particles) {
+                p.x += p.vx; p.y += p.vy;
+            }
+            resolveCollisions();
+            
+            // Draw
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawThermometer();
+            drawPump();
+            drawHeatCool();
+
+            // Chamber Box
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(OFFSET_X, OFFSET_Y, state.V, CHAMBER_H);
+            ctx.fillStyle = 'rgba(241, 245, 249, 0.5)'; // Slight tint inside
+            ctx.fillRect(OFFSET_X, OFFSET_Y, state.V, CHAMBER_H);
+
+            drawPressureGauge();
+
+            // Draggable Wall Handle
+            ctx.fillStyle = isDraggingWall ? '#0f172a' : '#94a3b8';
+            ctx.fillRect(OFFSET_X + state.V - 8, OFFSET_Y + CHAMBER_H/2 - 30, 16, 60);
+            
+            // Draw Particles (Solid colors)
+            for (let p of particles) {
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            if (frame % 5 === 0) drawHistogram();
+
+            requestAnimationFrame(render);
+        }
+
+        updateReadouts();
+        render();
+
+    </script>
+</body>
+</html>

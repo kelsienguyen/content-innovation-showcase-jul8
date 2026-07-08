@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculus: Signed Area Estimation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #CCEEFF; 
+            --panel-bg: #ffffff;
+            --text-main: #333333;
+            --border-color: #dddddd;
+            --primary-accent: #0066cc;
+            --negative-accent: #e63946;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Branding Header --- */
+        .branding-header {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .branding-logo {
+            height: 50px; 
+            max-width: 100%;
+            object-fit: contain;
+            margin-right: 20px;
+            display: block;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px; 
+            width: 100%;
+            align-items: flex-start;
+        }
+
+        .simulation-area {
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stage {
+            position: relative;
+            width: 600px;
+            height: 400px;
+            margin-top: 10px;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        #staticGrid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none; 
+        }
+
+        #mathCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            cursor: grab;
+            background: transparent; 
+        }
+        #mathCanvas:active {
+            cursor: grabbing;
+        }
+
+        .controls-area {
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 20px;
+            flex-grow: 1;
+            min-width: 350px; 
+            max-width: 450px;
+        }
+
+        h2 { margin-top: 0; font-size: 1.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; }
+        h3 { margin-top: 0; font-size: 1.2rem; color: #495057; }
+
+        .settings-panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .slider-row { display: flex; align-items: center; justify-content: space-between; font-weight: 500; font-size: 0.95rem; }
+        .slider-row select { padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); font-family: 'Open Sans', sans-serif;}
+        input[type=range] { width: 100%; margin-top: 10px; }
+
+        .results-panel { margin-top: 20px; padding: 15px; background-color: #e8f4f8; border-radius: 6px; border: 1px solid #b6d4fe; }
+        .results-panel p { margin: 8px 0; font-size: 1.1rem; display: flex; justify-content: space-between;}
+        .data-highlight { font-weight: bold; font-size: 1.3rem;}
+
+        .formula-box {
+            background-color: #f8f9fa;
+            border-color: var(--border-color);
+        }
+        
+        .formula-box p {
+            display: block;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+        
+        .formula-box strong {
+            color: var(--primary-accent);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="branding-header">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAABACAYAAAD1Xam+AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAQAElEQVR4AeydCYBcRbWGv7o9W0ImDCRBgYAQCPsOsoZkOhMCsiPCA5FNZXuyiqwKRlGeIA/RyBoR8xCFKCIigZBlsrG+8Ngij+WBimzZyD5JZqa73n+6M5klvd3bnUyWvjl/V92qc06dOrfq3Lp1uycBpTwafS+m+92Z4I9ioj+dSf7rNPpvKH+OcIrKhwm78bivLWWzG4Qu7x1jfX/56yb57RWhSfkWpX8XRstvh28Q/Sx3Yp3yQHEBYJzfQoPzqxqc92uC/w3PHJp5DceT6uVvhVEqu0/n9yv/sNJxBLxOrfgm+fc0wP8o+SuEvRnjY+LZOGmGr2QiX6eGN+Sv6+WnveWIHspXKN1OOJOACfLTf/GC763zMpU9UBIPhA8AY321BuKRwh+p4F1Z8V8anOdo0O6qfI0QUz5IAdW0wSlvgBhQrfrtNcBPUv6nSl+iL68riHyPaX6AyjYeGuOrWMi3CLhbna4TAvnDKe1Idl6lgtNp4k+M85soX6ayB4r2QFCwBhuok/wxuktNlMzjGqQn4bC7UUznpscGqbIFkpc0GvYoIDiqJGUBZAQtzFAguFurgx1VtmGT94EC377yxI/U0UohH9mKYDCVfD8fY7m+7IF8HrD6wD7yYoLfSQP1AfGNEQ4R7A5emKyYCySniRAT7C54Hp5pWmVcwXO+R4Hy6x/bM9gy/yYZHuaOboHiwo1upSQnlan0Hsg9ie/Vs+kUf7zu02PV9KlCTyG3jBiKIlsZOGLA54SbWc7DjPfbKr+BkTb9qqhVwDuM8EeN9lqODi9Wlih7oLMHsk/mMbrz7siFJPgNsL1gy08la42cWqoRjlY4eEwbjXspv+HQGIXVJPuqQxZUlYSiQNIHhZIoM5c9kMEDmQPAE74nm3MJjh9Lpk7IzKeKtUAVehzYm4AHFQR2WwvtrZ0m+sm76MEqSmu2SvJsHkW0LFP2gHmgDatP7Jm+il6cpeH5XVAO5ejmwxEDdiNgFFP9lsqv/1SvsBYwP1JHHF7/FkWSLQuVPdDBA50DgH0ZZTbDSPIDHLXis2W4knWC7BFkf1r5jw1kYzDJMl7VRF5B+COpYDgjvFhZouyBzh7oHAAa2UnVPxT6CqWY/K3Ss0yDPKm0FFQtJcfSxDFK129yzusdwAIF2hcjdMT8al+2iiBaFil7oN0D7QHAvsbruEhVe2pQtperICTNE/+vhXot3AdI1wDdtXckwYnA48JyITp5NpPe63nWbxFdyToiOUdrgAD7DkCYVUCrAupo5mBfwlpHOlI2Y33yQEdb2yd6gkM0sE5XZZUQlf6mx4dTcFzGXKYzhA+Ju08Zzj+o4Ekc5wAXCB8J0chp8esZyArOYH0/TnUJPNPUjVsFL+QmL+/Cy7TyfUw2N3e5tuyBvB5IB4BpfjNNq3PF3UeISm9reJ5LHdOJuyXpAaplLjpsuRt3rSq3Ja+9ALtEpXOFqNRTgmfR6O1RRdn1mOoVyhwWAGzTNdfGXiuOv9LCKQxnznrc47Lp65AH0gGghf1kU4Ngu+1KQpLnMw3On+jzNQ5wLTml4265hvwz4hkp5OYVQxYyu7fFc2CW+vWn2IJjPUvlv59Rgf3i7y4Z/7rQKnjhE/XzD0q/Ip6zGc6HmIwKylT2QLEeCLB3/p7jpCjqe2WPY7qWpY9xqmuWnvw0nCYN6ock93Z+5qwc9juE87UKsLcDWZnWiwqb0BYYJzGT3lxFNUeQZGf5Zyf56YsKmN9U/kniTiuolauq9aJjZSPXNQ90tSegB5/HYXf/aBPJM1/yDzKMXMvXzu3agF+B7mTcp4qEEIXM3l0kuP4/BqgTKRrhkhzgmjjM6WWse5+4+z8a3Ecc7RYpbyuCFFv5o+yByB6wn93bV+sn+GFM8icHVHIAsI0QjRzvsIJnsUkdRsPRbgW2cnDMDiPWhbcPnh26lJVPS+YB77TC6s8Ef7gGS4PyB6e+iGXfFylZG0UqmuA/l7Jrkm9gij+Uif4LOrebQ5GKCxRv9BXyyV5q9xThPPnperX/U6W36Pxa5b+h/MmybaDya8+ujubbr04b/T6y48f04b+pYDoBD4vl/kBLzS8q00sITx7bxX6FvkTb0EvyLzU6U4hKPRUAjugkbL+Vb/Tfk7P/EBGjJFe3Sqf9GrHRj1BZVH2/Yazvt0pfKqOJNU6vMRt9eJ0TJTPJ35NS0/aRvsBnFGGjvaJt0waTfVyD93YaeVnj41kNlkdV+Yjyj9PK8yp/VYPpj2rvbOHzeO/Id4z3gyTzO6L0udF/S3L2u5B0K5P8QdJ1vfCibHshZRc8QoLHdFOZqvPXVPe0+vBNYYeS/7EZ+5Fco69XG7fIoJfkk6eV/kpt36H0RjyXCpcrP0LpL5TeL9smKX1eMtcrGOwrm6p0npvsbt3or1Tfw4wT81X7fP6r34yJXCE7nlBj38axNx674duG/6aBTvZURbTNP1iqC/Ai+Tb+1EBG6s9ikkzMWFdIoadGHTpMzmy3v4pK9cleaZ6kNAq+pKZrhDQtSOkbFFGXtX+MNPRIK1v56VPpJpF0Ok4EhgvtNFlXwbNbJH2ek6TohwpS1brTf1ED9M+6JmNwfEv69lFqv8S0ANZH+S3E+wWle6ruROFOnU9lMjdrkOYOBI7+wPGSMZ+ExbWSrZN9u2lCj1L+z8INwgHCdrLH7OqjvKXbyhu7Kj9M5T8XJtKXuzXpBuJ9+zgRQ2iyu/0EfwQDGat+jJH8ZUr3Ubql2umt1N5O2ZfVqnRusLyVbaq6/uK1zfYbSPBX+vKgfL0/M3yl6jLTfPXEc6DkwvjrKlploWkc7zelB9dIi/lqaxXZuLYNdGXTFMjQHdLZCJ+OxVL+egTJtMiONKv9N3SyQghPTq1DP7aiJ22H7aeTKo+pKDxcSpZVh22N+lRZeF2QljEvr1LYKZOub+MrNPUpvZ0U6cQJ0fQl2V2hdLR6aV/UOlZ6+gpVgulU0oW8rppL2bCJBqcmFlconcBEhmGThAyHw6k0mn2wlfTfI/vsTnuW9HxeWG0wqyxNZh8p+2xcfEGFZ5PgGRo5MfJfUxrnt8Hzc2l9CKgHjTuwCe6UL5QCMZrdW+GwSf0XFnOpHiEswKoqA3n1GmKqKRRbivtEBfTeSk+W9PmS3VRwwmoUkKT3aqWFF9jS31C4REdO2zdwfCbHLu1YHCrv6EkTtaFkysydPeA0TOArwJaCDTQloagah/1Y6yGSnIctkUOJ52W2iXOs2ugvWGDKK9CFoUpyFghGacpezXQfbrxM8ntTxZ+k81yhr1AhFEeeStlkge37umPfoxWKLcuL05mWrlJyBj0YLP2Xa27V6TwrBWKyiJSVIU/FPJIsy8OTuzrBItkQPQCge1clPSkfxXogysRvbzN91+2na3kzAzkz60qgXSJsLqbB7MIKreJP27eZxusVNHO57OtFIccEv5fYHlbbeyvtoTS6DVKQgSwYHSO77tXjzdYZ6qMUbS077xMGSjinvYEYLGIoiUBOk7eSFREk20VaaJKhy9sLQuY8Zn8xQSxkg2X2PB6wO85PxLNPp70ZFawjZBPu27JlkJbJ1Uqzk70us79DAfaYXJmdseiaas2BOAHX8bS3h85iFdp8sNWcpSld2T4sAETvmNfdv4WWbMoLKo8pHkP0AAB252qP5gEWUH6qts+WU+8RmpSPTh/INs/Nujj27HmBFL0pFEf26NPMLOkcLPsahGlFKZyi+4fjGem5TnpsY64Yf0pF0dRPttxJP9o3Pyt4FbhRfb5Z6QLBC91FdbLvPqrpi/cuoxHj/CZUcJvq7Bey0eeIFBRINbLpDKqoX7UxeD4JrageIIm9UbBNx/mU+LAAYIiqtoU5Mi+qtMlVSj6g1bIR0Xkfw75fMJRG4tj/S3AbjsUR9abF7NuNDUxkCA/RIqTfn6brivk8zjVR76axgmdlo21uEfkY4ZJMYSoBt7GUq3G8FVlXqQQ9B+jKnknbpuBg2TSX2+nFCGCKkBS6k7aWv76jsJn58TGG7b43yMC8d1HxlIrqcFzHQrZIKXS6rlN5ms/4JZ6rVfaeUFIKpM0J0cjJrAFCNOl2KV+kDodrV6accx4n54EFluJWKFInXWl9VSRIUtq765JU381Oayk6LAjYD64+Vpgqdl8mbcVnShYJ0chpesElNOs+iw6na2K/YEy/MrY9H6/SYmihhBfKe1EDSSDZr5JgM+npTOP9prL+ZyrsLRRGnnfEaKubeo0RW9l9WeeT1EY4H3p2wbE/3tvcBLuu5rdWbK9tBSU+rJGoDkSdq2C2XFWMUTF1FyqKUVGWLakH/qUr+nUN4jgx6nWNrwBssikJSY6dqWZwifcCZsmmG3DUpwCnAZ+oLMo47kc1x622FxCws3T2Fwodl2+S5Ctsww+JM5VhWtlN43GVnYrjl7ItTBCwx9nhTKbzyqSHtBDt6CC1Qva8ITwhbfeo/JpAHwkhKtVokBTqpMxtrMCer3JvxmSWbCu19YNFx7bzchrdA/ZK9jQmM5ph7nWGuFcYyi9wXEx6NaUkFAWaBGfQi+LGSHuTC6XvQuxRJ+5exTCNR3F8WQgzydo0OsldQB2bsOrwTll75q5Vmp885rPz2Iy3GGhfb3fplc0IrUCHuXnU8J84ZkpRmAB1OC30lkypyObHS1J2As0cQz++wjwuZiq3WQBoVUVUqqUntgsfVR45pwYoJgAk8CygfJTCA7cxlOexwcvKw2kg1/N7XSf7KmmYQZxW4Diw6JtEWpN9PkmC8dgvJ+3MYLbO4b+VHSVEeTzrzwqNYgmn6AVqMZuhsHEd8CItvEX60SalotPHoc4ChN1xw9i2ORWapp0URT6xwDhKfTqBOM9wpPsXe7hm7LFCvrMAsCKyaqhjGT0o5gjkcIrS0UKlrCjGhrKseWAxjrtxK+9gVtIG5xI47Jk4fADwbE8Vm+mZ1u6sbRqjpEvx3Mhw7G7WWd4Gs8N+Wbq0c0UBZ546oK/ss7mAtG+h8w4rAp1lJ0+SByS9ODtLquY5HE2pXGEfvUiwWWGsObkSqn0Kx03YX+bKcG2t02Eik/R1os9RTaHO6iTY4cQuQG2H87DZ5bSGcm5Y/RsHv2My9WR/1u/FC8BHQnqJq0yBVCG+PfgDgdLo5HlPGubhXLYg9A8p/z/BBr2SAskRAw7iKexRFBxbCoWuSJOyKcZi9qbRH5AVDhvj5gcKPKqJUey8sqbm6eNu4i7rt3XtoiwRU1TqhWeXqMJyWAWO7YAaISotlavyReCoujceuST/k7OztsT1PCseL4SjJDvST1c6nFRX7vdopqVr4apzewPisdep2XlWMXfJeHbXhKtIlXpsAzCdTxXk/HAa/6OE8TkB9vuB2pyaOlfGpK+qc1Gksxks581ckhYAinm32IsEBzJi5SuLXC1lqmvFfkxyuKrMDiUhyRZgMJ9lhFlehWxkI2F3fFDAFP1feSN8AHD0o7YA7VKeg95nIdnu/mmx79wUkgAAD71JREFUgBnKtAphaWsSCgEm5WVrcmXeznPDxq3t2tsdPheMx1YaubW113pcnr628+bKvcq2ZF/VSdI6YBEit2PFmIWqcezHEHpnqc9dXCFneywA5ObLVusU32AqFv2z8ZTLC/OAVxjNzzkvP0tGjhrep9g9gCWp0ZJR/crCBDbYwz0CpEV7UknaPo+N6XRpd316WmXNiiKbt83xT9mdnCuigIBX1FD0O6jHfg+9I2EP+4aYLb0c9r8Ah5Vu428iyVNtJ+W0CA84TYFCxH0hTF14PFGkOitxlGJJ3Fln21lH+xxLVVy8vVISmRxNCgAWzCKrkGBCWI7LsKmrijYKtNh5USezhWjk6CPBs3nO91AahupwXCCBTYSoNFeC7wulIy+rWhQWS6dx/dDk2TSvoQG95Z28bBkYFjMAn6E8TFEf8t2bY9hYCsIoTfE65tOD5Mr8HKXpvDLdQo4F8vOnFHMU6O1ADX2idqYJBYqIszNV6/QElrEr3qeXUSrISWO9yQzCc0hOvtyVLbL9DWJkX5ZWpC5quIvpCWSX2Ze5dacW2QAPp426fCPAXul5eT189z9msbwaXq6jxADmkHtzzrOTBGJCOHL8nfkkUkJJ7Cu9ral8IR8mCy/KK8+WDEnGEGNuIc0XyxMwyNkO+lgpsi8MKIlAni0l9RPG8fm8QWCMj9GDgXhukUydEJUWyuEjyfX835oKAC2hGnAaZFVkvhs267J47E9khVK5XjCng7HLams6uB+A07+sTFkqAv6XepIUczh2YBOqsqow+xz1kINHlRnJ8zpb0pKqa8FWw4U/f3vGs5zhxN2gkqHBfW/lvEyZtCY/gpRyx1Qc9hrIp87Df1RI/jCq+KU09VcQiGVU0ehr6MsueB4AdhKikkXr91nCzJwKbDPF05yTp2ulp0ZFQyDDasZTjedg1W945NiXRgXmbD2bir2u3R1whDkci1nK27is7+8L0+bZRox7YXtHyqxGk+lD+tpUrFaXu2A5Nvb3pzXFVo3deZem8oV9HEOMrbAAVBh/O5fJzPA9GeOzB7Z27lC5QpmDFOMc5pDkQeUXC1GppwSPI8FfmMxJTPHbY7+qGuc3Sf2RgwneJvwFwKPCAUIxZAvKOzjWzc+ppJUWAuyC5mTrUlmjgXQxE9iiUxCY6as0/ffCYf3oIrJBnFao31eSaYLZa94E56qXlUI48rzB5iwPJ5SRu4IYN6jGXqkp6UA2kaBBJbVCWLI7/hKcS9/86lkoBa8JLUIhtBUVXKbx0rsQ5lU89sdAJzGARdxFX45K/Qc9qyrXXiYdAOyrlK08qWYnC3Z3VRKJKiW1D56HaWUCFTxIJaOp4vcE2E8j71C9fdFCSURymtQwU5/j8mqoplm25F4ldFXiZClsTYwHGM8eCl5balL051OG4hkF2EaTkg2QHPZHT45d9QcprIv2yDaIg5S9RMi8slNFVnKM1/VP312zMhVY4RkkznOwm0p60itG+4DJ7KBrcwtgNyElIcjxIstoWiVhgcBzp86XCIWQw3EGARdh/8emBctcUhZgJ/jPsYhTxPaU7D5T8r9kEw4hvTem4rVH6QBg7R3pZsuQnyo7S2k6GuokIsWkY4A6d5zkTxaGC1sLxZK9sJktvVdylPssr7Ja7FluuvjC9sfeaBxFjGep4jE8TxAIEP51pxovObmSa2xTWK2+/oqFfJNJfmet4gbShy8T4yExZN4XUUUOWkLAaPanNAEAKmXfCH3eyFR2Sdk3hSF4HsWxlewIhDC0jCS30YP2AGDSnteUzJLeQvctanHcQDO/ZjD76obRF/sv9+yR12BvyBp9HRP9DiQ4mYAx0j0Kx0AhUH4bpSOpZDfJZn6EWSYOQhwFjpHODqvmZRnzEyH6hmAIGyOwWlS+i02x7y6kxe0PJ1jk7AhbXtkdwr6+mkjxdr7Aacncnz7l8Fox2d1vH6WZL4wqcpInhmdTXdiaVIQ3e03A7LPBsS01Og0zuezSVklX71U6paCE1Ec9vwvPcyQEhw3W7aXf2lUSghxPsZSPsbtqCLE8rOarq2nlBdk3nSTjxb+X7K1UGpbeldx7xF3nADXMzVP5rThsvBWqs6f4TxTzZMk+TE/uVfrzFJan8qNVP0WT/3fiGax8T6Xt5NlVI+UuFdgeWvu8tBWYrRqqpBHsxiSW3LSy1nSkx5zJt427lZVtiTG15eFQt4wWHpJxtkkXpvPtOtZUzmPL+XGy7S5sYre1M4lt5JYbOmExl/E8NSmWCmyf4F+pfHd8OKp10W+X3bco92Mm0D9lxnTqNHhvpYnbAPujFkoKJEcf9fc+PLdQw39gwaRA0YLZHJuLt68QleaTYAQvaUSxBg6HPXNrn4ZYJO2OxbLvMurIfLNr4XHgLaHQvQCxpqiXPhtwfE3p+StxptLjBVsFB0qz0YGquI3JmO/BJm5fhknXubrWPwAGCIVSheTOpgcXkuRcJnEw3q/mq9WNOSq1tL5FDf5eLa07QcBpqngeIe4WyK402cB3bCdbv9sFF9CKXQioZiGOXwGdo7wK1hJVq50GklxKwPmCRXjrTZ3ssufq81Qf5sKivlYK/ya5S4WL+AFO6bpELbLoF9TxLiNcknXvaJX/nqCW/6HjzaSjnTYPElyook/Eu7b64NTWoSSwFSfUUiU/XkyS+wDbn6lTGob2l747pMPkT+d56esivXoAMAb77bDnBgnfq1ObcF5pd1NPTZ7j6PqfTiRVmssyW9W08gexfCoUT3aJwPYWsn8BqfhW1mcNFmjHs4RbyTa5urd3CY3rt1nGlRzsMt/92+w7wr2iyXOZMFdFazYIeJKya47auo5+PK/21goFWVsZ5mZRzQ9wXCWej4QWoTupSo0fzAC2VJqmycSoIPMytePapYLZcu93JFTMa06JizzL9fmQcLXQ3T6RCesUNcuaKVRwDseyjHXtcLRoPL9DwIkczWwKOabwF7FdIrlZmqAJ5UtPnmbpf1+j+Wvy2sPs7ZZGbSSsXPYAYJrsW4JT+LUMs+eXsSqy52mL8Mp2C20jW25Mfb/ANkcqqCXJERksSai83U77E1LNPCU++6s2FvW98uEofedfhmecLtdVwp+l4B1hQyEbdFEHuPlzkXzzqPxyKoOZS2k3/szHFlDar6mVFA6zb4nse5YkX2IK7+MKfDSxR5ihboyaOguH7QmYHaZPRUWS3fVhgfQ+QZJjGMIEjna2umRtHUHehswB9schWzhDvLaZMVWpLX/N0DW7LFJDXagHnlMUBH5GXw6mBbPny114kEObacLu1Kw6jtZyrwrbcLtKZbMEs7/QC5lQuwuF0fTgG9jz4SKW6KL9SGXNQrIgGJcXpxpPkZeGUiClrMgPz0hZNkVaFgqFTjQLGEvl77eI8e8EnJXyDa5Qv6qpgukxcf5FNn6mtFnI34b5Fo0E+ED811DF8TS4f2JjmpBH3E1QP4+S1Eil9jhp4yu/DRLIQObfRdLzpnCh7DqXYe4dXBe/2a90bMfH+lEsHEk+XN2S/AGgTeZILUuGuidZztE47HXHXcA7ggWDJqUtujgWEApxivEYJBaSHL0lca4wXfi50EfoSDYoP1WYsAvUsRxsRRPnfpI0yNZ7VPlPYYFg9ltAaFHeLo7BBplFextw9ix4IQGXYH/kUUzYfxjitapwPC1/vFQQ4GVipB9DHCsKknHk0z2D7xPNl3Q6Xmcew6XJfGvL3rRvPEvFZX4wfy5XfZOwSGWfyP6pwuUs42CGuIeIO/ObqtYAOf5ODV/DcxqOB9XC+4JdG3vYa7cvPeEXq26W+GaI/1qaOYQ4d2PXXxWRKe4+ZKi7hlaOkd47pOc9wcaP+cb63j7+nThs8qLR5rExuUK8Zusspea3f5ddQ4i7R8hmV6+U7LvkHwP5xojVf4DpU+MdqfAA0CZlS5S4my5HfFtDw3YZ7fHgKhn5OwJeFpv9bTaLkHOVtwtkjw0Ge7dqz10fyjX2l2U+VH0pBq7UdCCPOVoO7hJN21icSzDMvUmDu1w276ni02TPd5QfqfwY5Z8Wxio/Wuk1win05lDsQnUd4Ee4hQx1JwiHFIQGN1R6ZmKRfrj7uCCZoS6f7iEpfTK4aDqVpPzymOw6mRZ2x2HfVrtYPrhG+Ruk/3piXE7A2Trfj3oaiLtfcbSzgMAaP1bgde3Gq81v4thDOEEWX6T0KtWYfd9V/tvC14lxCHM5lAY3kqOcgpUr3VizzcEGd53a2Vc4XRghPCXYF4jekx/+KXtsHtjkfU3lE3V+h9KLlB4mu4YTV8A8yn0m3uwUd8sZ6q4U8o2BVH1Ovrj7T2zudmktfADoqOA41yQHP6eG71KHzhEOJM6OVLKb2Aaps18SjiWBrRrqVb4P7zKAeexFkktVZ3desZaUbGk+tiCNcbeEoW6c+nA3cXeV8l9T/jjBJvX5SkcKk1g3d7ML6mJkpiPdUvlkgvr/G2Gk8rfJPz+j3o1S/s/Cp1ggo5uOuCaH3YiGud8Sd3fKRrPvduXvFf7IEPd37Cvua9I8Gz9x97Tau0U4XthPPhoobCcMEHZeWXak7LtW+d8qfW+N2xWiz8UFgEwNOZfkcDdfnX9bnX1JeI4j3Avq/EwGKxJf4FpSDujBczgmSIUtj5SUhJIEfEwSi8IlUVhWUvbAhuyB0geAQr11GHPEepPwqeCFUtBiPCMVcBaWQllZR9kDG7oHui8A4Dy9eV0OvkywCVtsELBNmFdJ8Kj0lSmsB2JhBcr865IHotrSjQFAJtuz9Tb8VY8Cl+jOPV+wXVRVhCab/O9Iz4Ub7d3fvhbtfcBOxOSHWGgPJqlkDAGmI99PWkMrl4DZZ3rt+xueCpWEo6RkategfeGs2WC4uzcAmBvtP1R8h0c0aE8V3lJRs1DoasAraNiu/8skOI24M3mJb2Rkk+sZ+vMMX5Q/hqv3OwnhyHEsm0nedAxmT/AunII83BPZnEHsTx31OA4CwgUpx+EskJzZdzj7YD+UoXwU64HuDwDWA9sYHOomUk1cpz8SPhJsYrfisVWBBQSD5RPYVzphuXg+UP5G5YZzhHtD5xsnTdZkquQiKnlBDnhcqBPCkecUaXmetI4x2GognIbc3I7hBEzVfdw2fr8gZieEoUMJmJSyzzFWguH7KKEydfZA0Pm0m88Oc7MZ6m6iN3vIkq9qct8pTBX+pvO3lb4mjCfJ7QoMtmLYQ/y3srbeQ8uIMpU9sK55oBh71q0A0NaTA1JfsPkTcXe5Jnhc6Z5Kd1W6n/AlGty1whPKL2kTKadlD5Q9EN4D62YACN+PskTZA2UPRPBAOQBEcFpZpJs9kP6efTcbsWE0Xw4AG8J1rNeOiMfentgjUfHwLCu5W2K0Sqf9sKgU9jWRUJ+lcGOnYvv//wAAAP//QkM6agAAAAZJREFUAwBA4wTQZG1KegAAAABJRU5ErkJggg==" alt="Brand Logo" class="branding-logo">
+    </div>
+
+    <div class="container">
+        <div class="simulation-area">
+            <h2>Signed Area (Riemann Sums)</h2>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">Drag the points. Watch how area below the axis is subtracted.</p>
+            
+            <div class="stage">
+                <svg id="staticGrid" width="600" height="400" xmlns="http://www.w3.org/2000/svg"></svg>
+                <canvas id="mathCanvas" width="600" height="400"></canvas>
+            </div>
+        </div>
+
+        <div class="controls-area">
+            <h2>Controls</h2>
+            
+            <div class="settings-panel">
+                <div class="slider-row">
+                    <label for="rectCount"><strong>Number of Rectangles ($n$):</strong></label>
+                    <span id="rectCountValue" style="font-weight:bold; font-size:1.2rem;">20</span>
+                </div>
+                <input type="range" id="rectCount" min="1" max="100" value="20">
+                
+                <div class="slider-row" style="margin-top:15px;">
+                    <label for="sumMethod"><strong>Estimation Method:</strong></label>
+                    <select id="sumMethod" style="padding: 5px; border-radius: 4px;">
+                        <option value="left">Left Endpoint</option>
+                        <option value="right">Right Endpoint</option>
+                        <option value="mid" selected>Midpoint</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="results-panel">
+                <h3>Calculations</h3>
+                <p>Width ($\Delta x$): <span id="dxValue">0.00</span></p>
+                <hr style="border: 0; border-top: 1px solid #b6d4fe; margin: 10px 0;">
+                <p>Positive Area: <span id="posAreaValue" style="color: var(--primary-accent); font-weight: bold;">0.00</span></p>
+                <p>Negative Area: <span id="negAreaValue" style="color: var(--negative-accent); font-weight: bold;">0.00</span></p>
+                <hr style="border: 0; border-top: 2px solid #333; margin: 10px 0;">
+                <p>Net Signed Area: <span id="netAreaValue" class="data-highlight">0.00</span></p>
+            </div>
+            
+            <div class="results-panel formula-box">
+                <h3>Key Formulas</h3>
+                <p><strong>Width of Subinterval</strong><br>
+                $$ \Delta x = \frac{b - a}{n} $$</p>
+                <p><strong>Definite Integral</strong><br>
+                $$ \int_{a}^{b} f(x) \, dx = \lim_{n \to \infty} \sum_{i=1}^{n} f(x_i^*) \Delta x $$</p>
+                <p><strong>Midpoint Approximation</strong><br>
+                $$ M_n = \sum_{i=1}^{n} f(\bar{x}_i) \Delta x $$</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State ---
+        // Pre-configured to dip below the axis immediately
+        let controlPoints = [
+            { x: 50, y: 100 },  // P0 (Start)
+            { x: 200, y: 350 }, // P1 (Control 1) - Below axis
+            { x: 400, y: 50 },  // P2 (Control 2)
+            { x: 550, y: 150 }  // P3 (End)
+        ];
+        
+        let rectCount = 20;
+        let sumMethod = 'mid';
+        let draggedPointIndex = null;
+
+        // --- DOM Elements ---
+        const canvas = document.getElementById('mathCanvas');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('rectCount');
+        const methodSelect = document.getElementById('sumMethod');
+        
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        // Move the X-axis to the middle of the screen
+        const groundY = canvasHeight / 2; 
+
+        // --- Generate Static SVG Grid ---
+        function generateStaticGrid() {
+            const svg = document.getElementById('staticGrid');
+            let svgHTML = '';
+            
+            // Draw grid lines
+            for (let i = 0; i <= canvasWidth; i += 50) {
+                svgHTML += `<line x1="${i}" y1="0" x2="${i}" y2="${canvasHeight}" stroke="#e9ecef" stroke-width="1"/>`;
+            }
+            for (let i = 0; i <= canvasHeight; i += 50) {
+                svgHTML += `<line x1="0" y1="${i}" x2="${canvasWidth}" y2="${i}" stroke="#e9ecef" stroke-width="1"/>`;
+            }
+            
+            // X-Axis (Ground) - Made thicker and darker
+            svgHTML += `<line x1="0" y1="${groundY}" x2="${canvasWidth}" y2="${groundY}" stroke="#343a40" stroke-width="3"/>`;
+            
+            svg.innerHTML = svgHTML;
+        }
+
+        // --- Math Engine: Bezier Curve Equation ---
+        function getBezierY(targetX) {
+            let bestT = 0;
+            let bestDist = Infinity;
+
+            for (let t = 0; t <= 1; t += 0.001) {
+                let currentX = Math.pow(1-t, 3)*controlPoints[0].x + 
+                               3*Math.pow(1-t, 2)*t*controlPoints[1].x + 
+                               3*(1-t)*Math.pow(t, 2)*controlPoints[2].x + 
+                               Math.pow(t, 3)*controlPoints[3].x;
+                
+                let dist = Math.abs(currentX - targetX);
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    bestT = t;
+                }
+            }
+
+            let currentY = Math.pow(1-bestT, 3)*controlPoints[0].y + 
+                           3*Math.pow(1-bestT, 2)*bestT*controlPoints[1].y + 
+                           3*(1-bestT)*Math.pow(bestT, 2)*controlPoints[2].y + 
+                           Math.pow(bestT, 3)*controlPoints[3].y;
+            
+            return currentY;
+        }
+
+        // --- Rendering Engine ---
+        function drawSimulation() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            let startX = controlPoints[0].x;
+            let endX = controlPoints[3].x;
+            let width = endX - startX;
+            let dx = width / rectCount;
+            
+            let posArea = 0;
+            let negArea = 0;
+
+            // 1. Draw Rectangles
+            for (let i = 0; i < rectCount; i++) {
+                let rectX = startX + (i * dx);
+                let sampleX;
+
+                if (sumMethod === 'left') sampleX = rectX;
+                else if (sumMethod === 'right') sampleX = rectX + dx;
+                else if (sumMethod === 'mid') sampleX = rectX + (dx / 2);
+
+                let sampleY = getBezierY(sampleX);
+                
+                // Determine if above or below the center axis
+                let rectHeight = groundY - sampleY; 
+
+                ctx.lineWidth = 1;
+
+                if (rectHeight >= 0) {
+                    // Positive Area (Blue, drawing upwards)
+                    ctx.fillStyle = 'rgba(0, 102, 204, 0.2)';
+                    ctx.strokeStyle = 'rgba(0, 102, 204, 0.8)';
+                    ctx.fillRect(rectX, groundY - rectHeight, dx, rectHeight);
+                    ctx.strokeRect(rectX, groundY - rectHeight, dx, rectHeight);
+                    posArea += (rectHeight * dx);
+                } else {
+                    // Negative Area (Red, drawing downwards)
+                    let absHeight = Math.abs(rectHeight);
+                    ctx.fillStyle = 'rgba(230, 57, 70, 0.2)';
+                    ctx.strokeStyle = 'rgba(230, 57, 70, 0.8)';
+                    ctx.fillRect(rectX, groundY, dx, absHeight);
+                    ctx.strokeRect(rectX, groundY, dx, absHeight);
+                    negArea += (absHeight * dx);
+                }
+            }
+
+            // Calculate Net Area
+            let netArea = posArea - negArea;
+
+            // Update UI (Scaling down by 100 for readable generic units)
+            document.getElementById('dxValue').innerText = (dx / 10).toFixed(2);
+            document.getElementById('posAreaValue').innerText = "+" + (posArea / 100).toFixed(1);
+            document.getElementById('negAreaValue').innerText = "-" + (negArea / 100).toFixed(1);
+            
+            const netEl = document.getElementById('netAreaValue');
+            netEl.innerText = (netArea / 100).toFixed(1);
+            netEl.style.color = netArea >= 0 ? 'var(--primary-accent)' : 'var(--negative-accent)';
+
+            // 2. Draw the Smooth Curve
+            ctx.beginPath();
+            ctx.moveTo(controlPoints[0].x, controlPoints[0].y);
+            ctx.bezierCurveTo(
+                controlPoints[1].x, controlPoints[1].y,
+                controlPoints[2].x, controlPoints[2].y,
+                controlPoints[3].x, controlPoints[3].y
+            );
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // 3. Draw Control Points & Handles
+            ctx.strokeStyle = '#adb5bd';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(controlPoints[0].x, controlPoints[0].y);
+            ctx.lineTo(controlPoints[1].x, controlPoints[1].y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(controlPoints[3].x, controlPoints[3].y);
+            ctx.lineTo(controlPoints[2].x, controlPoints[2].y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            controlPoints.forEach((pt, index) => {
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = index === 0 || index === 3 ? '#333' : '#f4a261';
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+        }
+
+        // --- Interaction Logic ---
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            for (let i = 0; i < controlPoints.length; i++) {
+                let pt = controlPoints[i];
+                let dist = Math.sqrt((mouseX - pt.x)**2 + (mouseY - pt.y)**2);
+                if (dist < 15) {
+                    draggedPointIndex = i;
+                    break;
+                }
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (draggedPointIndex !== null) {
+                const rect = canvas.getBoundingClientRect();
+                let mouseX = e.clientX - rect.left;
+                let mouseY = e.clientY - rect.top;
+
+                // Constraint: Keep endpoints horizontally sorted so the curve doesn't fold backwards
+                if (draggedPointIndex === 0) {
+                    if (mouseX > controlPoints[3].x - 50) mouseX = controlPoints[3].x - 50;
+                } else if (draggedPointIndex === 3) {
+                    if (mouseX < controlPoints[0].x + 50) mouseX = controlPoints[0].x + 50;
+                }
+
+                controlPoints[draggedPointIndex].x = mouseX;
+                controlPoints[draggedPointIndex].y = mouseY;
+
+                requestAnimationFrame(drawSimulation);
+            }
+        });
+
+        window.addEventListener('mouseup', () => { draggedPointIndex = null; });
+        canvas.addEventListener('mouseleave', () => { draggedPointIndex = null; });
+
+        // --- UI Events ---
+        slider.addEventListener('input', (e) => {
+            rectCount = parseInt(e.target.value);
+            document.getElementById('rectCountValue').innerText = rectCount;
+            requestAnimationFrame(drawSimulation);
+        });
+
+        methodSelect.addEventListener('change', (e) => {
+            sumMethod = e.target.value;
+            requestAnimationFrame(drawSimulation);
+        });
+
+        // Init
+        generateStaticGrid();
+        drawSimulation();
+
+    </script>
+</body>
+</html>

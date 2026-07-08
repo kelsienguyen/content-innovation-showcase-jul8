@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Photosynthesis & Plant Physiology Lab</title>
+    <!-- Tailwind CSS for modern responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .mono {
+            font-family: 'JetBrains+Mono', monospace;
+        }
+        /* Custom styled light scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #10b981;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col selection:bg-emerald-100 selection:text-emerald-900">
+
+    <!-- Header Section (Light/High Contrast) -->
+    <header class="border-b border-slate-200 bg-white/90 backdrop-blur sticky top-0 z-40 px-4 py-3 sm:px-6 shadow-sm">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-emerald-100 text-emerald-700 rounded-xl border border-emerald-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2">
+                        BioLab <span class="text-emerald-700 font-semibold text-xs px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 rounded-full">Photosynthesis v3.0</span>
+                    </h1>
+                    <p class="text-xs text-slate-500">Advanced physiological plant growth & gas exchange simulator</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="toggle-guide-btn" onclick="openModal('guide-modal')" class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-sm transition flex items-center gap-1">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    Lab Manual
+                </button>
+                <button id="reset-btn" onclick="resetSimulation()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-semibold border border-rose-200 shadow-sm transition flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17"></path></svg>
+                    Reset Lab
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Interactive Equation Highlight Banner -->
+    <section class="max-w-7xl w-full mx-auto px-4 mt-4 lg:px-6">
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex flex-col">
+                <span class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Dynamic Equation Process</span>
+                <span class="text-[10px] text-slate-500">Reactants glow based on parameter intensities</span>
+            </div>
+            <!-- Equation Visual Flex -->
+            <div class="flex flex-wrap items-center justify-center gap-2 text-xs md:text-sm font-semibold text-slate-700">
+                <!-- Reactants -->
+                <div id="eq-co2" class="px-2.5 py-1.5 rounded-lg border border-slate-100 transition-all duration-300">
+                    6CO₂ <span class="text-[9px] block text-slate-400 text-center">Carbon Dioxide</span>
+                </div>
+                <span>+</span>
+                <div id="eq-h2o" class="px-2.5 py-1.5 rounded-lg border border-slate-100 transition-all duration-300">
+                    6H₂O <span class="text-[9px] block text-slate-400 text-center">Water</span>
+                </div>
+                <span>+</span>
+                <div id="eq-light" class="px-2.5 py-1.5 rounded-lg border border-slate-100 transition-all duration-300">
+                    Light Energy <span class="text-[9px] block text-slate-400 text-center">Photons</span>
+                </div>
+                
+                <span class="text-slate-400">⚡──➔</span>
+
+                <!-- Products -->
+                <div id="eq-glucose" class="px-2.5 py-1.5 rounded-lg border border-slate-100 transition-all duration-300">
+                    C₆H₁₂O₆ <span class="text-[9px] block text-slate-400 text-center">Glucose (Sugar)</span>
+                </div>
+                <span>+</span>
+                <div id="eq-o2" class="px-2.5 py-1.5 rounded-lg border border-slate-100 transition-all duration-300">
+                    6O₂ <span class="text-[9px] block text-emerald-500 text-center font-bold">Oxygen (Gas)</span>
+                </div>
+            </div>
+            <!-- Quick Formula Reference -->
+            <button onclick="openModal('theory-modal')" class="text-xs text-emerald-600 hover:text-emerald-700 hover:underline flex items-center gap-1">
+                View Scientific Theory
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </button>
+        </div>
+    </section>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- LEFT COLUMN: CONTROLS (4 Cols) -->
+        <section class="lg:col-span-4 flex flex-col gap-6">
+            <!-- Parameter Control Panel -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Environmental Control
+                    </h2>
+                    <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                        <button onclick="setPlantType('aquatic')" id="btn-plant-aquatic" class="px-2 py-1 text-xs font-semibold rounded-md transition-all bg-white text-slate-900 shadow-sm border border-slate-200">Aquatic</button>
+                        <button onclick="setPlantType('terrestrial')" id="btn-plant-terrestrial" class="px-2 py-1 text-xs font-semibold rounded-md transition-all text-slate-500 hover:text-slate-900">Terrestrial</button>
+                    </div>
+                </div>
+
+                <!-- Control Sliders -->
+                <div class="space-y-5">
+                    
+                    <!-- Slider 1: Light Intensity -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                <span id="light-icon-container" class="text-amber-500">☀️</span>
+                                Light Intensity
+                            </label>
+                            <span id="light-val" class="text-xs font-bold text-amber-600 mono bg-amber-50 px-2 py-0.5 rounded border border-amber-100">80%</span>
+                        </div>
+                        <input type="range" id="light-intensity" min="0" max="100" value="80" oninput="updateParameters()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>0% (Dark)</span>
+                            <span>Optimal (70-90)</span>
+                            <span>100% (Saturated)</span>
+                        </div>
+                    </div>
+
+                    <!-- Wavelength Spectrum Selector -->
+                    <div>
+                        <label class="text-xs font-semibold text-slate-700 block mb-1.5">Light Wavelength (Color)</label>
+                        <div class="grid grid-cols-4 gap-1.5">
+                            <button onclick="setWavelength('white')" id="wave-white" class="wave-btn py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition">
+                                White <span class="block text-[8px] text-slate-400">All Spectrum</span>
+                            </button>
+                            <button onclick="setWavelength('blue')" id="wave-blue" class="wave-btn py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-500 transition">
+                                Blue <span class="block text-[8px] text-blue-600 font-semibold">450 nm</span>
+                            </button>
+                            <button onclick="setWavelength('red')" id="wave-red" class="wave-btn py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-500 transition">
+                                Red <span class="block text-[8px] text-red-600 font-semibold">660 nm</span>
+                            </button>
+                            <button onclick="setWavelength('green')" id="wave-green" class="wave-btn py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-500 transition">
+                                Green <span class="block text-[8px] text-emerald-600 font-semibold">530 nm</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Slider 2: Carbon Dioxide -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                <span class="text-sky-500 font-bold">💨</span>
+                                CO₂ Concentration
+                            </label>
+                            <span id="co2-val" class="text-xs font-bold text-sky-600 mono bg-sky-50 px-2 py-0.5 rounded border border-sky-100">400 ppm</span>
+                        </div>
+                        <input type="range" id="co2-concen" min="0" max="2000" value="400" step="50" oninput="updateParameters()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>0 ppm (Starved)</span>
+                            <span>400 ppm (Atm)</span>
+                            <span>2000 ppm</span>
+                        </div>
+                    </div>
+
+                    <!-- Slider 3: Water Availability -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                <span class="text-blue-500">💧</span>
+                                Water Supply <span id="water-label-type" class="text-[10px] text-slate-400 font-normal">(Flow Rate)</span>
+                            </label>
+                            <span id="water-val" class="text-xs font-bold text-blue-600 mono bg-blue-50 px-2 py-0.5 rounded border border-blue-100">75%</span>
+                        </div>
+                        <input type="range" id="water-avail" min="0" max="100" value="75" oninput="updateParameters()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none">
+                        <div id="water-bounds" class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>Stagnant</span>
+                            <span>Optimal Flow</span>
+                            <span>High Torrent</span>
+                        </div>
+                    </div>
+
+                    <!-- Slider 4: Temperature -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                <span class="text-rose-500">🌡️</span>
+                                Temperature
+                            </label>
+                            <span id="temp-val" class="text-xs font-bold text-rose-600 mono bg-rose-50 px-2 py-0.5 rounded border border-rose-100">25°C</span>
+                        </div>
+                        <input type="range" id="temperature" min="0" max="50" value="25" step="1" oninput="updateParameters()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-500 focus:outline-none">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>0°C (Freezing)</span>
+                            <span>25°C (Ideal)</span>
+                            <span>50°C (Denature)</span>
+                        </div>
+                    </div>
+
+                    <!-- Chemicals / Reagents Toggles -->
+                    <div id="chemical-controls" class="pt-4 border-t border-slate-100 space-y-3">
+                        <span class="text-xs font-semibold text-slate-500 block">Chemical Reagents</span>
+                        <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                            <div class="flex flex-col">
+                                <span class="text-xs font-semibold text-slate-700">Bromothymol Blue (BTB)</span>
+                                <span class="text-[10px] text-slate-400">CO₂ pH indicator chemical dye</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="btb-toggle" class="sr-only peer" onchange="toggleBTB()">
+                                <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:width-4 after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Quiz/Lab Challenges Panel -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex-1 flex flex-col">
+                <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Lab Challenge Logbook
+                </h3>
+                
+                <div class="space-y-2 flex-1 overflow-y-auto max-h-[220px] pr-1" id="challenges-container">
+                    <!-- Challenge Items populated dynamically -->
+                </div>
+
+                <!-- Challenge Info Banner -->
+                <div id="challenge-banner" class="hidden mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-col gap-1.5">
+                    <div class="flex justify-between items-center">
+                        <span id="challenge-title" class="text-xs font-bold text-emerald-800">Challenge Active</span>
+                        <button onclick="abandonChallenge()" class="text-[10px] text-rose-600 hover:underline">Cancel</button>
+                    </div>
+                    <p id="challenge-desc" class="text-[11px] text-slate-600 leading-relaxed"></p>
+                    <div class="flex items-center justify-between mt-1 pt-1.5 border-t border-emerald-100">
+                        <span class="text-[10px] text-slate-500">Target Value Progress:</span>
+                        <span id="challenge-progress" class="text-xs font-extrabold text-emerald-700 mono">0%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CENTER COLUMN: INTERACTIVE VISUALIZER CANVAS (5 Cols) -->
+        <section class="lg:col-span-5 flex flex-col gap-4">
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex-1 flex flex-col">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex flex-col">
+                        <span id="sim-title" class="text-sm font-bold text-slate-900">Live Incubator Chamber</span>
+                        <span class="text-[10px] text-slate-400">Interactive physiological physics simulation</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100 text-[10px] font-mono text-emerald-700">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                        SIM_ACTIVE
+                    </div>
+                </div>
+
+                <!-- Simulation Visual Container -->
+                <div class="relative flex-1 bg-slate-50 rounded-xl overflow-hidden border border-slate-200 min-h-[350px]" id="canvas-container">
+                    <!-- Dynamic Anatomical Annotations Box (Floating over canvas) -->
+                    <div class="absolute top-4 right-4 bg-white/95 border border-slate-200 rounded-lg p-2 text-[9px] text-slate-500 pointer-events-none shadow-sm flex flex-col gap-1 z-10">
+                        <span class="font-bold text-slate-700 uppercase">Interactive Elements:</span>
+                        <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded bg-amber-400"></span> 💡 Light Source (Upper-Left)</div>
+                        <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded bg-emerald-500"></span> 🌿 Photosynthetic Plant Body</div>
+                        <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded bg-sky-300"></span> ☁️ CO₂ Diffuser (Aquatic Bottom)</div>
+                        <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded bg-rose-400"></span> 🌡️ Thermometer (Far-Right)</div>
+                    </div>
+
+                    <canvas id="simCanvas" class="absolute inset-0 w-full h-full block cursor-crosshair"></canvas>
+                    
+                    <!-- Floating Indicators inside canvas -->
+                    <div class="absolute bottom-4 left-4 right-4 flex justify-between gap-2 pointer-events-none">
+                        <!-- Custom Alert Dialog Overlay Box -->
+                        <div id="custom-toast" class="hidden px-3 py-2 bg-slate-900/95 border border-slate-700 text-xs text-slate-200 rounded-lg shadow-md max-w-xs transition-opacity duration-300">
+                            <!-- Populated on notification -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Interaction Bar -->
+                <div class="grid grid-cols-2 gap-2 mt-3">
+                    <button onclick="injectCO2()" class="px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 hover:border-sky-500/40 text-sky-600 text-xs font-semibold rounded-xl transition shadow-sm flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Inject Concentrated CO₂
+                    </button>
+                    <button onclick="waterPlantAction()" id="water-action-btn" class="px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 hover:border-blue-500/40 text-blue-600 text-xs font-semibold rounded-xl transition shadow-sm flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                        Flash Flush Water
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT COLUMN: ANALYTICS & STATS (3 Cols) -->
+        <section class="lg:col-span-3 flex flex-col gap-6">
+            
+            <!-- Real-time Metrics Dashboard -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col gap-4">
+                <h3 class="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100">Physiological Telemetry</h3>
+
+                <!-- Primary Gauge Widget -->
+                <div class="flex flex-col items-center py-2 relative">
+                    <!-- Gauge Canvas -->
+                    <canvas id="gaugeCanvas" class="w-36 h-20 block"></canvas>
+                    <div class="text-center -mt-2">
+                        <span id="rate-value" class="text-2xl font-black text-slate-950 tracking-tight mono">0.0</span>
+                        <span class="text-xs text-emerald-600 font-semibold block">mL / hr (O₂ Production)</span>
+                    </div>
+                </div>
+
+                <!-- Secondary Metrics -->
+                <div class="space-y-2.5">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block tracking-wider">Limiting Factor</span>
+                            <span id="limiting-factor-label" class="text-xs font-bold text-amber-500">Analyzing...</span>
+                        </div>
+                        <div class="p-1.5 bg-amber-500/10 text-amber-600 rounded-lg">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block tracking-wider">Photosynthetic Efficiency</span>
+                            <span id="efficiency-label" class="text-xs font-bold text-emerald-600 mono">0.0%</span>
+                        </div>
+                        <div class="p-1.5 bg-emerald-500/10 text-emerald-600 rounded-lg">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Molecular / Microscopic Viewport (Chloroplast Process) -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                        Chloroplast Anatomy View
+                    </span>
+                    <span id="stomata-status" class="text-[9px] bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 text-emerald-700 font-semibold">Stomata: Open</span>
+                </div>
+                <!-- Microscopic Visual Space -->
+                <div class="relative bg-white rounded-xl h-[125px] overflow-hidden border border-slate-200">
+                    <canvas id="chloroCanvas" class="absolute inset-0 w-full h-full block"></canvas>
+                </div>
+                <div class="grid grid-cols-2 gap-1 mt-2 text-[8px] text-slate-500 font-medium">
+                    <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-sky-400 inline-block"></span> CO₂ (Carbon Dioxide)</div>
+                    <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span> H₂O (Water Molecule)</div>
+                    <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span> O₂ (Oxygen Produced)</div>
+                    <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block"></span> Glucose Carbohydrate</div>
+                </div>
+            </div>
+
+            <!-- Graph Widget -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex-1 flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-1.5">
+                    <span class="text-xs font-bold text-slate-900">Gas Exchange Over Time</span>
+                    <span class="text-[9px] text-slate-400 font-semibold">O₂ Production Profile</span>
+                </div>
+                <div class="relative flex-1 bg-slate-50 rounded-lg min-h-[100px] border border-slate-100">
+                    <canvas id="chartCanvas" class="absolute inset-0 w-full h-full block"></canvas>
+                </div>
+            </div>
+            
+        </section>
+
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="border-t border-slate-200 bg-white py-4 px-6 text-center text-xs text-slate-400">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p>© 2026 Virtual Science Laboratory Environments. Developed for interactive biological science education.</p>
+            <div class="flex gap-4 font-semibold">
+                <a href="#" onclick="openModal('theory-modal'); return false;" class="text-emerald-600 hover:text-emerald-700 transition">Photosynthesis Theory</a>
+                <span>•</span>
+                <a href="#" onclick="openModal('guide-modal'); return false;" class="text-emerald-600 hover:text-emerald-700 transition">User Manual</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: LAB MANUAL / USER GUIDE -->
+    <div id="guide-modal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full p-6 shadow-xl overflow-y-auto max-h-[85vh]">
+            <div class="flex justify-between items-start pb-4 border-b border-slate-100 mb-4">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    📖 Photosynthesis Lab User Guide
+                </h3>
+                <button onclick="closeModal('guide-modal')" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+            </div>
+            <div class="space-y-4 text-xs text-slate-600 leading-relaxed">
+                <p>Welcome to the virtual physiology laboratory! This interactive lab simulates how photoautotrophs (plants) synthesize light energy into chemical energy. You can manipulate five core variable factors to observe how the rate of oxygen generation reacts.</p>
+                
+                <h4 class="text-sm font-bold text-emerald-700">Core Environmental Variables:</h4>
+                <ul class="list-disc pl-5 space-y-1.5">
+                    <li><strong>Light Intensity (0% - 100%):</strong> Governs the energetic photolytic potential in Photosystem II. At low levels, it acts as a severe bottleneck. At high levels, photosynthesis saturates.</li>
+                    <li><strong>Wavelength (Color):</strong> Plants absorb photon energy primarily via Chlorophyll $A$ and $B$. Under White, Blue ($450\text{nm}$), or Red ($660\text{nm}$) light, rate processes are high. Under Green ($530\text{nm}$) light, photosynthetic yield plunges dramatically because plants reflect green light.</li>
+                    <li><strong>Carbon Dioxide ($CO_2$):</strong> The carbon input building block utilized in the Light-Independent Reactions (Calvin Cycle). Sub-400 ppm levels restrict carbohydrate production. Levels beyond 1200 ppm lead to ribulose-1,5-bisphosphate carboxylase/oxygenase (RuBisCO) enzyme saturation.</li>
+                    <li><strong>Water Availability:</strong> Essential for standard cell turgidity. In **Terrestrial** Sunflower mode, water stress closed stomatal pores to conserve water, blocking $CO_2$ entry, stalling photosynthesis.</li>
+                    <li><strong>Temperature (0°C - 50°C):</strong> Enzyme catalysts (like RuBisCO) have precise activation thresholds. Extreme cold freezes cellular dynamics. Extreme heat ($>44^\circ\text{C}$) denatures chemical enzymes, stopping gas production entirely.</li>
+                </ul>
+
+                <h4 class="text-sm font-bold text-emerald-700">Using Chemical Indicators (Bromothymol Blue):</h4>
+                <p>Enabling BTB turns the water indicator into a real-time chemical color analyzer. Adding Carbon Dioxide turns water acidic, turning BTB yellow. When the plant performs photosynthesis, it extracts dissolved $CO_2$, increasing the pH and turning the indicator blue-violet.</p>
+
+                <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                    <span class="text-xs font-bold text-emerald-800 block mb-1">💡 Tips for Success:</span>
+                    <p>Try working your way through the **Challenge Logbook** in the bottom-left panel. Completing challenges helps you master plant physiology concepts step-by-step!</p>
+                </div>
+            </div>
+            <div class="flex justify-end pt-4 mt-4 border-t border-slate-100">
+                <button onclick="closeModal('guide-modal')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition">Start Experimenting</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: BOTANICAL SCIENCE THEORY -->
+    <div id="theory-modal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full p-6 shadow-xl overflow-y-auto max-h-[85vh]">
+            <div class="flex justify-between items-start pb-4 border-b border-slate-100 mb-4">
+                <h3 class="text-lg font-bold text-slate-900">
+                    🔬 The Biology of Photosynthesis
+                </h3>
+                <button onclick="closeModal('theory-modal')" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+            </div>
+            <div class="space-y-4 text-xs text-slate-600 leading-relaxed">
+                <p>The net chemical process of oxygenic photosynthesis is represented by the following chemical equation:</p>
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-center text-sm font-mono text-emerald-700">
+                    6CO₂ + 6H₂O + light ──> C₆H₁₂O₆ + 6O₂
+                </div>
+
+                <h4 class="text-sm font-bold text-emerald-700">1. Light Reactions (Thylakoid Membrane)</h4>
+                <p>Photons of light strike chlorophyll pigment molecules inside Photosystem II. This energy excites electrons which enter an Electron Transport Chain (ETC). To replace these lost electrons, water molecules undergo photolysis: split into protons ($H^+$), electrons, and free oxygen ($O_2$). The free oxygen molecules diffuse out of the leaves as a gaseous byproduct (the bubbles observed in aquatic setups!).</p>
+
+                <h4 class="text-sm font-bold text-emerald-700">2. Dark Reactions (Stroma)</h4>
+                <p>The Calvin Cycle operates independently of instantaneous light, utilizing the chemical carriers ATP and NADPH formed in the light reactions. The key enzyme **RuBisCO** fixes Carbon Dioxide ($CO_2$) onto organic substrates, constructing glyceraldehyde-3-phosphate (G3P) molecules which join to construct Glucose sugar.</p>
+
+                <h4 class="text-sm font-bold text-emerald-700">3. Liebig's Law of the Minimum (Limiting Factors)</h4>
+                <p>Photosynthesis behaves according to limiting resource thresholds. The overall speed is strictly limited by the single environmental input factor which is in shortest supply. Raising the CO₂ will not accelerate photosynthesis if the plant is starved of photons (Light Intensity). Finding the balance of factors is crucial for optimal agricultural yield.</p>
+            </div>
+            <div class="flex justify-end pt-4 mt-4 border-t border-slate-100">
+                <button onclick="closeModal('theory-modal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN JAVASCRIPT PROGRAM -->
+    <script>
+        // Simulation Globals
+        let plantType = 'aquatic'; // 'aquatic' or 'terrestrial'
+        let lightIntensity = 80;  // 0 - 100
+        let lightWavelength = 'white'; // 'white', 'blue', 'red', 'green'
+        let co2Concentration = 400; // ppm
+        let waterAvailability = 75; // 0 - 100
+        let temperature = 25; // celsius
+        let btbEnabled = false; // Bromothymol Blue dye
+
+        // Theoretical Math Parameters
+        let currentO2Rate = 0; // mL/hr
+        let rawEfficiency = 0; // %
+        let currentLimitingFactor = 'None';
+        
+        // Interactive state trackers
+        let injectCo2Coeff = 0; // Temporary boost from user actions
+        let flushWaterCoeff = 0;
+        let isWilted = false;
+
+        // Challenge Management System
+        let challenges = [
+            {
+                id: 'opt',
+                name: '1. Cellular Bio-Engine',
+                desc: 'Configure environment variables to reach a maximized O₂ production of 95.0 mL/hr or more.',
+                check: () => currentO2Rate >= 95.0,
+                completed: false
+            },
+            {
+                id: 'green',
+                name: '2. The Green Reflectance Paradox',
+                desc: 'Set the light wavelength to Green (530 nm) with 100% light intensity, and notice how low the rate plunges (<20 mL/hr) due to pigment reflection.',
+                check: () => lightWavelength === 'green' && lightIntensity === 100 && currentO2Rate < 20,
+                completed: false
+            },
+            {
+                id: 'starch',
+                name: '3. Stomatal Drought Guard',
+                desc: 'Switch to Terrestrial Sunflower and drop Water Availability to under 15% to trigger stomata shutdown, starving the plant cells of carbon.',
+                check: () => plantType === 'terrestrial' && waterAvailability < 15 && isWilted,
+                completed: false
+            },
+            {
+                id: 'enzyme',
+                name: '4. Thermal Denaturation',
+                desc: 'Exceed 46°C to permanently denature the protein RuBisCO enzyme complexes, dropping oxygen rate to 0 mL/hr.',
+                check: () => temperature >= 46 && currentO2Rate === 0,
+                completed: false
+            },
+            {
+                id: 'btb',
+                name: '5. Acidic Blue-Yellow Turn',
+                desc: 'Turn on Bromothymol Blue (BTB), and adjust CO₂ to 1800 ppm to saturate the solvent and turn the flask completely Yellow.',
+                check: () => btbEnabled && co2Concentration >= 1800,
+                completed: false
+            }
+        ];
+        let activeChallengeId = null;
+
+        // Canvas setups
+        let canvas, ctx;
+        let gaugeCanvas, gaugeCtx;
+        let chartCanvas, chartCtx;
+        let chloroCanvas, chloroCtx;
+
+        // Animation arrays
+        let bubbles = [];
+        let molecules = [];
+        let historyData = Array(30).fill(0); // For time series chart
+
+        // Asset setup inside runtime
+        window.onload = function() {
+            // Setup DOM components
+            canvas = document.getElementById('simCanvas');
+            ctx = canvas.getContext('2d');
+            gaugeCanvas = document.getElementById('gaugeCanvas');
+            gaugeCtx = gaugeCanvas.getContext('2d');
+            chartCanvas = document.getElementById('chartCanvas');
+            chartCtx = chartCanvas.getContext('2d');
+            chloroCanvas = document.getElementById('chloroCanvas');
+            chloroCtx = chloroCanvas.getContext('2d');
+
+            // Responsive resizing
+            window.addEventListener('resize', resizeCanvases);
+            resizeCanvases();
+
+            // Populate Lab Challenges list
+            renderChallenges();
+
+            // Start Animation Loop
+            requestAnimationFrame(tick);
+
+            // Fetch initial parameter calculation
+            updateParameters();
+
+            // Setup chart update timer (every 1 second)
+            setInterval(updateChartData, 1000);
+        };
+
+        function resizeCanvases() {
+            const cc = document.getElementById('canvas-container');
+            canvas.width = cc.clientWidth;
+            canvas.height = cc.clientHeight;
+
+            gaugeCanvas.width = gaugeCanvas.parentElement.clientWidth;
+            gaugeCanvas.height = 100;
+
+            chartCanvas.width = chartCanvas.parentElement.clientWidth;
+            chartCanvas.height = chartCanvas.parentElement.clientHeight;
+
+            chloroCanvas.width = chloroCanvas.parentElement.clientWidth;
+            chloroCanvas.height = 125;
+        }
+
+        // State Update Engine (Main Mathematical Model for Photosynthesis)
+        function updateParameters() {
+            // Read UI values
+            lightIntensity = parseFloat(document.getElementById('light-intensity').value);
+            co2Concentration = parseFloat(document.getElementById('co2-concen').value);
+            waterAvailability = parseFloat(document.getElementById('water-avail').value);
+            temperature = parseFloat(document.getElementById('temperature').value);
+
+            // Apply manual action decays/inputs
+            let dynamicCO2 = co2Concentration + (injectCo2Coeff * 500);
+            let dynamicWater = waterAvailability + (flushWaterCoeff * 30);
+            dynamicWater = Math.min(100, Math.max(0, dynamicWater));
+
+            // Decays
+            if (injectCo2Coeff > 0) injectCo2Coeff -= 0.005;
+            if (flushWaterCoeff > 0) flushWaterCoeff -= 0.005;
+
+            // 1. Light Effect (Wavelength Specific Absorption Coefficients)
+            let waveCoeff = 1.0; // White
+            if (lightWavelength === 'blue') waveCoeff = 0.90;
+            if (lightWavelength === 'red') waveCoeff = 0.82;
+            if (lightWavelength === 'green') waveCoeff = 0.12; // High reflectance
+
+            let lightInput = (lightIntensity / 100) * waveCoeff;
+            // Michaelis-Menten Photosynthetic Photon Flux response curve
+            let lightScore = (lightInput / (lightInput + 0.25)) * 100;
+
+            // 2. Carbon Dioxide Carbon Fixation limits
+            // Atmospheric baseline = 400ppm. RuBisCO saturation = ~1200ppm
+            let normalizedCO2 = dynamicCO2 / 2000;
+            let co2Score = (normalizedCO2 / (normalizedCO2 + 0.18)) * 125;
+            co2Score = Math.min(100, co2Score);
+
+            // 3. Water Stress factor (Impacts Terrestrial Stomata dramatically, aquatic moderately)
+            let waterScore = 100;
+            isWilted = false;
+            if (plantType === 'terrestrial') {
+                if (dynamicWater < 20) {
+                    // Closed stomata drought condition
+                    let droughtSeverity = (20 - dynamicWater) / 20; // 0 to 1
+                    waterScore = (1 - droughtSeverity) * 30; // Drops rate drastically
+                    isWilted = true;
+                    // Extreme drought starves CO2 intake as stomata seal shut
+                    co2Score *= (1 - (droughtSeverity * 0.9)); 
+                } else if (dynamicWater > 85) {
+                    // Waterlogged soil reduces root oxygen intake causing slight stress
+                    let waterlogSeverity = (dynamicWater - 85) / 15;
+                    waterScore = 100 - (waterlogSeverity * 15);
+                } else {
+                    waterScore = 100;
+                }
+            } else {
+                // Aquatic: Elodea does not wilt. Flooding is always optimal.
+                // However, stagnant flow (low flow slider) slightly limits gas transport rates
+                if (dynamicWater < 30) {
+                    waterScore = 70 + (dynamicWater / 30) * 30;
+                }
+            }
+
+            // 4. Enzymatic Temperature Factor
+            // Standard enzymes have low kinetic activation at 0C, optimum at 28C, denature rapidly at 44C+
+            let tempScore = 0;
+            if (temperature <= 45) {
+                // Skewed Gaussian/bell curve
+                tempScore = Math.max(0, 100 * Math.exp(-Math.pow(temperature - 28, 2) / (2 * Math.pow(9, 2))));
+            } else {
+                // Permanently denatures
+                tempScore = 0;
+            }
+
+            // 5. Liebig's Law of the Minimum (Bottleneck evaluation)
+            let scores = [
+                { name: 'Light Level', val: lightScore },
+                { name: 'Carbon Dioxide', val: co2Score },
+                { name: 'Water Deficit', val: waterScore },
+                { name: 'Temperature', val: tempScore }
+            ];
+
+            // Sort to find minimum score
+            scores.sort((a, b) => a.val - b.val);
+            let absoluteMin = scores[0];
+
+            currentLimitingFactor = absoluteMin.name;
+            rawEfficiency = absoluteMin.val;
+
+            // Scaled maximum O2 output potential (e.g., 100 mL/hr max)
+            currentO2Rate = (rawEfficiency / 100) * 100;
+            
+            // Apply slight random physiological flickering noise (0.5% max)
+            if (currentO2Rate > 1 && temperature < 45) {
+                currentO2Rate += (Math.random() - 0.5) * 0.4;
+            }
+            currentO2Rate = Math.max(0, Math.min(100, currentO2Rate));
+
+            // Update DOM Text nodes
+            document.getElementById('light-val').innerText = `${Math.round(lightIntensity)}%`;
+            document.getElementById('co2-val').innerText = `${Math.round(dynamicCO2)} ppm`;
+            document.getElementById('water-val').innerText = `${Math.round(dynamicWater)}%`;
+            document.getElementById('temp-val').innerText = `${Math.round(temperature)}°C`;
+            document.getElementById('rate-value').innerText = currentO2Rate.toFixed(1);
+            document.getElementById('efficiency-label').innerText = `${rawEfficiency.toFixed(1)}%`;
+            document.getElementById('limiting-factor-label').innerText = currentO2Rate < 0.5 ? 'None (No Process)' : currentLimitingFactor;
+
+            // Customize color coding of Limiting Factor for alerts
+            let labelNode = document.getElementById('limiting-factor-label');
+            labelNode.className = "text-xs font-bold";
+            if (currentO2Rate < 0.5) {
+                labelNode.classList.add("text-slate-400");
+            } else if (currentLimitingFactor === 'Light Level') {
+                labelNode.classList.add("text-amber-500");
+            } else if (currentLimitingFactor === 'Carbon Dioxide') {
+                labelNode.classList.add("text-sky-500");
+            } else if (currentLimitingFactor === 'Water Deficit') {
+                labelNode.classList.add("text-blue-500");
+            } else if (currentLimitingFactor === 'Temperature') {
+                labelNode.classList.add("text-rose-500");
+            } else {
+                labelNode.classList.add("text-emerald-500");
+            }
+
+            // Update equation glows based on current intensity values
+            updateEquationGlows(dynamicCO2, dynamicWater);
+
+            // Challenge validations
+            checkChallenges();
+        }
+
+        // Dynamically style the formula banner based on state
+        function updateEquationGlows(co2, water) {
+            const co2Elem = document.getElementById('eq-co2');
+            const h2oElem = document.getElementById('eq-h2o');
+            const lightElem = document.getElementById('eq-light');
+            const gluElem = document.getElementById('eq-glucose');
+            const o2Elem = document.getElementById('eq-o2');
+
+            // Carbon Dioxide Glow
+            if (co2 > 1200) {
+                co2Elem.className = "px-2.5 py-1.5 rounded-lg border border-sky-300 bg-sky-50 text-sky-800 shadow-sm";
+            } else if (co2 < 150) {
+                co2Elem.className = "px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 opacity-60";
+            } else {
+                co2Elem.className = "px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700";
+            }
+
+            // Water Glow
+            if (water > 70) {
+                h2oElem.className = "px-2.5 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-800 shadow-sm";
+            } else if (water < 20) {
+                h2oElem.className = "px-2.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-500";
+            } else {
+                h2oElem.className = "px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700";
+            }
+
+            // Light Glow
+            if (lightIntensity > 75) {
+                lightElem.className = "px-2.5 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 shadow-sm";
+            } else if (lightIntensity < 15) {
+                lightElem.className = "px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 opacity-60";
+            } else {
+                lightElem.className = "px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700";
+            }
+
+            // Products (Scale based on current photosynthesizing rate)
+            if (currentO2Rate > 60) {
+                o2Elem.className = "px-2.5 py-1.5 rounded-lg border border-emerald-400 bg-emerald-50 text-emerald-800 shadow-sm scale-105";
+                gluElem.className = "px-2.5 py-1.5 rounded-lg border border-emerald-400 bg-emerald-50 text-emerald-800 shadow-sm scale-105";
+            } else if (currentO2Rate < 5) {
+                o2Elem.className = "px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 opacity-50";
+                gluElem.className = "px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-400 opacity-50";
+            } else {
+                o2Elem.className = "px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700";
+                gluElem.className = "px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700";
+            }
+        }
+
+        // Interface helper actions
+        function setPlantType(type) {
+            plantType = type;
+            const btnAq = document.getElementById('btn-plant-aquatic');
+            const btnTe = document.getElementById('btn-plant-terrestrial');
+            const simTitle = document.getElementById('sim-title');
+            const waterLabel = document.getElementById('water-label-type');
+            const waterBounds = document.getElementById('water-bounds');
+
+            if (type === 'aquatic') {
+                btnAq.className = "px-2 py-1 text-xs font-semibold rounded-md transition-all bg-white text-slate-900 shadow-sm border border-slate-200";
+                btnTe.className = "px-2 py-1 text-xs font-semibold rounded-md transition-all text-slate-400 hover:text-slate-900";
+                simTitle.innerText = "Live Incubator Chamber (Aquatic Elodea)";
+                waterLabel.innerText = "(Water Current)";
+                waterBounds.innerHTML = `<span>Stagnant</span><span>Optimal Flow</span><span>Torrential</span>`;
+            } else {
+                btnTe.className = "px-2 py-1 text-xs font-semibold rounded-md transition-all bg-white text-slate-900 shadow-sm border border-slate-200";
+                btnAq.className = "px-2 py-1 text-xs font-semibold rounded-md transition-all text-slate-400 hover:text-slate-900";
+                simTitle.innerText = "Soil Greenhouse Chamber (Terrestrial Sunflower)";
+                waterLabel.innerText = "(Soil Moisture)";
+                waterBounds.innerHTML = `<span>Bone Dry</span><span>Saturated</span><span>Waterlogged</span>`;
+            }
+            bubbles = []; // Clear current visuals
+            updateParameters();
+            showToast(`Environment transitioned to ${type === 'aquatic' ? 'Aquatic Beaker Lab' : 'Soil Greenhouse Chamber'}.`);
+        }
+
+        function setWavelength(color) {
+            lightWavelength = color;
+            document.querySelectorAll('.wave-btn').forEach(btn => {
+                btn.className = "wave-btn py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-500 transition";
+            });
+
+            const activeBtn = document.getElementById(`wave-${color}`);
+            activeBtn.className = `wave-btn py-1.5 text-xs font-bold rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm transition-all`;
+            
+            // Shift light icon based on color
+            const iconNode = document.getElementById('light-icon-container');
+            if (color === 'blue') { iconNode.innerText = '🔵'; iconNode.className = 'text-blue-500'; }
+            else if (color === 'red') { iconNode.innerText = '🔴'; iconNode.className = 'text-red-500'; }
+            else if (color === 'green') { iconNode.innerText = '🟢'; iconNode.className = 'text-emerald-500'; }
+            else { iconNode.innerText = '☀️'; iconNode.className = 'text-amber-500'; }
+
+            updateParameters();
+        }
+
+        function toggleBTB() {
+            btbEnabled = document.getElementById('btb-toggle').checked;
+            showToast(btbEnabled ? "Bromothymol Blue dye dissolved into beaker solution." : "Beaker flushed with clear pure water.");
+            updateParameters();
+        }
+
+        function injectCO2() {
+            injectCo2Coeff = 1.0;
+            showToast("Injected localized CO₂. Concentration boosted instantly!");
+            updateParameters();
+        }
+
+        function waterPlantAction() {
+            flushWaterCoeff = 1.0;
+            showToast(plantType === 'aquatic' ? "Squirting strong water current through system." : "Sprinkler system activated! Soil thoroughly drenched.");
+            updateParameters();
+        }
+
+        function resetSimulation() {
+            document.getElementById('light-intensity').value = 80;
+            document.getElementById('co2-concen').value = 400;
+            document.getElementById('water-avail').value = 75;
+            document.getElementById('temperature').value = 25;
+            document.getElementById('btb-toggle').checked = false;
+            btbEnabled = false;
+            setWavelength('white');
+            setPlantType('aquatic');
+            injectCo2Coeff = 0;
+            flushWaterCoeff = 0;
+            historyData = Array(30).fill(0);
+            abandonChallenge();
+            showToast("Simulation chamber reset back to physical baseline parameters.");
+            updateParameters();
+        }
+
+        // Notification Engine
+        function showToast(message) {
+            const toast = document.getElementById('custom-toast');
+            toast.innerText = message;
+            toast.classList.remove('hidden', 'opacity-0');
+            toast.classList.add('opacity-100');
+            
+            // Clear any old timer
+            if (window.toastTimer) clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        // Modal triggers
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // Challenge Execution Engine
+        function renderChallenges() {
+            const container = document.getElementById('challenges-container');
+            container.innerHTML = '';
+            
+            challenges.forEach(item => {
+                const isCurrent = activeChallengeId === item.id;
+                const borderClass = isCurrent ? 'border-emerald-500 bg-emerald-50 shadow-inner' : 'border-slate-200 bg-slate-50 hover:bg-slate-100';
+                
+                container.innerHTML += `
+                    <div class="p-3 rounded-xl border ${borderClass} transition cursor-pointer" onclick="activateChallenge('${item.id}')">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs font-bold text-slate-800">${item.name}</span>
+                            ${item.completed 
+                                ? '<span class="text-[9px] bg-emerald-100 border border-emerald-300 text-emerald-800 px-1.5 py-0.5 rounded-full font-bold">Passed</span>'
+                                : '<span class="text-[9px] text-slate-400 font-semibold">Unresolved</span>'
+                            }
+                        </div>
+                        <p class="text-[10px] text-slate-500 leading-tight">${item.desc}</p>
+                    </div>
+                `;
+            });
+        }
+
+        function activateChallenge(id) {
+            activeChallengeId = id;
+            const item = challenges.find(c => c.id === id);
+            
+            // Display banner UI
+            document.getElementById('challenge-banner').classList.remove('hidden');
+            document.getElementById('challenge-title').innerText = `Active Task: ${item.name}`;
+            document.getElementById('challenge-desc').innerText = item.desc;
+            document.getElementById('challenge-progress').innerText = '0%';
+            
+            showToast(`Lab objective changed: "${item.name}"`);
+            renderChallenges();
+            updateParameters();
+        }
+
+        function checkChallenges() {
+            if (!activeChallengeId) return;
+            
+            const currentObj = challenges.find(c => c.id === activeChallengeId);
+            if (!currentObj) return;
+
+            // Track continuous progress or prompt instant win
+            let progress = 0;
+            if (activeChallengeId === 'opt') {
+                progress = Math.min(100, Math.round((currentO2Rate / 95.0) * 100));
+            } else if (activeChallengeId === 'green') {
+                progress = (lightWavelength === 'green' && lightIntensity === 100) ? 100 : 50;
+            } else if (activeChallengeId === 'starch') {
+                progress = (plantType === 'terrestrial' && waterAvailability < 15) ? 100 : 25;
+            } else if (activeChallengeId === 'enzyme') {
+                progress = Math.min(100, Math.round((temperature / 46) * 100));
+            } else if (activeChallengeId === 'btb') {
+                progress = (btbEnabled) ? Math.min(100, Math.round((co2Concentration / 1800) * 100)) : 10;
+            }
+
+            document.getElementById('challenge-progress').innerText = `${progress}%`;
+
+            if (currentObj.check()) {
+                currentObj.completed = true;
+                showToast(`✨ Challenge Accomplished: ${currentObj.name}! Excellent experiment science.`);
+                abandonChallenge();
+            }
+        }
+
+        function abandonChallenge() {
+            activeChallengeId = null;
+            document.getElementById('challenge-banner').classList.add('hidden');
+            renderChallenges();
+        }
+
+        // Real-Time Analytics Graph Array Operations
+        function updateChartData() {
+            historyData.shift();
+            historyData.push(currentO2Rate);
+            drawChart();
+        }
+
+        // Custom Time Series Line Chart Canvas Engine (High contrast light mode)
+        function drawChart() {
+            if (!chartCtx) return;
+            const w = chartCanvas.width;
+            const h = chartCanvas.height;
+            chartCtx.clearRect(0, 0, w, h);
+
+            // Back light-mode grid lines
+            chartCtx.strokeStyle = '#e2e8f0';
+            chartCtx.lineWidth = 1;
+            const lines = 4;
+            for (let i = 0; i <= lines; i++) {
+                const yPos = (h - 16) * (i / lines) + 8;
+                chartCtx.beginPath();
+                chartCtx.moveTo(24, yPos);
+                chartCtx.lineTo(w - 8, yPos);
+                chartCtx.stroke();
+                
+                // Axis markers
+                chartCtx.fillStyle = '#64748b';
+                chartCtx.font = '8px sans-serif';
+                const labelVal = 100 - (i / lines * 100);
+                chartCtx.fillText(labelVal.toFixed(0), 4, yPos + 3);
+            }
+
+            // Draw line profile
+            chartCtx.beginPath();
+            chartCtx.strokeStyle = '#059669'; // Emerald-600
+            chartCtx.lineWidth = 2.5;
+            chartCtx.lineJoin = 'round';
+            chartCtx.lineCap = 'round';
+
+            const segmentWidth = (w - 32) / (historyData.length - 1);
+            
+            for (let i = 0; i < historyData.length; i++) {
+                const x = 24 + i * segmentWidth;
+                // invert axis
+                const y = (h - 16) - (historyData[i] / 100) * (h - 16) + 8;
+                
+                if (i === 0) chartCtx.moveTo(x, y);
+                else chartCtx.lineTo(x, y);
+            }
+            chartCtx.stroke();
+
+            // Fill area below gradient
+            const grad = chartCtx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, 'rgba(5, 150, 105, 0.15)');
+            grad.addColorStop(1, 'rgba(5, 150, 105, 0.0)');
+            chartCtx.fillStyle = grad;
+            chartCtx.lineTo(w - 8, h - 8);
+            chartCtx.lineTo(24, h - 8);
+            chartCtx.closePath();
+            chartCtx.fill();
+        }
+
+        // Gauge Widget Custom Canvas Drawer
+        function drawGauge() {
+            if (!gaugeCtx) return;
+            const w = gaugeCanvas.width;
+            const h = gaugeCanvas.height;
+            gaugeCtx.clearRect(0, 0, w, h);
+
+            const centerX = w / 2;
+            const centerY = h - 10;
+            const radius = Math.min(w / 2 - 15, h - 15);
+
+            // Draw background dial arc
+            gaugeCtx.beginPath();
+            gaugeCtx.arc(centerX, centerY, radius, Math.PI, 2 * Math.PI, false);
+            gaugeCtx.lineWidth = 10;
+            gaugeCtx.strokeStyle = '#f1f5f9';
+            gaugeCtx.stroke();
+
+            // Target Challenge Line indicator (if challenge has specific target rate)
+            if (activeChallengeId === 'opt') {
+                const targetPct = 0.95; // 95 mL/hr target
+                const targetAngle = Math.PI + (Math.PI * targetPct);
+                gaugeCtx.beginPath();
+                gaugeCtx.arc(centerX, centerY, radius + 4, targetAngle - 0.02, targetAngle + 0.02);
+                gaugeCtx.lineWidth = 4;
+                gaugeCtx.strokeStyle = '#d97706';
+                gaugeCtx.stroke();
+            }
+
+            // Draw current value arc (High Contrast Emerald gradient)
+            const fillGrad = gaugeCtx.createLinearGradient(0, 0, w, 0);
+            fillGrad.addColorStop(0, '#3b82f6'); // Cool blue-ish starting spectrum
+            fillGrad.addColorStop(0.5, '#10b981'); // Emerald
+            fillGrad.addColorStop(1, '#ef4444'); // Red
+            
+            const valuePct = Math.min(100, Math.max(0, currentO2Rate)) / 100;
+            const endAngle = Math.PI + (Math.PI * valuePct);
+
+            gaugeCtx.beginPath();
+            gaugeCtx.arc(centerX, centerY, radius, Math.PI, endAngle, false);
+            gaugeCtx.lineWidth = 10;
+            gaugeCtx.strokeStyle = fillGrad;
+            gaugeCtx.stroke();
+
+            // Draw Needle pointer pin (Dark slate)
+            gaugeCtx.save();
+            gaugeCtx.translate(centerX, centerY);
+            gaugeCtx.rotate(endAngle + Math.PI / 2);
+            gaugeCtx.beginPath();
+            gaugeCtx.moveTo(-4, 0);
+            gaugeCtx.lineTo(0, -radius + 4);
+            gaugeCtx.lineTo(4, 0);
+            gaugeCtx.closePath();
+            gaugeCtx.fillStyle = '#0f172a';
+            gaugeCtx.fill();
+            gaugeCtx.restore();
+
+            // Core center pin
+            gaugeCtx.beginPath();
+            gaugeCtx.arc(centerX, centerY, 6, 0, 2 * Math.PI);
+            gaugeCtx.fillStyle = '#475569';
+            gaugeCtx.fill();
+            gaugeCtx.beginPath();
+            gaugeCtx.arc(centerX, centerY, 3, 0, 2 * Math.PI);
+            gaugeCtx.fillStyle = '#ffffff';
+            gaugeCtx.fill();
+        }
+
+        // Chloroplast Secondary Molecular Microscopic Simulation Engine
+        function updateMolecules() {
+            const targetMoleculeCount = Math.floor((currentO2Rate / 100) * 20) + 2;
+            
+            if (molecules.length < targetMoleculeCount) {
+                const types = ['CO2', 'H2O', 'O2', 'Glucose'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                molecules.push({
+                    x: Math.random() * chloroCanvas.width,
+                    y: Math.random() * chloroCanvas.height,
+                    vx: (Math.random() - 0.5) * 1.5 * (currentO2Rate/50 + 0.2),
+                    vy: (Math.random() - 0.5) * 1.5 * (currentO2Rate/50 + 0.2),
+                    type: type,
+                    size: type === 'Glucose' ? 4 : 2.5
+                });
+            } else if (molecules.length > targetMoleculeCount + 10) {
+                molecules.pop();
+            }
+
+            // Propagate physics
+            molecules.forEach(m => {
+                m.x += m.vx;
+                m.y += m.vy;
+
+                // Wall boundary bounces
+                if (m.x < 0 || m.x > chloroCanvas.width) m.vx *= -1;
+                if (m.y < 0 || m.y > chloroCanvas.height) m.vy *= -1;
+            });
+        }
+
+        function drawChloroplastView() {
+            if (!chloroCtx) return;
+            const w = chloroCanvas.width;
+            const h = chloroCanvas.height;
+            chloroCtx.clearRect(0, 0, w, h);
+
+            // Light green organelle background representation
+            chloroCtx.fillStyle = '#f8fafc';
+            chloroCtx.fillRect(0,0,w,h);
+
+            // Thylakoid Stroma Divide Line
+            chloroCtx.strokeStyle = 'rgba(16, 185, 129, 0.2)';
+            chloroCtx.lineWidth = 1;
+            chloroCtx.beginPath();
+            chloroCtx.moveTo(w / 2, 0);
+            chloroCtx.lineTo(w / 2, h);
+            chloroCtx.stroke();
+
+            // Micro Labeling
+            chloroCtx.fillStyle = 'rgba(71, 85, 105, 0.4)';
+            chloroCtx.font = 'bold 7px sans-serif';
+            chloroCtx.fillText("THYLAKOID (Light RXN)", 10, 12);
+            chloroCtx.fillText("STROMA (Calvin Cycle)", w/2 + 10, 12);
+
+            // Draw chloroplast plant thylakoid stacks dynamically
+            chloroCtx.fillStyle = 'rgba(16, 185, 129, 0.15)';
+            chloroCtx.strokeStyle = 'rgba(4, 120, 87, 0.25)';
+            chloroCtx.lineWidth = 1.5;
+
+            const stacks = [
+                {x: 45, y: 40, r: 16, h: 6},
+                {x: 65, y: 95, r: 18, h: 5},
+                {x: w - 50, y: h / 2 + 10, r: 22, h: 8}
+            ];
+
+            stacks.forEach(st => {
+                for (let i = 0; i < st.h; i++) {
+                    chloroCtx.beginPath();
+                    chloroCtx.ellipse(st.x, st.y - (i * 3), st.r, st.r * 0.35, 0, 0, 2 * Math.PI);
+                    chloroCtx.fill();
+                    chloroCtx.stroke();
+                }
+            });
+
+            // Update & Render molecules
+            updateMolecules();
+            
+            molecules.forEach(m => {
+                chloroCtx.beginPath();
+                chloroCtx.arc(m.x, m.y, m.size, 0, 2 * Math.PI);
+                
+                // Color codes
+                if (m.type === 'CO2') chloroCtx.fillStyle = '#0284c7'; // Sky blue
+                else if (m.type === 'H2O') chloroCtx.fillStyle = '#2563eb'; // Water blue
+                else if (m.type === 'O2') chloroCtx.fillStyle = '#dc2626'; // High Contrast Red
+                else chloroCtx.fillStyle = '#ca8a04'; // Glucose gold-yellow
+
+                chloroCtx.fill();
+
+                // Simple label text at microscopic level for fun
+                chloroCtx.fillStyle = 'rgba(71, 85, 105, 0.5)';
+                chloroCtx.font = '6px sans-serif';
+                if (Math.random() < 0.05) {
+                    chloroCtx.fillText(m.type, m.x + 5, m.y + 2);
+                }
+            });
+
+            // Handle Stomata UI label
+            const stomataLabel = document.getElementById('stomata-status');
+            if (plantType === 'aquatic') {
+                stomataLabel.innerText = "Gas Cuticle: Dynamic Flow";
+                stomataLabel.className = "text-[9px] bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-emerald-800 font-semibold";
+            } else if (isWilted) {
+                stomataLabel.innerText = "Stomata: Guard Cells Closed";
+                stomataLabel.className = "text-[9px] bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200 text-rose-700 font-semibold";
+            } else {
+                stomataLabel.innerText = "Stomata: Open (Gaseous Flow)";
+                stomataLabel.className = "text-[9px] bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-emerald-800 font-semibold";
+            }
+        }
+
+        // Physical Animated Incubator Chamber Canvas Engine
+        function handleBubblesPhysics() {
+            if (plantType === 'aquatic' && currentO2Rate > 1.0) {
+                const bubbleChance = currentO2Rate / 350; // Map rate to spawning frequency
+                if (Math.random() < bubbleChance) {
+                    bubbles.push({
+                        x: canvas.width / 2 - 12 + (Math.random() - 0.5) * 8,
+                        y: canvas.height * 0.55,
+                        radius: 1.5 + Math.random() * 3,
+                        speedX: (Math.random() - 0.5) * 0.4,
+                        speedY: -(0.5 + Math.random() * 1.5),
+                        alpha: 0.9
+                    });
+                }
+            }
+
+            // Propagate bubble movement
+            for (let i = bubbles.length - 1; i >= 0; i--) {
+                const b = bubbles[i];
+                b.y += b.speedY;
+                b.x += b.speedX + Math.sin(b.y / 15) * 0.25;
+                
+                const waterLine = canvas.height * 0.28;
+                if (b.y <= waterLine) {
+                    bubbles.splice(i, 1); // Remove
+                }
+            }
+        }
+
+        function drawIncubatorSimulation() {
+            if (!ctx) return;
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            // Clean background fill
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0,0,w,h);
+
+            // 1. Draw light beam cone from lamp if intensity > 0
+            if (lightIntensity > 0) {
+                let rayGrad = ctx.createLinearGradient(10, 20, w / 2, h / 2);
+                if (lightWavelength === 'white') {
+                    rayGrad.addColorStop(0, `rgba(253, 224, 71, ${lightIntensity / 250})`);
+                    rayGrad.addColorStop(1, 'rgba(253, 224, 71, 0)');
+                } else if (lightWavelength === 'blue') {
+                    rayGrad.addColorStop(0, `rgba(59, 130, 246, ${lightIntensity / 220})`);
+                    rayGrad.addColorStop(1, 'rgba(59, 130, 246, 0)');
+                } else if (lightWavelength === 'red') {
+                    rayGrad.addColorStop(0, `rgba(239, 68, 68, ${lightIntensity / 220})`);
+                    rayGrad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+                } else if (lightWavelength === 'green') {
+                    rayGrad.addColorStop(0, `rgba(16, 185, 129, ${lightIntensity / 300})`);
+                    rayGrad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                }
+
+                ctx.fillStyle = rayGrad;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(120, 0);
+                ctx.lineTo(w, h * 0.95);
+                ctx.lineTo(w * 0.4, h);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // 2. Lamp Device fixture in the upper left corner
+            ctx.save();
+            ctx.fillStyle = '#cbd5e1';
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(-10, -10, 55, 0, Math.PI / 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw Bulb center glowing element
+            ctx.fillStyle = lightIntensity > 10 ? '#fbbf24' : '#e2e8f0';
+            ctx.beginPath();
+            ctx.arc(15, 15, 15, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.restore();
+
+            // 3. Render Plant visual representations
+            if (plantType === 'aquatic') {
+                // Beaker Chamber Glassware
+                const beakerLeft = w * 0.22;
+                const beakerWidth = w * 0.56;
+                const beakerHeight = h * 0.65;
+                const beakerTop = h * 0.25;
+                const beakerBottom = beakerTop + beakerHeight;
+
+                // Soft Beaker Backing Water
+                let waterColor = 'rgba(224, 242, 254, 0.4)'; // Clear light-sky-blue
+
+                // Chemical Bromothymol Blue dynamics (High contrast adjustments)
+                if (btbEnabled) {
+                    let btbCO2 = co2Concentration + (injectCo2Coeff * 500);
+                    if (btbCO2 < 300) {
+                        waterColor = 'rgba(147, 197, 253, 0.5)'; // Soft blue base
+                    } else if (btbCO2 >= 300 && btbCO2 < 950) {
+                        waterColor = 'rgba(110, 231, 183, 0.5)'; // Soft Green Neutral
+                    } else {
+                        waterColor = 'rgba(252, 211, 77, 0.5)'; // Soft Yellow acidic
+                    }
+                }
+
+                ctx.fillStyle = waterColor;
+                ctx.fillRect(beakerLeft + 6, beakerTop + 30, beakerWidth - 12, beakerHeight - 34);
+
+                // Glassware Outline lines (Clean high contrast slate outline)
+                ctx.strokeStyle = '#475569';
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(beakerLeft, beakerTop);
+                ctx.lineTo(beakerLeft, beakerBottom);
+                ctx.lineTo(beakerLeft + beakerWidth, beakerBottom);
+                ctx.lineTo(beakerLeft + beakerWidth, beakerTop);
+                ctx.stroke();
+
+                // Glassware Volume Grads (Visual scientific increments)
+                ctx.strokeStyle = 'rgba(71, 85, 105, 0.3)';
+                ctx.lineWidth = 1.5;
+                for (let i = 1; i <= 5; i++) {
+                    let gY = beakerBottom - (beakerHeight * 0.16 * i);
+                    ctx.beginPath();
+                    ctx.moveTo(beakerLeft + 6, gY);
+                    ctx.lineTo(beakerLeft + 20, gY);
+                    ctx.stroke();
+                }
+
+                // Water top wave ripple line
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.moveTo(beakerLeft + 4, beakerTop + 30);
+                ctx.lineTo(beakerLeft + beakerWidth - 4, beakerTop + 30);
+                ctx.stroke();
+
+                // Draw Elodea plant (cut branch setup - Vibrant Scientific Green)
+                const plantX = w / 2;
+                const plantBottomY = beakerBottom - 10;
+                const stemLength = h * 0.4;
+                const plantTopY = plantBottomY - stemLength;
+
+                // Main stem line
+                ctx.strokeStyle = '#047857'; // Deep Forest Green
+                ctx.lineWidth = 5.5;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(plantX, plantBottomY);
+                ctx.lineTo(plantX - 10, plantTopY + 20); 
+                ctx.stroke();
+
+                // Cut stem base mark (where bubbles spawn)
+                ctx.fillStyle = '#34d399';
+                ctx.beginPath();
+                ctx.arc(plantX - 10, plantTopY + 20, 4, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Branching alternating leaves
+                ctx.fillStyle = '#059669'; // Emerald leafy
+                for (let i = 0; i < 7; i++) {
+                    let leafY = plantBottomY - (i * (stemLength / 8.5)) - 25;
+                    let leftSide = i % 2 === 0;
+
+                    ctx.beginPath();
+                    if (leftSide) {
+                        ctx.ellipse(plantX - 15, leafY, 15, 6, -Math.PI / 8, 0, 2 * Math.PI);
+                    } else {
+                        ctx.ellipse(plantX + 8, leafY, 15, 6, Math.PI / 8, 0, 2 * Math.PI);
+                    }
+                    ctx.fill();
+
+                    // Leaf ribs detail lines
+                    ctx.strokeStyle = '#064e3b';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                // Render bubbling O2 gas particles
+                handleBubblesPhysics();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                ctx.strokeStyle = '#2563eb';
+                ctx.lineWidth = 1.2;
+                bubbles.forEach(b => {
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, b.radius, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.stroke();
+                });
+
+                // Display CO2 Diffuser Stone block (Visual cyan color)
+                const diffX = beakerLeft + 35;
+                const diffY = beakerBottom - 25;
+                ctx.fillStyle = '#64748b';
+                ctx.fillRect(diffX, diffY, 20, 15);
+                ctx.strokeStyle = '#334155';
+                ctx.strokeRect(diffX, diffY, 20, 15);
+
+                // Micro bubbles released if CO2 slider is high
+                if (co2Concentration > 50 && Math.random() < 0.4) {
+                    ctx.fillStyle = 'rgba(14, 165, 233, 0.6)';
+                    ctx.beginPath();
+                    ctx.arc(diffX + 10 + (Math.random() - 0.5) * 8, diffY - 10 - Math.random() * 15, 2, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+
+            } else {
+                // Terrestrial Pot setup (Sunflower)
+                const potWidth = w * 0.4;
+                const potHeight = h * 0.2;
+                const potX = w / 2 - potWidth / 2;
+                const potY = h * 0.7;
+
+                // Draw rich soil
+                ctx.fillStyle = '#451a03'; // Rich brown dirt
+                ctx.beginPath();
+                ctx.ellipse(w / 2, potY, potWidth / 2 - 2, 8, 0, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Potted Clay Container
+                ctx.fillStyle = '#f97316'; // Vivid terracotta orange
+                ctx.strokeStyle = '#c2410c';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(potX, potY);
+                ctx.lineTo(potX + 15, potY + potHeight);
+                ctx.lineTo(potX + potWidth - 15, potY + potHeight);
+                ctx.lineTo(potX + potWidth, potY);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Sunflower Stem
+                const stemX = w / 2;
+                const stemTopY = potY - (isWilted ? h * 0.22 : h * 0.38);
+
+                ctx.strokeStyle = '#10b981';
+                ctx.lineWidth = 7;
+                ctx.lineCap = 'round';
+                
+                ctx.beginPath();
+                ctx.moveTo(stemX, potY);
+                if (isWilted) {
+                    ctx.bezierCurveTo(stemX - 10, potY - 30, stemX - 35, potY - 60, stemX - 25, stemTopY);
+                } else {
+                    ctx.lineTo(stemX, stemTopY);
+                }
+                ctx.stroke();
+
+                // Lateral large structural leaves
+                ctx.fillStyle = '#059669';
+                ctx.beginPath();
+                if (isWilted) {
+                    ctx.ellipse(stemX - 18, potY - 35, 12, 18, Math.PI / 4, 0, 2 * Math.PI);
+                    ctx.ellipse(stemX + 18, potY - 20, 12, 18, -Math.PI / 4, 0, 2 * Math.PI);
+                } else {
+                    ctx.ellipse(stemX - 25, potY - 65, 20, 10, -Math.PI / 6, 0, 2 * Math.PI);
+                    ctx.ellipse(stemX + 25, potY - 50, 20, 10, Math.PI / 6, 0, 2 * Math.PI);
+                }
+                ctx.fill();
+
+                // Sunflower Flower Head
+                const headX = isWilted ? stemX - 25 : stemX;
+                const headY = stemTopY;
+
+                // Golden Petals radiating around
+                ctx.fillStyle = '#facc15'; // Bright golden yellow
+                const petalCount = 14;
+                for (let i = 0; i < petalCount; i++) {
+                    const angle = (i / petalCount) * 2 * Math.PI;
+                    const petalX = headX + Math.cos(angle) * (isWilted ? 18 : 24);
+                    const petalY = headY + Math.sin(angle) * (isWilted ? 18 : 24);
+                    
+                    ctx.beginPath();
+                    ctx.arc(petalX, petalY, 7, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+
+                // Internal seed disk center
+                ctx.fillStyle = '#7c2d12'; // Dark seed core
+                ctx.beginPath();
+                ctx.arc(headX, headY, isWilted ? 13 : 18, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.strokeStyle = '#eab308';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Draw falling water droplets if user uses "Irrigate" button
+                if (flushWaterCoeff > 0.01) {
+                    ctx.fillStyle = '#3b82f6';
+                    for (let d = 0; d < 5; d++) {
+                        ctx.beginPath();
+                        ctx.ellipse(potX + Math.random() * potWidth, potY - 40 + Math.random() * 20, 2, 4, 0, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            // 4. Clinical Thermometer HUD device drawing on canvas bottom right
+            const thermX = w - 30;
+            const thermY = h - 110;
+            const thermH = 90;
+
+            ctx.fillStyle = '#f1f5f9';
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(thermX + 6, thermY + thermH - 12, 12, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillRect(thermX, thermY, 12, thermH - 15);
+            ctx.strokeRect(thermX, thermY, 12, thermH - 15);
+
+            // Red fluid rendering relative to temperature
+            ctx.fillStyle = '#ef4444';
+            const heightPct = temperature / 50;
+            ctx.beginPath();
+            ctx.arc(thermX + 6, thermY + thermH - 12, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.fillRect(thermX + 3, thermY + (thermH - 15) * (1 - heightPct), 6, (thermH - 15) * heightPct);
+
+            // Text temperature label inside canvas
+            ctx.fillStyle = '#334155';
+            ctx.font = 'bold 8px sans-serif';
+            ctx.fillText(`${temperature}°C`, thermX - 25, thermY + 12);
+        }
+
+        // Real-Time Frame Loop (Updates animation canvases)
+        function tick() {
+            updateParameters();
+            drawIncubatorSimulation();
+            drawGauge();
+            drawChloroplastView();
+            requestAnimationFrame(tick);
+        }
+    </script>
+</body>
+</html>

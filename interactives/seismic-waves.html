@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Seismic Wave Simulation</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Open Sans"', 'sans-serif'] },
+                    colors: {
+                        'brand-blue': '#00beff', 'brand-darkblue': '#0056b3',
+                        'brand-gray-minus2': '#e3ecf5', 'brand-gray-plus2': '#1e3f6b',
+                        'brand-gray-plus3': '#0c2846', 'brand-yellow': '#ded807',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Lock body size to prevent mobile browser bouncing, use dvh for true mobile sizing */
+        body { margin: 0; padding: 0; background-color: #e3ecf5; color: #0c2846; overflow: hidden; }
+        canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 3px; }
+        
+        /* Modern Flat Range Slider */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin: 8px 0; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%;
+            background: #00beff; cursor: pointer; margin-top: -6px; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 6px; cursor: pointer; background: #cbd5e1; border-radius: 3px;
+        }
+        input[type=range]:focus { outline: none; }
+        
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Hide number input spinners */
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+    </style>
+</head>
+<body class="h-[100dvh] w-screen flex flex-col md:flex-row overflow-hidden font-sans">
+
+    <!-- Main Viewport for Earth Cross-Section (Top on Mobile, Left on Desktop) -->
+    <div class="flex-none h-[40dvh] md:h-auto md:flex-1 relative bg-brand-gray-minus2 flex flex-col min-h-0">
+        <!-- Earth Model Canvas -->
+        <div class="flex-1 relative min-h-0">
+            <canvas id="earthCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- Sidebar Controls (Bottom on Mobile, Right on Desktop) -->
+    <div class="flex-1 min-h-0 w-full md:w-[460px] bg-brand-blue flex flex-col z-10 shadow-[0_-5px_25px_rgba(0,0,0,0.2)] md:shadow-[-5px_0_25px_rgba(0,0,0,0.2)] shrink-0 md:shrink-0">
+        
+        <!-- Tab Navigation -->
+        <div class="flex text-[10px] md:text-xs font-extrabold uppercase tracking-wider bg-brand-darkblue shrink-0">
+            <button id="tabBtnExplore" class="flex-1 py-3 md:py-4 text-white bg-brand-blue border-b-4 border-white transition-colors">Explore</button>
+            <button id="tabBtnSeismo" class="flex-1 py-3 md:py-4 text-white/60 hover:text-white transition-colors border-b-4 border-transparent">Seismograms</button>
+            <button id="tabBtnTriang" class="flex-1 py-3 md:py-4 text-white/60 hover:text-white transition-colors border-b-4 border-transparent">Triangulate</button>
+        </div>
+
+        <!-- Integrated Header -->
+        <div class="bg-white p-3 md:p-5 shadow-sm z-20 shrink-0">
+            <h1 class="text-xl md:text-2xl font-bold text-brand-gray-plus3">Seismic Explorer</h1>
+            <p id="instructionText" class="text-xs md:text-sm font-semibold text-brand-gray-plus2 mt-1 leading-tight">
+                Click Earth to place earthquake. Drag Probe to measure.
+            </p>
+        </div>
+
+        <!-- Scrollable Tab Containers -->
+        <div class="flex-1 relative overflow-hidden bg-brand-blue">
+            
+            <!-- ================= EXPLORE TAB ================= -->
+            <div id="tabExplore" class="absolute inset-0 p-3 md:p-4 flex flex-col gap-3 md:gap-4 overflow-y-auto fade-in">
+                <div class="bg-white rounded-xl shadow p-3 md:p-4 shrink-0">
+                    <h3 class="font-extrabold text-brand-gray-plus3 uppercase text-[11px] md:text-sm tracking-wider mb-3 opacity-60">Simulation Settings</h3>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-xs md:text-sm font-bold mb-1 text-brand-gray-plus3">
+                            <label>Animation Speed</label> <span id="speedLabel">1x</span>
+                        </div>
+                        <input type="range" id="speedSlider" min="10" max="200" value="100">
+                    </div>
+                    <div class="mb-4">
+                        <label class="flex justify-between text-xs md:text-sm font-bold mb-1 text-brand-gray-plus3">Outer Core State</label>
+                        <select id="coreState" class="w-full bg-brand-gray-minus2 rounded-lg p-2 text-xs md:text-sm font-bold text-brand-gray-plus3 outline-none cursor-pointer border border-gray-300">
+                            <option value="liquid">Liquid (Blocks S-Waves)</option>
+                            <option value="solid">Solid (Passes S-Waves)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs md:text-sm font-bold mb-1 text-brand-gray-plus3">
+                            <label>Mantle Density</label> <span id="densityLabel">Earth Default</span>
+                        </div>
+                        <input type="range" id="densitySlider" min="50" max="150" value="100">
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow p-3 md:p-4 shrink-0">
+                    <h3 class="font-extrabold text-brand-gray-plus3 uppercase text-[11px] md:text-sm tracking-wider mb-3 opacity-60">Visualizations</h3>
+                    <div class="space-y-3">
+                        <label class="flex items-center cursor-pointer">
+                            <div class="relative">
+                                <input type="checkbox" id="toggleP" class="sr-only" checked>
+                                <div class="block bg-brand-gray-minus2 w-10 h-6 rounded-full transition-colors border border-gray-300"></div>
+                                <div class="dot absolute left-1 top-1 bg-white shadow w-4 h-4 rounded-full transition-transform"></div>
+                            </div>
+                            <span class="ml-3 text-xs md:text-sm text-brand-gray-plus3 font-bold">Show P-Wave Rays (Blue)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <div class="relative">
+                                <input type="checkbox" id="toggleS" class="sr-only" checked>
+                                <div class="block bg-brand-gray-minus2 w-10 h-6 rounded-full transition-colors border border-gray-300"></div>
+                                <div class="dot absolute left-1 top-1 bg-white shadow w-4 h-4 rounded-full transition-transform"></div>
+                            </div>
+                            <span class="ml-3 text-xs md:text-sm text-brand-gray-plus3 font-bold">Show S-Wave Rays (Black)</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <div class="relative">
+                                <input type="checkbox" id="toggleWavefronts" class="sr-only" checked>
+                                <div class="block bg-brand-gray-minus2 w-10 h-6 rounded-full transition-colors border border-gray-300"></div>
+                                <div class="dot absolute left-1 top-1 bg-white shadow w-4 h-4 rounded-full transition-transform"></div>
+                            </div>
+                            <span class="ml-3 text-xs md:text-sm text-brand-gray-plus3 font-bold">Animate Wavefront Dots</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-brand-gray-plus3 rounded-xl p-3 md:p-4 shadow flex-shrink-0 border-2 border-white/20 shrink-0">
+                    <h3 class="font-extrabold text-white uppercase text-[11px] md:text-sm tracking-wider mb-2 flex justify-between items-center">
+                        <span>Particle Viewport</span> <span id="probeDepthLabel" class="text-brand-blue bg-white/10 px-2 py-1 rounded text-[10px] md:text-xs normal-case">Depth: 0km</span>
+                    </h3>
+                    <div class="relative w-full h-24 md:h-32 bg-[#0c1826] rounded-lg overflow-hidden shadow-inner border border-brand-gray-plus2">
+                        <canvas id="particleCanvas"></canvas>
+                    </div>
+                    <div class="mt-2 flex justify-between text-[10px] md:text-xs font-semibold text-brand-gray-minus2 opacity-90">
+                        <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-blue-500"></div> P: Longitudinal</span>
+                        <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-gray-800 border border-gray-500"></div> S: Transverse</span>
+                    </div>
+                </div>
+
+                <button id="resetExploreBtn" class="w-full mt-2 mb-4 bg-white/20 hover:bg-white/30 text-white font-bold py-3 px-4 rounded-xl shadow transition-colors text-xs md:text-sm uppercase tracking-wider shrink-0">Reset Settings</button>
+            </div>
+
+            <!-- ================= ADVANCED PANEL (Shared for Seismo & Triangulate) ================= -->
+            <div id="tabAdvanced" class="absolute inset-0 flex flex-col hidden fade-in bg-brand-gray-minus2">
+                
+                <!-- Action Bar: Seismograms -->
+                <div id="actionSeismo" class="p-2 md:p-3 bg-white shrink-0 flex gap-2 border-b border-gray-200 shadow-sm">
+                    <button id="addStationBtn" class="flex-1 bg-brand-blue hover:bg-blue-500 text-white font-extrabold py-2 px-2 rounded-lg shadow-sm text-[10px] md:text-xs uppercase tracking-wider transition">+ Add Station</button>
+                    <button id="resetSeismoBtn" class="flex-1 bg-brand-gray-plus2 hover:bg-brand-gray-plus3 text-white font-extrabold py-2 px-2 rounded-lg shadow-sm text-[10px] md:text-xs uppercase tracking-wider transition">Reset Pos</button>
+                </div>
+                
+                <!-- Action Bar: Triangulation -->
+                <div id="actionTriang" class="p-2 md:p-3 bg-white shrink-0 hidden border-b border-gray-200 shadow-sm flex-col gap-2">
+                    <details class="bg-blue-50 border-l-4 border-brand-blue rounded-r shadow-inner group cursor-pointer">
+                        <summary class="p-2 text-[10px] md:text-xs text-brand-darkblue font-bold outline-none marker:content-none flex justify-between items-center">
+                            <span>🎓 How to Triangulate (Click to open)</span>
+                            <span class="transform group-open:rotate-180 transition-transform">▼</span>
+                        </summary>
+                        <div class="p-2 pt-0 text-[10px] md:text-xs text-brand-darkblue font-semibold">
+                            1. Find the <b>&Delta;t</b> (S-P lag time) for each station.<br>
+                            2. Calculate Distance: <b>Dist &approx; &Delta;t &times; 100 km</b>.<br>
+                            3. Type the calculated distance in each station's Ring.<br>
+                            4. Drag the <b>Guess Pin</b> to where all 3 rings intersect!
+                        </div>
+                    </details>
+                    <div class="flex gap-2">
+                        <button id="newMysteryBtn" class="flex-1 bg-brand-blue hover:bg-blue-500 text-white font-extrabold py-2 px-1 rounded-lg shadow-sm text-[10px] md:text-xs uppercase tracking-wider transition">New Quake</button>
+                        <button id="revealBtn" class="flex-1 bg-brand-yellow hover:bg-yellow-500 text-brand-gray-plus3 font-extrabold py-2 px-1 rounded-lg shadow-sm text-[10px] md:text-xs uppercase tracking-wider transition border border-yellow-600">Reveal Center</button>
+                    </div>
+                </div>
+
+                <!-- Universal Trigger Button -->
+                <div class="p-2 md:p-3 bg-brand-gray-minus2 shrink-0">
+                    <button id="triggerBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-extrabold py-2.5 md:py-3 rounded-lg shadow-md transition-colors text-xs md:text-sm uppercase tracking-widest border-b-4 border-red-700 active:border-b-0 active:translate-y-1">
+                        Trigger Earthquake Playback
+                    </button>
+                </div>
+
+                <!-- Shared Station List -->
+                <div class="flex-1 overflow-y-auto px-2 md:px-3 pb-4">
+                    <div id="stationList" class="flex flex-col gap-3 md:gap-4">
+                        <!-- Station Cards injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <style>
+        input:checked ~ .block { background-color: #00beff; border-color: #0056b3; }
+        input:checked ~ .dot { transform: translateX(16px); }
+    </style>
+
+    <script>
+        /**
+         * Seismic Wave Simulation & Seismography Engine
+         */
+        
+        // Canvas Setup
+        const canvas = document.getElementById('earthCanvas');
+        const ctx = canvas.getContext('2d');
+        const pCanvas = document.getElementById('particleCanvas');
+        const pCtx = pCanvas.getContext('2d');
+
+        // Core Metrics
+        let width, height, cx, cy;
+        let R = 0; 
+        const EARTH_RADIUS_KM = 6371;
+        
+        // Interaction State
+        let dragTarget = null; 
+        let activePicker = null; 
+        let lastTimestamp = 0;
+        let simTime = 0;
+        let isSeismoRunning = false;
+        
+        // Physics Constants
+        const MAX_PHYSICS_TIME = 0.8; 
+        const SIM_TIME_SCALE = 1000; // Translates abstract physics time to "Seconds" (0.8 * 1000 = 800s max graph length)
+        
+        let rayPathsP = [];
+        let rayPathsS = [];
+        
+        // Colors
+        const colors = {
+            crustMantle: '#C87533', outerCore: '#FF9900', innerCore: '#FFD700',
+            pWave: '#3b82f6', sWave: '#1f2937', // Blue and Dark Gray for waves!
+            probe: '#FFFFFF', source: '#FF3333', guess: '#00beff',
+            stat1: '#00beff', stat2: '#32CD32', stat3: '#FF3333'
+        };
+
+        // Complete App State
+        let state = {
+            activeTab: 'explore',
+            sourceAngle: -Math.PI / 2, 
+            sourceDepthRatio: 0.05,    
+            probePosNorm: { x: 0, y: 1 }, 
+            coreIsLiquid: true,
+            mantleDensityFactor: 1.0,
+            speedMultiplier: 1.0,
+            showP: true, showS: true, showWavefronts: true,
+            
+            isMysteryMode: false,
+            mysteryRevealed: false,
+            guessPin: null, 
+            
+            stations: [
+                { id: 1, color: colors.stat1, angle: Math.PI * -0.2, pPick: 10, sPick: 20, ringKm: 0, waveform: [] },
+                { id: 2, color: colors.stat2, angle: Math.PI * 0.4, pPick: 25, sPick: 45, ringKm: 0, waveform: [] }
+            ],
+            nextStationId: 3
+        };
+
+        let layers = [];
+
+        // --- Core Initialization ---
+        window.onload = function() {
+            resize(); 
+            switchTab('explore'); 
+            requestAnimationFrame(animate);
+        };
+
+        function resize() {
+            canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
+            canvas.height = canvas.parentElement.clientHeight * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            width = canvas.parentElement.clientWidth;
+            height = canvas.parentElement.clientHeight;
+            cx = width / 2; cy = height / 2;
+            R = Math.min(width, height) * 0.42; 
+
+            pCanvas.width = pCanvas.parentElement.clientWidth * window.devicePixelRatio;
+            pCanvas.height = pCanvas.parentElement.clientHeight * window.devicePixelRatio;
+            pCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+            updatePhysics();
+        }
+        window.addEventListener('resize', resize);
+
+        // --- Tab Switching Logic ---
+        function switchTab(tab) {
+            state.activeTab = tab;
+            
+            // Reset Button Styles
+            ['tabBtnExplore', 'tabBtnSeismo', 'tabBtnTriang'].forEach(id => {
+                document.getElementById(id).className = "flex-1 py-3 md:py-4 text-white/60 hover:text-white transition-colors border-b-4 border-transparent bg-brand-darkblue";
+            });
+            const activeBtn = { 'explore': 'tabBtnExplore', 'seismo': 'tabBtnSeismo', 'triang': 'tabBtnTriang' }[tab];
+            document.getElementById(activeBtn).className = "flex-1 py-3 md:py-4 text-white bg-brand-blue border-b-4 border-white transition-colors";
+
+            // Panel Visibility
+            const divEx = document.getElementById('tabExplore');
+            const divAdv = document.getElementById('tabAdvanced');
+            const actionSeismo = document.getElementById('actionSeismo');
+            const actionTriang = document.getElementById('actionTriang');
+            const instructions = document.getElementById('instructionText');
+
+            if (tab === 'explore') {
+                divEx.classList.remove('hidden'); divAdv.classList.add('hidden');
+                instructions.innerText = "Click Earth to place earthquake. Drag Probe to measure.";
+                state.isMysteryMode = false;
+            } else if (tab === 'seismo') {
+                divEx.classList.add('hidden'); divAdv.classList.remove('hidden'); 
+                actionSeismo.classList.remove('hidden'); actionTriang.classList.add('hidden');
+                instructions.innerText = "Drag stations on the map. Analyze live seismograms below.";
+                state.isMysteryMode = false;
+                simTime = MAX_PHYSICS_TIME; 
+                isSeismoRunning = false;
+            } else if (tab === 'triang') {
+                divEx.classList.add('hidden'); divAdv.classList.remove('hidden'); 
+                actionSeismo.classList.add('hidden'); actionTriang.classList.remove('hidden');
+                instructions.innerText = "Find the hidden epicenter! Use rings and drop a pin.";
+                
+                state.isMysteryMode = true;
+                
+                // Force exactly 3 stations for the triangulation puzzle
+                if (state.stations.length < 3) {
+                    const defAngles = [Math.PI * -0.2, Math.PI * 0.4, Math.PI * 0.9];
+                    const cols = [colors.stat1, colors.stat2, colors.stat3];
+                    state.stations = [0, 1, 2].map(i => ({
+                        id: i + 1, color: cols[i], angle: defAngles[i], 
+                        pPick: 10, sPick: 20, ringKm: 0, waveform: []
+                    }));
+                    state.nextStationId = 4;
+                }
+
+                if (!state.mysteryRevealed && !state.guessPin) generateMysteryQuake();
+                simTime = MAX_PHYSICS_TIME; 
+                isSeismoRunning = false;
+            }
+            
+            // Give DOM time to update flex bounds, then resize canvas
+            setTimeout(() => {
+                resize();
+                renderStationList();
+                updatePhysics();
+            }, 10);
+        }
+
+        document.getElementById('tabBtnExplore').addEventListener('click', () => switchTab('explore'));
+        document.getElementById('tabBtnSeismo').addEventListener('click', () => switchTab('seismo'));
+        document.getElementById('tabBtnTriang').addEventListener('click', () => switchTab('triang'));
+
+        // --- Settings Event Listeners ---
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            state.speedMultiplier = parseInt(e.target.value) / 100;
+            document.getElementById('speedLabel').innerText = state.speedMultiplier.toFixed(1) + 'x';
+        });
+        document.getElementById('coreState').addEventListener('change', (e) => {
+            state.coreIsLiquid = (e.target.value === 'liquid'); updatePhysics();
+        });
+        document.getElementById('densitySlider').addEventListener('input', (e) => {
+            state.mantleDensityFactor = parseInt(e.target.value) / 100;
+            document.getElementById('densityLabel').innerText = state.mantleDensityFactor === 1 ? "Earth Default" : (state.mantleDensityFactor > 1 ? "Dense (Fast)" : "Light (Slow)");
+            updatePhysics();
+        });
+        ['P', 'S', 'Wavefronts'].forEach(type => {
+            document.getElementById(`toggle${type}`).addEventListener('change', (e) => { state[`show${type}`] = e.target.checked; });
+        });
+        document.getElementById('resetExploreBtn').addEventListener('click', () => {
+            document.getElementById('speedSlider').value = 100; document.getElementById('speedLabel').innerText = '1.0x'; state.speedMultiplier = 1;
+            document.getElementById('coreState').value = 'liquid'; state.coreIsLiquid = true;
+            document.getElementById('densitySlider').value = 100; document.getElementById('densityLabel').innerText = 'Earth Default'; state.mantleDensityFactor = 1;
+            ['P', 'S', 'Wavefronts'].forEach(type => { document.getElementById(`toggle${type}`).checked = true; state[`show${type}`] = true; });
+            updatePhysics();
+        });
+
+        // --- Advanced / Triangulation Buttons ---
+        document.getElementById('addStationBtn').addEventListener('click', () => {
+            if (state.stations.length >= 3) return;
+            const newColor = [colors.stat1, colors.stat2, colors.stat3][state.nextStationId % 3];
+            state.stations.push({
+                id: state.nextStationId++, color: newColor, angle: Math.random() * Math.PI, 
+                pPick: 15, sPick: 30, ringKm: 0, waveform: []
+            });
+            updatePhysics(); renderStationList();
+        });
+
+        document.getElementById('resetSeismoBtn').addEventListener('click', () => {
+            const defAngles = [Math.PI * -0.2, Math.PI * 0.4, Math.PI * 0.9];
+            state.stations.forEach((s, i) => { s.angle = defAngles[i % 3]; });
+            updatePhysics(); updateStationDataUI();
+        });
+
+        document.getElementById('triggerBtn').addEventListener('click', () => {
+            simTime = 0; isSeismoRunning = true; generateSyntheticSeismograms();
+        });
+
+        function generateMysteryQuake() {
+            state.sourceAngle = Math.random() * Math.PI * 2;
+            state.sourceDepthRatio = 0.0; // Surface earthquake for perfect 2D ring triangulation
+            state.mysteryRevealed = false;
+            state.guessPin = null;
+            state.stations.forEach(s => s.ringKm = 0); // Reset rings
+            updatePhysics(); renderStationList();
+            simTime = MAX_PHYSICS_TIME; isSeismoRunning = false;
+        }
+
+        document.getElementById('newMysteryBtn').addEventListener('click', generateMysteryQuake);
+        document.getElementById('revealBtn').addEventListener('click', () => {
+            state.mysteryRevealed = true; simTime = 0; isSeismoRunning = true;
+        });
+
+        // --- Dynamic Station UI Rendering ---
+        function renderStationList() {
+            const list = document.getElementById('stationList');
+            if(!list) return;
+            
+            const addBtn = document.getElementById('addStationBtn');
+            if(addBtn) {
+                addBtn.disabled = (state.stations.length >= 3);
+                addBtn.style.opacity = state.stations.length >= 3 ? '0.5' : '1';
+            }
+
+            let html = '';
+            state.stations.forEach((stat) => {
+                html += `
+                    <div class="border border-gray-300 rounded-lg bg-white flex flex-col shadow-sm relative overflow-hidden shrink-0">
+                        <div class="absolute top-0 left-0 w-1.5 h-full" style="background-color: ${stat.color}"></div>
+                        
+                        <div class="pl-3 pr-2 py-1 flex justify-between items-center border-b border-gray-200 bg-gray-50">
+                            <span class="font-extrabold text-brand-gray-plus3 text-xs md:text-sm">Station ${stat.id}</span>
+                            <button class="delete-station-btn text-gray-400 hover:text-red-500 font-bold px-2 py-1 rounded transition-colors text-sm md:text-lg leading-none" data-id="${stat.id}" title="Delete Station">✕</button>
+                        </div>
+                        
+                        <!-- Horizontal Layout: Graph Left, Data Right -->
+                        <div class="flex border-b border-gray-200">
+                            
+                            <!-- Left: Waveform Container -->
+                            <div class="relative flex-1 h-20 md:h-24 bg-[#f8fafc] waveform-container overflow-hidden" data-id="${stat.id}">
+                                <canvas id="canvas_stat_${stat.id}" class="absolute inset-0 w-full h-full"></canvas>
+                                
+                                <!-- P Picker -->
+                                <div id="picker_p_${stat.id}" class="absolute top-0 bottom-0 w-[2px] md:w-[3px] bg-blue-500 cursor-ew-resize z-10 picker-handle shadow-sm" data-id="${stat.id}" data-type="pPick" style="left: ${stat.pPick}%">
+                                    <div class="absolute -left-3 top-0 md:top-1 bg-blue-500 text-white text-[9px] md:text-[10px] font-bold px-1 rounded shadow">P</div>
+                                </div>
+                                
+                                <!-- S Picker -->
+                                <div id="picker_s_${stat.id}" class="absolute top-0 bottom-0 w-[2px] md:w-[3px] bg-gray-800 cursor-ew-resize z-10 picker-handle shadow-sm" data-id="${stat.id}" data-type="sPick" style="left: ${stat.sPick}%">
+                                    <div class="absolute -left-3 top-5 md:top-7 bg-gray-800 text-white text-[9px] md:text-[10px] font-bold px-1 rounded shadow">S</div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Data Stack -->
+                            <div class="w-[85px] md:w-24 bg-gray-50 flex flex-col justify-center p-2 border-l border-gray-200 shrink-0">
+                                <div class="text-blue-500 font-bold text-[10px] md:text-xs truncate" id="lbl_p_${stat.id}">P: 0s</div>
+                                <div class="text-gray-800 font-bold text-[10px] md:text-xs truncate" id="lbl_s_${stat.id}">S: 0s</div>
+                                <div class="text-brand-darkblue font-extrabold text-[11px] md:text-sm mt-0.5 mb-1 truncate" id="lbl_dt_${stat.id}">Δt: 0s</div>
+                                
+                                ${state.activeTab === 'seismo' ? 
+                                    `<div class="text-[9px] text-gray-500 font-bold uppercase mt-1">True Dist</div>
+                                     <div class="text-[10px] md:text-xs font-bold text-gray-800" id="lbl_dist_${stat.id}">0 km</div>` 
+                                    : 
+                                    `<label class="text-[9px] text-gray-500 font-bold uppercase mt-1 leading-tight">Ring (km)</label>
+                                     <input type="number" class="ring-input w-full border border-gray-300 rounded px-1 py-1 text-[10px] font-bold text-gray-800 mt-0.5 outline-none focus:border-brand-blue" data-id="${stat.id}" value="${stat.ringKm}" step="50" min="0">`
+                                }
+                            </div>
+                            
+                        </div>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+            updateStationDataUI();
+        }
+
+        // Fast DOM updates for dragging and physics without rebuilding HTML
+        function updateStationDataUI() {
+            state.stations.forEach(stat => {
+                const pTime = (stat.pPick / 100) * (MAX_PHYSICS_TIME * SIM_TIME_SCALE);
+                const sTime = (stat.sPick / 100) * (MAX_PHYSICS_TIME * SIM_TIME_SCALE);
+                const deltaT = Math.max(0, sTime - pTime).toFixed(0);
+
+                const elP = document.getElementById(`lbl_p_${stat.id}`); if(elP) elP.innerText = `P: ${pTime.toFixed(0)}s`;
+                const elS = document.getElementById(`lbl_s_${stat.id}`); if(elS) elS.innerText = `S: ${sTime.toFixed(0)}s`;
+                const elDt = document.getElementById(`lbl_dt_${stat.id}`); if(elDt) elDt.innerText = `Δt: ${deltaT}s`;
+                
+                const elDist = document.getElementById(`lbl_dist_${stat.id}`);
+                if (elDist) {
+                    let trueDistRad = Math.abs(stat.angle - state.sourceAngle);
+                    if (trueDistRad > Math.PI) trueDistRad = 2 * Math.PI - trueDistRad;
+                    const trueDistKm = Math.round(trueDistRad * EARTH_RADIUS_KM);
+                    elDist.innerText = `${trueDistKm} km`;
+                }
+
+                const pPicker = document.getElementById(`picker_p_${stat.id}`); if(pPicker) pPicker.style.left = `${stat.pPick}%`;
+                const sPicker = document.getElementById(`picker_s_${stat.id}`); if(sPicker) sPicker.style.left = `${stat.sPick}%`;
+            });
+        }
+
+        // DOM Event Delegation
+        document.getElementById('tabAdvanced').addEventListener('click', (e) => {
+            const delBtn = e.target.closest('.delete-station-btn');
+            if (delBtn && state.stations.length > 1) {
+                const id = parseInt(delBtn.dataset.id);
+                state.stations = state.stations.filter(s => s.id !== id);
+                updatePhysics(); renderStationList();
+            }
+        });
+
+        document.getElementById('tabAdvanced').addEventListener('input', (e) => {
+            if (e.target.classList.contains('ring-input')) {
+                const id = parseInt(e.target.dataset.id);
+                const stat = state.stations.find(s => s.id === id);
+                if (stat) {
+                    stat.ringKm = parseInt(e.target.value) || 0;
+                    updatePhysics(); // Visually update the circle on Earth
+                }
+            }
+        });
+
+        // --- Picker Interaction Logic (Draggable DOM Elements) ---
+        function attachPickerEvents(type, e) {
+            const handle = e.target.closest('.picker-handle');
+            if (handle) {
+                activePicker = {
+                    id: parseInt(handle.dataset.id),
+                    type: handle.dataset.type,
+                    container: handle.closest('.waveform-container')
+                };
+                if(type === 'touchstart') e.preventDefault();
+            }
+        }
+        function movePickerEvents(type, e) {
+            if (activePicker) {
+                const rect = activePicker.container.getBoundingClientRect();
+                let clientX = e.clientX;
+                if (e.touches && e.touches.length > 0) clientX = e.touches[0].clientX;
+                
+                let pct = ((clientX - rect.left) / rect.width) * 100;
+                pct = Math.max(0, Math.min(100, pct));
+                
+                const stat = state.stations.find(s => s.id === activePicker.id);
+                if (stat) {
+                    stat[activePicker.type] = pct;
+                    updateStationDataUI(); // Live text update
+                }
+                if(type === 'touchmove') e.preventDefault();
+            }
+        }
+
+        document.addEventListener('mousedown', (e) => attachPickerEvents('mousedown', e));
+        document.addEventListener('touchstart', (e) => attachPickerEvents('touchstart', e), {passive: false});
+        document.addEventListener('mousemove', (e) => movePickerEvents('mousemove', e));
+        document.addEventListener('touchmove', (e) => movePickerEvents('touchmove', e), {passive: false});
+        document.addEventListener('mouseup', () => { activePicker = null; });
+        document.addEventListener('touchend', () => { activePicker = null; });
+
+        // --- Interactive Dragging Logic (Earth Canvas) ---
+        function getEventPos(e, targetCanvas) {
+            const rect = targetCanvas.getBoundingClientRect();
+            let clientX = e.clientX; let clientY = e.clientY;
+            if (e.touches && e.touches.length > 0) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        canvas.addEventListener('mousedown', handlePointerDown);
+        window.addEventListener('mousemove', handlePointerMove);
+        window.addEventListener('mouseup', handlePointerUp);
+        canvas.addEventListener('touchstart', handlePointerDown, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { if(dragTarget && dragTarget !== 'seismo') { e.preventDefault(); handlePointerMove(e); } }, {passive: false});
+        window.addEventListener('touchend', handlePointerUp);
+
+        function handlePointerDown(e) {
+            if (R === 0) return; 
+            const pos = getEventPos(e, canvas);
+            const distToCenter = Math.hypot(pos.x - cx, pos.y - cy);
+            const hitRadius = 40; 
+
+            if (state.activeTab === 'explore') {
+                const probe = getProbePixelPos();
+                if (Math.hypot(pos.x - probe.x, pos.y - probe.y) < hitRadius) { dragTarget = 'probe'; return; }
+            } else {
+                for (let i = 0; i < state.stations.length; i++) {
+                    const statPx = { x: cx + Math.cos(state.stations[i].angle) * R, y: cy + Math.sin(state.stations[i].angle) * R };
+                    if (Math.hypot(pos.x - statPx.x, pos.y - statPx.y) < hitRadius) { dragTarget = `station_${i}`; return; }
+                }
+            }
+
+            if (distToCenter <= R) {
+                if (state.activeTab === 'triang' && !state.mysteryRevealed) {
+                    dragTarget = 'guessPin'; updateGuessPin(pos.x, pos.y);
+                } else if (state.activeTab !== 'triang' || state.mysteryRevealed) {
+                    dragTarget = 'source'; updateSourceFromPixel(pos.x, pos.y);
+                }
+            }
+        }
+
+        function handlePointerMove(e) {
+            if (!dragTarget) return;
+            const pos = getEventPos(e, canvas);
+            
+            if (dragTarget === 'source') updateSourceFromPixel(pos.x, pos.y);
+            else if (dragTarget === 'guessPin') updateGuessPin(pos.x, pos.y);
+            else if (dragTarget === 'probe') updateProbeFromPixel(pos.x, pos.y);
+            else if (dragTarget.startsWith('station_')) {
+                const idx = parseInt(dragTarget.split('_')[1]);
+                state.stations[idx].angle = Math.atan2(pos.y - cy, pos.x - cx);
+                updatePhysics(); updateStationDataUI();
+            }
+        }
+
+        function handlePointerUp() { dragTarget = null; }
+
+        function updateSourceFromPixel(px, py) {
+            let dx = px - cx; let dy = py - cy;
+            state.sourceAngle = Math.atan2(dy, dx);
+            let rNorm = Math.max(0.55, Math.min(1.0, Math.hypot(dx, dy) / R));
+            state.sourceDepthRatio = (1.0 - rNorm) / (1.0 - 0.55);
+            simTime = 0; isSeismoRunning = false;
+            updatePhysics(); updateStationDataUI();
+        }
+
+        function updateGuessPin(px, py) {
+            let dx = px - cx; let dy = py - cy;
+            let rNorm = Math.max(0.55, Math.min(1.0, Math.hypot(dx, dy) / R));
+            state.guessPin = { angle: Math.atan2(dy, dx), depthRatio: (1.0 - rNorm) / (1.0 - 0.55) };
+        }
+
+        function updateProbeFromPixel(px, py) {
+            let dx = px - cx; let dy = py - cy; let dist = Math.hypot(dx, dy);
+            if (dist > R) { dx = (dx / dist) * R; dy = (dy / dist) * R; dist = R; }
+            state.probePosNorm = { x: dx / R, y: dy / R };
+            let depthKm = Math.round((1.0 - (dist / R)) * EARTH_RADIUS_KM); 
+            document.getElementById('probeDepthLabel').innerText = `Depth: ${depthKm}km`;
+        }
+
+        function getSourcePixelPos() {
+            const minR = 0.55; const maxR = 1.0;
+            const actualR = (maxR - (state.sourceDepthRatio * (maxR - minR))) * R;
+            return { x: cx + Math.cos(state.sourceAngle) * actualR, y: cy + Math.sin(state.sourceAngle) * actualR };
+        }
+        function getProbePixelPos() { return { x: cx + state.probePosNorm.x * R, y: cy + state.probePosNorm.y * R }; }
+        function getGuessPinPixelPos() {
+            if(!state.guessPin) return null;
+            const actualR = (1.0 - (state.guessPin.depthRatio * 0.45)) * R;
+            return { x: cx + Math.cos(state.guessPin.angle) * actualR, y: cy + Math.sin(state.guessPin.angle) * actualR };
+        }
+
+        // --- Physics Engine (Ray Tracing) ---
+        function initLayers() {
+            // Mantle vs tweaked to ~6.11 so exactly Dist ≈ Δt * 100km for easy triangulation teaching.
+            layers = [
+                { name: 'Inner Core', r: 0.20, vp: 11, vs: 3.5, color: colors.innerCore },
+                { name: 'Outer Core', r: 0.55, vp: 8,  vs: state.coreIsLiquid ? 0 : 4.5, color: colors.outerCore },
+                { name: 'Mantle',     r: 1.0,  vp: 10 * state.mantleDensityFactor, vs: 6.11 * state.mantleDensityFactor, color: colors.crustMantle }
+            ];
+            layers.sort((a, b) => b.r - a.r); // Render outer to inner
+        }
+
+        function intersectCircle(origin, dir, radius) {
+            const a = dir.x*dir.x + dir.y*dir.y; const b = 2 * (origin.x*dir.x + origin.y*dir.y); const c = origin.x*origin.x + origin.y*origin.y - radius*radius;
+            const discriminant = b*b - 4*a*c; if (discriminant < 0) return [];
+            const t1 = (-b + Math.sqrt(discriminant)) / (2*a); const t2 = (-b - Math.sqrt(discriminant)) / (2*a);
+            let points = []; if (t1 > 0.001) points.push(t1); if (t2 > 0.001) points.push(t2);
+            return points.sort((a,b) => a-b);
+        }
+
+        function refract(inc, norm, v1, v2) {
+            const r = v2 / v1; const cosI = -(inc.x * norm.x + inc.y * norm.y); const sinT2 = r * r * (1.0 - cosI * cosI);
+            if (sinT2 > 1.0) return null; const cosT = Math.sqrt(1.0 - sinT2);
+            return { x: r * inc.x + (r * cosI - cosT) * norm.x, y: r * inc.y + (r * cosI - cosT) * norm.y };
+        }
+
+        function traceRays() {
+            if (R === 0) return;
+            rayPathsP = []; rayPathsS = [];
+            const srcPix = getSourcePixelPos(); const origin = { x: (srcPix.x - cx) / R, y: (srcPix.y - cy) / R };
+            const numRays = 360; 
+            for (let i = 0; i < numRays; i++) {
+                const angle = (i / numRays) * Math.PI * 2;
+                let dir = { x: Math.cos(angle), y: Math.sin(angle) };
+                rayPathsP.push(computeSingleRayPath(origin, dir, 'vp')); rayPathsS.push(computeSingleRayPath(origin, dir, 'vs'));
+            }
+        }
+
+        function computeSingleRayPath(startOrigin, startDir, waveType) {
+            let path = []; let origin = { x: startOrigin.x, y: startOrigin.y }; let dir = { x: startDir.x, y: startDir.y };
+            let currentLayerIdx = layers.findIndex(l => Math.hypot(origin.x, origin.y) <= l.r + 0.001); if (currentLayerIdx === -1) currentLayerIdx = 0;
+            let totalTime = 0; path.push({ x: origin.x, y: origin.y, time: totalTime });
+
+            for (let bounce = 0; bounce < 4; bounce++) { 
+                let currentV = layers[currentLayerIdx][waveType]; if (currentV === 0) break; 
+                let intersections = [];
+                let tOuter = intersectCircle(origin, dir, layers[currentLayerIdx].r); if (tOuter.length > 0) intersections.push({ t: tOuter[0], type: 'outer', targetLayer: currentLayerIdx - 1 });
+                if (currentLayerIdx + 1 < layers.length) { let tInner = intersectCircle(origin, dir, layers[currentLayerIdx+1].r); if (tInner.length > 0) intersections.push({ t: tInner[0], type: 'inner', targetLayer: currentLayerIdx + 1 }); }
+                if (intersections.length === 0) break;
+                intersections.sort((a,b) => a.t - b.t); let hit = intersections[0];
+                let hitPoint = { x: origin.x + dir.x * hit.t, y: origin.y + dir.y * hit.t };
+                totalTime += hit.t / currentV; path.push({ x: hitPoint.x, y: hitPoint.y, time: totalTime });
+                if (hit.type === 'outer' && hit.targetLayer < 0) break; 
+                let normal = { x: hitPoint.x, y: hitPoint.y }; let len = Math.hypot(normal.x, normal.y); normal.x /= len; normal.y /= len;
+                if (hit.type === 'outer') { normal.x *= -1; normal.y *= -1; }
+                let nextV = layers[hit.targetLayer][waveType]; if (nextV === 0) break;
+                let newDir = refract(dir, normal, currentV, nextV);
+                if (newDir) { dir = newDir; currentLayerIdx = hit.targetLayer; origin = hitPoint; origin.x += dir.x * 0.0001; origin.y += dir.y * 0.0001; } else { break; }
+            }
+            return path;
+        }
+
+        // --- Sophisticated Synthetic Seismogram Generator ---
+        function waveEnvelope(dt, k, a) { return dt < 0 ? 0 : Math.pow(dt * a, k) * Math.exp(-dt * a); }
+        function getArrivalFromRays(paths, targetAngle) {
+            let bestTime = Infinity; let minAngleDiff = Infinity;
+            for (let path of paths) {
+                let lastPt = path[path.length - 1];
+                if (Math.hypot(lastPt.x, lastPt.y) >= 0.99) {
+                    let diff = Math.abs(Math.atan2(lastPt.y, lastPt.x) - targetAngle);
+                    if (diff > Math.PI) diff = 2 * Math.PI - diff;
+                    if (diff < minAngleDiff) { minAngleDiff = diff; bestTime = lastPt.time; }
+                }
+            }
+            return minAngleDiff <= 0.15 ? bestTime : null;
+        }
+
+        function generateSyntheticSeismograms() {
+            state.stations.forEach(station => {
+                station.pArrival = getArrivalFromRays(rayPathsP, station.angle);
+                station.sArrival = getArrivalFromRays(rayPathsS, station.angle);
+                let diff = Math.abs(station.angle - state.sourceAngle); if (diff > Math.PI) diff = 2 * Math.PI - diff;
+                station.surfArrival = diff / (3.0 * state.mantleDensityFactor); 
+                station.waveform = [];
+                
+                const numPts = 800; // Matches MAX_PHYSICS_TIME
+                for(let i = 0; i <= numPts; i++) {
+                    let t = (i / numPts) * MAX_PHYSICS_TIME;
+                    let val = (Math.random() - 0.5) * 0.03; // background noise
+                    let atten = 1.0 / (1.0 + diff * 1.5); 
+                    
+                    if (station.pArrival !== null && t >= station.pArrival) {
+                        let dt = t - station.pArrival;
+                        val += waveEnvelope(dt, 1.5, 35) * 2.0 * (Math.sin(dt*300)*0.6 + Math.sin(dt*150)*0.4 + (Math.random()-0.5)*0.5) * atten;
+                    }
+                    if (station.sArrival !== null && t >= station.sArrival) {
+                        let dt = t - station.sArrival;
+                        val += waveEnvelope(dt, 2, 25) * 3.5 * (Math.sin(dt*120)*0.7 + Math.sin(dt*70)*0.3 + (Math.random()-0.5)*0.4) * atten;
+                    }
+                    if (t >= station.surfArrival) {
+                        let dt = t - station.surfArrival;
+                        val += waveEnvelope(dt, 3, 12) * 5.0 * (Math.sin(dt*45)*0.8 + Math.cos(dt*20)*0.2) * atten;
+                    }
+                    station.waveform.push(val);
+                }
+            });
+        }
+
+        function updatePhysics() {
+            if (R === 0) return;
+            initLayers();
+            traceRays();
+            updateProbeFromPixel(cx + state.probePosNorm.x * R, cy + state.probePosNorm.y * R);
+            generateSyntheticSeismograms();
+        }
+
+        // --- Core Rendering ---
+        function drawScaleBar() {
+            const scaleKm = 4000; const px = (scaleKm / EARTH_RADIUS_KM) * R;
+            const bx = 25; const by = height - 30;
+
+            ctx.save();
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.fillRect(bx - 10, by - 25, px + 20, 40); 
+            ctx.strokeStyle = '#0c2846'; ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(bx, by); ctx.lineTo(bx + px, by);
+            ctx.moveTo(bx, by - 6); ctx.lineTo(bx, by + 6);
+            ctx.moveTo(bx + px, by - 6); ctx.lineTo(bx + px, by + 6);
+            ctx.moveTo(bx + px/2, by - 4); ctx.lineTo(bx + px/2, by + 4); 
+            ctx.stroke();
+            ctx.fillStyle = '#0c2846'; ctx.font = 'bold 12px "Open Sans"'; ctx.textAlign = 'center';
+            ctx.fillText(scaleKm + ' km', bx + px / 2, by - 10);
+            ctx.restore();
+        }
+
+        function drawEarth() {
+            ctx.clearRect(0, 0, width, height);
+            for (let layer of layers) { ctx.beginPath(); ctx.arc(cx, cy, layer.r * R, 0, Math.PI * 2); ctx.fillStyle = layer.color; ctx.fill(); }
+            
+            ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.font = 'bold 18px "Open Sans"'; ctx.textAlign = 'center';
+            
+            // Labels correctly positioned in the exact middle of their respective rings
+            ctx.fillText('MANTLE', cx, cy - ((layers[0].r + layers[1].r)/2 * R) + 6);
+            ctx.fillText('OUTER CORE', cx, cy - ((layers[1].r + layers[2].r)/2 * R) + 6);
+            ctx.fillText('INNER', cx, cy - 8); ctx.fillText('CORE', cx, cy + 12);
+            drawScaleBar();
+        }
+
+        function drawRaysAndWavefronts(paths, color, isPWave) {
+            if (state.isMysteryMode && !state.mysteryRevealed) return;
+
+            if (isPWave ? state.showP : state.showS) {
+                ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.35;
+                paths.forEach(path => {
+                    if (path.length < 2) return;
+                    ctx.beginPath(); ctx.moveTo(cx + path[0].x * R, cy + path[0].y * R);
+                    for (let i = 1; i < path.length; i++) { ctx.lineTo(cx + path[i].x * R, cy + path[i].y * R); }
+                    ctx.stroke();
+                });
+                ctx.globalAlpha = 1.0;
+            }
+
+            if (state.showWavefronts) {
+                ctx.fillStyle = color;
+                paths.forEach(path => {
+                    if (path.length < 2) return;
+                    if (state.activeTab !== 'explore') {
+                        if (!isSeismoRunning) return;
+                        let targetTime = simTime;
+                        for (let i = 0; i < path.length - 1; i++) {
+                            if (targetTime >= path[i].time && targetTime <= path[i+1].time) {
+                                let ratio = (targetTime - path[i].time) / (path[i+1].time - path[i].time);
+                                let px = cx + (path[i].x + (path[i+1].x - path[i].x) * ratio) * R;
+                                let py = cy + (path[i].y + (path[i+1].y - path[i].y) * ratio) * R;
+                                ctx.beginPath(); ctx.arc(px, py, isPWave ? 3 : 2.5, 0, Math.PI * 2); ctx.fill(); break;
+                            }
+                        }
+                    } else {
+                        for (let p = 0; p < 8; p++) {
+                            let targetTime = simTime - (p * 0.15); if (targetTime < 0) targetTime += MAX_PHYSICS_TIME; targetTime %= MAX_PHYSICS_TIME;
+                            for (let i = 0; i < path.length - 1; i++) {
+                                if (targetTime >= path[i].time && targetTime <= path[i+1].time) {
+                                    let ratio = (targetTime - path[i].time) / (path[i+1].time - path[i].time);
+                                    let px = cx + (path[i].x + (path[i+1].x - path[i].x) * ratio) * R;
+                                    let py = cy + (path[i].y + (path[i+1].y - path[i].y) * ratio) * R;
+                                    ctx.beginPath(); ctx.arc(px, py, isPWave ? 2.5 : 2, 0, Math.PI * 2); ctx.fill(); break;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function drawIcons() {
+            if (state.activeTab !== 'explore') {
+                state.stations.forEach(stat => {
+                    const px = cx + Math.cos(stat.angle) * R; const py = cy + Math.sin(stat.angle) * R;
+                    
+                    if (stat.ringKm > 0) {
+                        const rPx = (stat.ringKm / EARTH_RADIUS_KM) * R;
+                        ctx.beginPath(); ctx.arc(px, py, rPx, 0, Math.PI * 2);
+                        ctx.strokeStyle = stat.color; ctx.lineWidth = 2.5; ctx.globalAlpha = 0.5;
+                        ctx.stroke(); ctx.globalAlpha = 1.0;
+                    }
+                    
+                    ctx.save(); ctx.translate(px, py); ctx.rotate(stat.angle + Math.PI/2);
+                    ctx.beginPath(); ctx.moveTo(0, 8); ctx.lineTo(-10, -12); ctx.lineTo(10, -12); ctx.closePath();
+                    ctx.fillStyle = stat.color; ctx.fill(); ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
+                    ctx.restore();
+                });
+            } else {
+                const probe = getProbePixelPos();
+                ctx.beginPath(); ctx.arc(probe.x, probe.y, 10, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 4; ctx.stroke();
+                ctx.beginPath(); ctx.arc(probe.x, probe.y, 10, 0, Math.PI * 2); ctx.strokeStyle = colors.probe; ctx.lineWidth = 2; ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(probe.x - 16, probe.y); ctx.lineTo(probe.x + 16, probe.y); ctx.moveTo(probe.x, probe.y - 16); ctx.lineTo(probe.x, probe.y + 16); ctx.strokeStyle = colors.probe; ctx.lineWidth = 2; ctx.stroke();
+            }
+
+            if (state.isMysteryMode) {
+                if (state.guessPin) {
+                    const gSrc = getGuessPinPixelPos();
+                    ctx.beginPath(); ctx.arc(gSrc.x, gSrc.y, 8, 0, Math.PI * 2); ctx.fillStyle = colors.guess; ctx.fill();
+                    ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+                    ctx.fillStyle = colors.guess; ctx.font = 'bold 12px sans-serif'; ctx.fillText('Guess', gSrc.x, gSrc.y - 15);
+                }
+                
+                if (state.mysteryRevealed) {
+                    const src = getSourcePixelPos();
+                    const pulse = (Math.sin(simTime * 8) + 1) * 5;
+                    ctx.beginPath(); ctx.arc(src.x, src.y, 8 + pulse, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255, 51, 51, 0.4)'; ctx.fill();
+                    ctx.beginPath(); ctx.arc(src.x, src.y, 6, 0, Math.PI * 2); ctx.fillStyle = colors.source; ctx.fill();
+                    ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+                    ctx.fillStyle = colors.source; ctx.font = 'bold 12px sans-serif'; ctx.fillText('True Epicenter', src.x, src.y - 20);
+                }
+            } else {
+                const src = getSourcePixelPos();
+                const pulse = (Math.sin(simTime * 8) + 1) * 5;
+                ctx.beginPath(); ctx.arc(src.x, src.y, 8 + pulse, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255, 51, 51, 0.4)'; ctx.fill();
+                ctx.beginPath(); ctx.arc(src.x, src.y, 6, 0, Math.PI * 2); ctx.fillStyle = colors.source; ctx.fill();
+                ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+            }
+        }
+
+        // Exact Refraction Vector Particle Logic
+        function getWavePresenceAndAngle(paths, probeNorm) {
+            const threshold = 0.15; 
+            for(let path of paths) {
+                for(let i=0; i<path.length-1; i++) {
+                    let v = path[i], w = path[i+1];
+                    let l2 = (v.x-w.x)**2 + (v.y-w.y)**2;
+                    let t = l2==0 ? 0 : ((probeNorm.x-v.x)*(w.x-v.x) + (probeNorm.y-v.y)*(w.y-v.y))/l2;
+                    t = Math.max(0, Math.min(1, t));
+                    let dist = Math.hypot(probeNorm.x - (v.x+t*(w.x-v.x)), probeNorm.y - (v.y+t*(w.y-v.y)));
+                    if(dist < threshold) {
+                        return { has: true, angle: Math.atan2(w.y - v.y, w.x - v.x) };
+                    }
+                }
+            }
+            return { has: false, angle: 0 };
+        }
+
+        function renderParticleViewport() {
+            const pw = pCanvas.parentElement.clientWidth; const ph = pCanvas.parentElement.clientHeight; pCtx.clearRect(0, 0, pw, ph);
+
+            const pData = getWavePresenceAndAngle(rayPathsP, state.probePosNorm);
+            const sData = getWavePresenceAndAngle(rayPathsS, state.probePosNorm);
+            
+            const spX = pw / 5, spY = ph / 5;
+
+            // Draw base grid FIRST
+            for (let r = 1; r <= 4; r++) { for (let c = 1; c <= 4; c++) {
+                pCtx.beginPath(); pCtx.arc(c * spX, r * spY, 2, 0, Math.PI*2); pCtx.fillStyle = 'rgba(255,255,255,0.1)'; pCtx.fill();
+            }}
+
+            // Draw moving particles over top based on correct vector angles
+            for (let r = 1; r <= 4; r++) { for (let c = 1; c <= 4; c++) {
+                const bx = c * spX, by = r * spY;
+                
+                // P-Wave (Longitudinal - Oscillates parallel to wave vector)
+                const pDisp = pData.has ? Math.cos(0.5*(c+r) - simTime*12) * 12 : 0;
+                pCtx.beginPath(); pCtx.arc(bx + Math.cos(pData.angle)*pDisp, by + Math.sin(pData.angle)*pDisp, 4, 0, Math.PI*2); pCtx.fillStyle = colors.pWave; pCtx.fill();
+
+                // S-Wave (Transverse - Oscillates perpendicular to wave vector)
+                const sDisp = sData.has ? Math.cos(0.5*(c+r) - simTime*8) * 12 : 0;
+                pCtx.beginPath(); pCtx.arc(bx + Math.cos(sData.angle + Math.PI/2)*sDisp, by + Math.sin(sData.angle + Math.PI/2)*sDisp, 2.5, 0, Math.PI*2); pCtx.fillStyle = colors.sWave; pCtx.fill();
+            }}
+            
+            pCtx.font = 'bold 12px "Open Sans"'; pCtx.textAlign = 'center';
+            if (!pData.has && state.showP) { pCtx.fillStyle = 'rgba(255, 255, 255, 0.4)'; pCtx.fillText('P-WAVE SHADOW ZONE', pw/2, ph/2 - 10); }
+            if (!sData.has && state.showS) { pCtx.fillStyle = 'rgba(0, 0, 0, 0.6)'; pCtx.fillText('S-WAVE SHADOW ZONE', pw/2, (!pData.has && state.showP) ? ph/2 + 10 : ph/2); }
+        }
+
+        // Draw individual dynamic seismograms inside cards
+        function renderCardSeismograms() {
+            if (state.activeTab === 'explore') return;
+            state.stations.forEach(stat => {
+                const canvas = document.getElementById(`canvas_stat_${stat.id}`);
+                if (!canvas) return; 
+
+                const cw = canvas.clientWidth * window.devicePixelRatio; const ch = canvas.clientHeight * window.devicePixelRatio;
+                if (canvas.width !== cw || canvas.height !== ch) {
+                    canvas.width = cw; canvas.height = ch; canvas.getContext('2d').scale(window.devicePixelRatio, window.devicePixelRatio);
+                }
+
+                const ctx = canvas.getContext('2d'); const w = canvas.clientWidth; const h = canvas.clientHeight;
+                ctx.clearRect(0, 0, w, h);
+                const midY = h / 2; ctx.lineWidth = 1.5; ctx.lineJoin = 'round';
+                
+                // Base line
+                ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.strokeStyle = 'rgba(0,0,0,0.05)'; ctx.stroke();
+
+                const ptsToDraw = Math.floor(stat.waveform.length * (isSeismoRunning ? Math.min(1.0, simTime / MAX_PHYSICS_TIME) : (simTime === 0 ? 0 : 1.0)));
+                const step = w / stat.waveform.length;
+                
+                let prevColor = null; let prevX = 0, prevY = midY;
+                for (let j = 0; j < ptsToDraw; j++) {
+                    let t = (j / stat.waveform.length) * MAX_PHYSICS_TIME;
+                    let color = 'rgba(0,0,0,0.15)'; 
+                    
+                    // Dynamic color coding based on arrival times!
+                    if (stat.pArrival !== null && t >= stat.pArrival && (stat.sArrival === null || t < stat.sArrival)) color = colors.pWave;
+                    else if (stat.sArrival !== null && t >= stat.sArrival) color = colors.sWave;
+                    
+                    let x = j * step; let y = midY - (stat.waveform[j] * (h * 0.45));
+                    
+                    if (color !== prevColor) {
+                        if (prevColor) ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(prevX, prevY); ctx.strokeStyle = color; prevColor = color;
+                    }
+                    ctx.lineTo(x, y); prevX = x; prevY = y;
+                }
+                if (prevColor) ctx.stroke();
+            });
+        }
+
+        // --- Core Animation Loop ---
+        function animate(timestamp) {
+            if (R === 0) { requestAnimationFrame(animate); return; } // Guard
+            
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const dt = (timestamp - lastTimestamp) / 1000;
+            lastTimestamp = timestamp;
+            
+            if (state.activeTab === 'explore') {
+                simTime += dt * state.speedMultiplier * 0.15;
+                if (simTime > MAX_PHYSICS_TIME) simTime %= MAX_PHYSICS_TIME;
+            } else {
+                if (isSeismoRunning) {
+                    simTime += dt * state.speedMultiplier * 0.25; // Good visual playback speed
+                    if (simTime >= MAX_PHYSICS_TIME) { isSeismoRunning = false; simTime = MAX_PHYSICS_TIME; }
+                }
+            }
+            
+            drawEarth();
+            drawRaysAndWavefronts(rayPathsS, colors.sWave, false);
+            drawRaysAndWavefronts(rayPathsP, colors.pWave, true);
+            drawIcons();
+            
+            if (state.activeTab === 'explore') renderParticleViewport();
+            else renderCardSeismograms();
+
+            requestAnimationFrame(animate);
+        }
+
+    </script>
+</body>
+</html>

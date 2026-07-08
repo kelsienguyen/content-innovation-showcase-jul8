@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Harmony Selector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .canvas-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin: 0 auto;
+        }
+
+        /* Layer canvases to avoid redrawing the heavy background wheel every time the pointer moves */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-radius: 50%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            cursor: crosshair;
+        }
+
+        #pointerCanvas {
+            pointer-events: auto;
+            box-shadow: none; /* No shadow on the transparent overlay */
+        }
+
+        /* Custom Radio Button styling */
+        .harmony-radio:checked + div {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+        .harmony-radio:checked + div p {
+            color: #e0f2fe;
+        }
+        
+        /* Tab styling */
+        .tab-btn.active {
+            border-bottom: 2px solid #3b82f6;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-6 flex flex-col items-center">
+
+    <div class="max-w-6xl w-full bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        
+        <!-- Header -->
+        <header class="bg-gray-50 border-b border-gray-100 p-6 text-center">
+            <h1 class="text-3xl font-extrabold text-gray-800">Color Harmony Explorer</h1>
+            <p class="text-gray-500 mt-2">Click and drag on the wheel to explore color relationships and generate palettes.</p>
+        </header>
+
+        <div class="flex flex-col lg:flex-row p-6 gap-8">
+            
+            <!-- Left Side: Wheel & Tabs -->
+            <div class="flex-1 flex flex-col items-center border-r border-gray-100 pr-0 lg:pr-8">
+                
+                <!-- Tab Navigation -->
+                <div class="flex space-x-8 mb-6 border-b border-gray-200 w-full justify-center">
+                    <button class="tab-btn active pb-2 px-4 text-gray-500 hover:text-gray-800 transition" onclick="setMode('discrete')">
+                        12-Part Art Wheel
+                    </button>
+                    <button class="tab-btn pb-2 px-4 text-gray-500 hover:text-gray-800 transition" onclick="setMode('continuous')">
+                        Continuous Spectrum
+                    </button>
+                </div>
+
+                <div class="canvas-container" id="wheelContainer">
+                    <canvas id="wheelCanvas" width="400" height="400"></canvas>
+                    <canvas id="pointerCanvas" width="400" height="400"></canvas>
+                </div>
+
+                <p class="text-sm text-gray-400 mt-6 text-center">
+                    Values radiate outward: Tints (Lighter) → Pure Hue → Shades (Darker).
+                </p>
+            </div>
+
+            <!-- Right Side: Controls & Output -->
+            <div class="flex-1 flex flex-col h-[500px] overflow-y-auto pr-2">
+                
+                <h3 class="text-lg font-bold text-gray-800 mb-4">1. Select a Harmony</h3>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8" id="harmonyList">
+                    <!-- Populated by JS -->
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-800 mb-4">2. Generated Palette</h3>
+                
+                <div id="paletteDisplay" class="flex flex-wrap gap-4">
+                    <!-- Swatches populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. HARMONY DEFINITIONS ---
+        // Offsets represent the angle (in degrees 0-360) relative to the base hue.
+        const harmonies = {
+            monochromatic: { 
+                name: 'Monochromatic', 
+                offsets: [0], 
+                desc: 'Uses variations in lightness and saturation of a single hue. Elegant and soothing.' 
+            },
+            complementary: { 
+                name: 'Complementary', 
+                offsets: [0, 180], 
+                desc: 'Colors positioned directly opposite each other. Creates high contrast and vibrant tension.' 
+            },
+            analogous: { 
+                name: 'Analogous', 
+                offsets: [0, 30, 330], // Base, +30, -30
+                desc: 'Colors adjacent to each other. Often found in nature, very harmonious and pleasing.' 
+            },
+            split_complementary: { 
+                name: 'Split-Complementary', 
+                offsets: [0, 150, 210], 
+                desc: 'A base color and the two colors adjacent to its complement. High contrast but less tension.' 
+            },
+            triadic: { 
+                name: 'Triadic', 
+                offsets: [0, 120, 240], 
+                desc: 'Three colors evenly spaced around the wheel. Vibrant even when using pale tints.' 
+            },
+            tetradic: { 
+                name: 'Tetradic (Rectangle)', 
+                offsets: [0, 60, 180, 240], 
+                desc: 'Four colors arranged into two complementary pairs. Offers a wide variety of variations.' 
+            },
+            square: { 
+                name: 'Square', 
+                offsets: [0, 90, 180, 270], 
+                desc: 'Four colors spaced evenly around the color circle. Works best if one color dominates.' 
+            },
+            diadic: { 
+                name: 'Diadic', 
+                offsets: [0, 60], 
+                desc: 'Two colors separated by one slice on the 12-part wheel. Subtle and highly compatible.' 
+            }
+        };
+
+        // --- 2. STATE MANAGEMENT ---
+        let currentMode = 'discrete'; // 'discrete' or 'continuous'
+        let selectedHarmony = 'complementary';
+        
+        // Target destinations
+        let baseHue = 0;      // 0 - 360
+        let baseLightness = 50; // 0 - 100
+        let baseDistance = 100; // Radial distance from center
+        
+        // Animated current positions
+        let animHue = 0;
+        let animLightness = 50;
+        let animDistance = 100;
+        
+        // Multi-pointer animation states
+        let animOffsets = [0, 0, 0, 0];
+        let animOpacities = [1, 0, 0, 0];
+        let monoOpacity = 0;
+        
+        let isDragging = false;
+
+        // Canvases
+        const wheelCanvas = document.getElementById('wheelCanvas');
+        const wheelCtx = wheelCanvas.getContext('2d', { willReadFrequently: true });
+        
+        const pointerCanvas = document.getElementById('pointerCanvas');
+        const pointerCtx = pointerCanvas.getContext('2d');
+        
+        const radius = wheelCanvas.width / 2;
+        const cx = radius;
+        const cy = radius;
+
+        // Lightness bands for the discrete wheel (Inner to Outer)
+        const lightnessBands = [90, 75, 50, 30, 15]; 
+
+        // --- 3. INITIALIZATION ---
+        function init() {
+            // Set initial base distance based on canvas size
+            baseDistance = radius * 0.5;
+            animDistance = baseDistance;
+
+            // Initialize pointer states to avoid fly-in on load
+            const initialOffsets = harmonies[selectedHarmony].offsets;
+            for(let i=0; i<4; i++) {
+                animOffsets[i] = initialOffsets[i] || 0;
+                animOpacities[i] = i < initialOffsets.length ? 1 : 0;
+            }
+            monoOpacity = selectedHarmony === 'monochromatic' ? 1 : 0;
+
+            buildHarmonyUI();
+            drawWheel();
+            updatePaletteDOM();
+            setupInteractions();
+            
+            // Start the 60fps animation loop
+            requestAnimationFrame(animate);
+        }
+
+        function buildHarmonyUI() {
+            const list = document.getElementById('harmonyList');
+            list.innerHTML = '';
+            
+            Object.keys(harmonies).forEach((key) => {
+                const h = harmonies[key];
+                const isChecked = key === selectedHarmony ? 'checked' : '';
+                
+                const html = `
+                    <label class="cursor-pointer">
+                        <input type="radio" name="harmony" value="${key}" class="hidden harmony-radio" ${isChecked} onchange="changeHarmony('${key}')">
+                        <div class="border border-gray-200 rounded-xl p-4 transition-all hover:border-blue-300 h-full">
+                            <h4 class="font-bold text-gray-800 text-sm mb-1">${h.name}</h4>
+                            <p class="text-xs text-gray-500 leading-tight">${h.desc}</p>
+                        </div>
+                    </label>
+                `;
+                list.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // --- 4. DRAWING THE WHEELS ---
+        function drawWheel() {
+            wheelCtx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+            
+            if (currentMode === 'discrete') {
+                drawDiscreteWheel();
+            } else {
+                drawContinuousWheel();
+            }
+        }
+
+        function drawDiscreteWheel() {
+            // 12 Slices, 5 Lightness rings
+            const sliceAngle = (Math.PI * 2) / 12;
+            const ringWidth = radius / lightnessBands.length;
+
+            for (let ring = 0; ring < lightnessBands.length; ring++) {
+                const innerRad = ring * ringWidth;
+                const outerRad = (ring + 1) * ringWidth;
+                const lightness = lightnessBands[ring];
+
+                for (let slice = 0; slice < 12; slice++) {
+                    const startAngle = slice * sliceAngle - (Math.PI / 2) - (sliceAngle / 2); // Shift so Red is top center
+                    const endAngle = startAngle + sliceAngle;
+                    
+                    const hue = slice * 30;
+
+                    wheelCtx.beginPath();
+                    wheelCtx.arc(cx, cy, outerRad, startAngle, endAngle);
+                    wheelCtx.arc(cx, cy, innerRad, endAngle, startAngle, true);
+                    wheelCtx.closePath();
+                    
+                    wheelCtx.fillStyle = `hsl(${hue}, 100%, ${lightness}%)`;
+                    wheelCtx.fill();
+                    
+                    // Add subtle grid lines
+                    wheelCtx.lineWidth = 1;
+                    wheelCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+                    wheelCtx.stroke();
+                }
+            }
+        }
+
+        function drawContinuousWheel() {
+            // Use conic gradient for hue if supported, otherwise manual pixel calculation
+            if (wheelCtx.createConicGradient) {
+                // Hue layer
+                const conic = wheelCtx.createConicGradient(-Math.PI / 2, cx, cy);
+                for (let i = 0; i <= 360; i += 10) {
+                    conic.addColorStop(i / 360, `hsl(${i}, 100%, 50%)`);
+                }
+                
+                wheelCtx.beginPath();
+                wheelCtx.arc(cx, cy, radius, 0, Math.PI * 2);
+                wheelCtx.fillStyle = conic;
+                wheelCtx.fill();
+
+                // Lightness overlay (White center to Transparent middle)
+                const lightGrad = wheelCtx.createRadialGradient(cx, cy, 0, cx, cy, radius / 2);
+                lightGrad.addColorStop(0, 'rgba(255,255,255,1)');
+                lightGrad.addColorStop(1, 'rgba(255,255,255,0)');
+                wheelCtx.fillStyle = lightGrad;
+                wheelCtx.fill();
+
+                // Darkness overlay (Transparent middle to Black edge)
+                const darkGrad = wheelCtx.createRadialGradient(cx, cy, radius / 2, cx, cy, radius);
+                darkGrad.addColorStop(0, 'rgba(0,0,0,0)');
+                darkGrad.addColorStop(1, 'rgba(0,0,0,1)');
+                wheelCtx.fillStyle = darkGrad;
+                wheelCtx.fill();
+            }
+        }
+
+        // --- 5. DRAWING POINTERS & OUTPUT ---
+        function updatePaletteDOM() {
+            // Updates just the HTML Swatches instantly
+            const paletteDiv = document.getElementById('paletteDisplay');
+            paletteDiv.innerHTML = '';
+
+            const harmony = harmonies[selectedHarmony];
+            const activeOffsets = harmony.offsets;
+
+            activeOffsets.forEach((offset, index) => {
+                let targetHue = (baseHue + offset) % 360;
+                if (targetHue < 0) targetHue += 360;
+                createSwatches(targetHue, index === 0);
+            });
+        }
+
+        function animate() {
+            // Lerp Base Hue (Calculates the shortest rotational path)
+            let diff = baseHue - animHue;
+            diff = ((diff + 540) % 360) - 180;
+            animHue += diff * 0.15; // 0.15 is the "spring" speed
+            animHue = (animHue + 360) % 360;
+
+            // Lerp Distance and Lightness
+            animDistance += (baseDistance - animDistance) * 0.15;
+            animLightness += (baseLightness - animLightness) * 0.15;
+
+            // Lerp multi-pointers and Monochromatic state
+            const targetOffsets = harmonies[selectedHarmony].offsets;
+            let targetMono = selectedHarmony === 'monochromatic' ? 1 : 0;
+            monoOpacity += (targetMono - monoOpacity) * 0.15;
+
+            for(let i = 0; i < 4; i++) {
+                // Opacity lerp (Fades pointers in/out)
+                let targetOpacity = i < targetOffsets.length ? 1 : 0;
+                animOpacities[i] += (targetOpacity - animOpacities[i]) * 0.15;
+
+                // Offset lerp (Shortest angular path so they swing correctly)
+                let targetOffset = targetOffsets[i] !== undefined ? targetOffsets[i] : 0;
+                let offsetDiff = targetOffset - animOffsets[i];
+                offsetDiff = ((offsetDiff + 540) % 360) - 180;
+                animOffsets[i] += offsetDiff * 0.15;
+                animOffsets[i] = (animOffsets[i] + 360) % 360;
+            }
+
+            // Draw current frame
+            drawPointers();
+            
+            // Loop
+            requestAnimationFrame(animate);
+        }
+
+        function drawPointers() {
+            pointerCtx.clearRect(0, 0, pointerCanvas.width, pointerCanvas.height);
+            
+            for(let i = 0; i < 4; i++) {
+                if (animOpacities[i] > 0.01) {
+                    let targetHue = (animHue + animOffsets[i]) % 360;
+                    if (targetHue < 0) targetHue += 360;
+                    drawPointer(targetHue, i === 0, animOpacities[i]);
+                }
+            }
+        }
+
+        function drawPointer(hue, isPrimary, baseOpacity) {
+            const radians = (hue - 90) * (Math.PI / 180); // -90 to align 0 with top
+            
+            pointerCtx.save();
+            pointerCtx.globalAlpha = baseOpacity;
+            pointerCtx.translate(cx, cy);
+            pointerCtx.rotate(radians);
+
+            // Draw line
+            pointerCtx.beginPath();
+            pointerCtx.moveTo(0, 0);
+            pointerCtx.lineTo(radius, 0);
+            pointerCtx.strokeStyle = isPrimary ? '#ffffff' : 'rgba(255,255,255,0.6)';
+            pointerCtx.lineWidth = isPrimary ? 3 : 2;
+            
+            // Add shadow to make pointer visible over light colors
+            pointerCtx.shadowColor = 'rgba(0,0,0,0.8)';
+            pointerCtx.shadowBlur = 4;
+            pointerCtx.stroke();
+
+            // Determine which dots to draw and their individual opacity
+            let dotsToDraw = [];
+            
+            if (isPrimary) {
+                // Base highlighted dot
+                dotsToDraw.push({
+                    distance: animDistance,
+                    lightness: animLightness,
+                    isHighlighted: true,
+                    alpha: 1 - monoOpacity
+                });
+                
+                if (monoOpacity > 0.01) {
+                    // Monochromatic: Draw all 5 lightness bands along the line inward to outward
+                    for(let i = 0; i < lightnessBands.length; i++) {
+                        let l = lightnessBands[i];
+                        let d;
+                        if (currentMode === 'discrete') {
+                            const ringWidth = radius / lightnessBands.length;
+                            d = (i * ringWidth) + (ringWidth / 2);
+                        } else {
+                            d = radius * (1 - (l / 100));
+                        }
+                        dotsToDraw.push({
+                            distance: d,
+                            lightness: l,
+                            isHighlighted: Math.abs(d - animDistance) < 15,
+                            alpha: monoOpacity
+                        });
+                    }
+                }
+            } else {
+                // Other harmonies: Draw single dot at current animated distance
+                dotsToDraw.push({
+                    distance: animDistance,
+                    lightness: animLightness,
+                    isHighlighted: true,
+                    alpha: 1
+                });
+            }
+
+            // Draw the indicator dots
+            dotsToDraw.forEach(dot => {
+                if (dot.alpha < 0.01) return;
+                
+                pointerCtx.globalAlpha = baseOpacity * dot.alpha;
+                pointerCtx.beginPath();
+                pointerCtx.arc(dot.distance, 0, dot.isHighlighted ? 8 : 5, 0, Math.PI * 2);
+                pointerCtx.fillStyle = `hsl(${hue}, 100%, ${dot.lightness}%)`;
+                pointerCtx.fill();
+                pointerCtx.lineWidth = dot.isHighlighted ? 2 : 1;
+                pointerCtx.strokeStyle = '#fff';
+                pointerCtx.stroke();
+            });
+
+            pointerCtx.restore();
+        }
+
+        function createSwatches(hue, isPrimary) {
+            const paletteDiv = document.getElementById('paletteDisplay');
+            
+            // Create a column for this hue showing its monochromatic spectrum
+            const col = document.createElement('div');
+            col.className = 'flex flex-col items-center gap-1 w-24';
+            
+            // Label
+            const label = document.createElement('span');
+            label.className = `text-xs font-bold mb-1 ${isPrimary ? 'text-blue-600' : 'text-gray-500'}`;
+            label.innerText = isPrimary ? `Base Hue (${Math.round(hue)}°)` : `${Math.round(hue)}°`;
+            col.appendChild(label);
+
+            // Generate 5 lightness variations to show the "Values radiate outward" concept
+            const displayLightness = [90, 75, 50, 30, 15];
+            
+            displayLightness.forEach(l => {
+                const swatch = document.createElement('div');
+                const isSelectedValue = Math.abs(l - baseLightness) < 10;
+                
+                swatch.className = `w-full h-8 rounded shadow-sm transition-transform ${isSelectedValue ? 'scale-110 border-2 border-white ring-2 ring-blue-400 z-10 relative' : 'border border-black/10'}`;
+                swatch.style.backgroundColor = `hsl(${hue}, 100%, ${l}%)`;
+                
+                // Add click to change lightness directly from swatch
+                swatch.onclick = () => {
+                    baseLightness = l;
+                    // Update baseDistance to match clicked swatch
+                    if (currentMode === 'discrete') {
+                        const ringWidth = radius / lightnessBands.length;
+                        let ringIndex = lightnessBands.indexOf(l);
+                        if(ringIndex === -1) ringIndex = 2; // default
+                        baseDistance = (ringIndex * ringWidth) + (ringWidth / 2);
+                    } else {
+                        baseDistance = radius * (1 - (l / 100));
+                    }
+                    updatePaletteDOM();
+                };
+                swatch.style.cursor = 'pointer';
+                
+                col.appendChild(swatch);
+            });
+            
+            paletteDiv.appendChild(col);
+        }
+
+        // --- 6. INTERACTIONS ---
+        function setupInteractions() {
+            pointerCanvas.addEventListener('mousedown', handlePointerEvent);
+            pointerCanvas.addEventListener('mousemove', (e) => {
+                if (isDragging) handlePointerEvent(e);
+            });
+            window.addEventListener('mouseup', () => isDragging = false);
+            
+            // Touch support
+            pointerCanvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handlePointerEvent(e.touches[0]);
+            });
+            pointerCanvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                handlePointerEvent(e.touches[0]);
+            });
+        }
+
+        function handlePointerEvent(e) {
+            isDragging = true;
+            
+            const rect = pointerCanvas.getBoundingClientRect();
+            // Calculate relative x,y coordinates
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Translate coordinates to center of canvas
+            const dx = x - cx;
+            const dy = y - cy;
+            
+            // Calculate angle in degrees
+            let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            angle = (angle + 90) % 360; // Offset by 90deg so top is 0
+            if (angle < 0) angle += 360;
+            
+            // Calculate distance to determine lightness
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            // Cap distance to radius
+            const clampedDist = Math.min(dist, radius);
+            
+            // Pre-calculate target snaps for the animation loop
+            if (currentMode === 'discrete') {
+                baseHue = Math.round(angle / 30) * 30;
+                
+                const ringWidth = radius / lightnessBands.length;
+                let closestRing = Math.floor(clampedDist / ringWidth);
+                if (closestRing >= lightnessBands.length) closestRing = lightnessBands.length - 1;
+                
+                baseDistance = (closestRing * ringWidth) + (ringWidth / 2);
+                baseLightness = lightnessBands[closestRing];
+            } else {
+                baseHue = angle;
+                baseDistance = clampedDist;
+                baseLightness = 100 - ((clampedDist / radius) * 100);
+            }
+
+            updatePaletteDOM();
+        }
+
+        // UI Handlers
+        window.changeHarmony = function(harmonyKey) {
+            selectedHarmony = harmonyKey;
+            updatePaletteDOM();
+        };
+
+        window.setMode = function(mode) {
+            currentMode = mode;
+            
+            // Update Tab UI
+            const btns = document.querySelectorAll('.tab-btn');
+            btns[0].classList.toggle('active', mode === 'discrete');
+            btns[1].classList.toggle('active', mode === 'continuous');
+
+            // Recalibrate target distance for the new mode
+            if (mode === 'discrete') {
+                baseHue = Math.round(baseHue / 30) * 30;
+                const ringWidth = radius / lightnessBands.length;
+                let closestRing = 2;
+                let minDiff = 100;
+                for(let i=0; i<lightnessBands.length; i++){
+                    if(Math.abs(lightnessBands[i] - baseLightness) < minDiff){
+                        minDiff = Math.abs(lightnessBands[i] - baseLightness);
+                        closestRing = i;
+                    }
+                }
+                baseDistance = (closestRing * ringWidth) + (ringWidth / 2);
+                baseLightness = lightnessBands[closestRing];
+            } else {
+                baseDistance = radius * (1 - (baseLightness / 100));
+            }
+
+            // Redraw background wheel instantly, pointers will animate to new places
+            drawWheel();
+            updatePaletteDOM();
+        };
+
+        // Start
+        init();
+
+    </script>
+</body>
+</html>

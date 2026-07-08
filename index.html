@@ -46,6 +46,24 @@ a{color:var(--darkblue)}
 .prog-t{display:block;font-weight:700;font-size:13.5px;color:var(--ink);line-height:1.35}
 .prog-l{display:block;font-size:12px;color:var(--sub);margin-top:2px}
 
+.winner{position:relative;margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:8px;
+  box-shadow:var(--shadow);padding:24px 22px 22px;overflow:hidden}
+.winner::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;
+  background:linear-gradient(90deg,rgb(240 205 0),rgb(240 140 8))}
+.win-eyebrow{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#e7580c}
+.winner h2{font-size:26px;font-weight:800;letter-spacing:-.015em;color:var(--ink);margin:4px 0 0}
+.win-lead{font-size:13px;font-weight:600;color:var(--navy)}
+.win-blurb{color:#33517a;font-size:14px;margin-top:6px;max-width:70ch}
+.win-try{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--navy);opacity:.75;margin:14px 0 8px}
+.samples{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.sample{display:flex;flex-direction:column;gap:3px;text-decoration:none;border:1px solid #bed2e8;
+  border-radius:6px;padding:10px 12px;background:#f6f7fa;transition:border-color .15s,box-shadow .15s}
+.sample:hover{border-color:var(--blue1);box-shadow:var(--shadow)}
+.sample:focus-visible{outline:2px solid var(--blue1);outline-offset:2px}
+.sample-t{font-size:13px;font-weight:700;color:var(--darkblue);line-height:1.3}
+.subj{font-size:11px;font-weight:600;color:var(--sub)}
+
 .filters{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 18px}
 .chip{--pc:#0056b3;font:600 13px/1 var(--font);color:var(--navy);background:#fff;
   border:1px solid #bed2e8;border-radius:9999px;padding:8px 14px;cursor:pointer;
@@ -156,7 +174,7 @@ html{scroll-behavior:smooth}
       <div class="stat"><b>8</b><span>team members</span></div>
       <div class="stat"><b>4</b><span>strategic pillars</span></div>
     </div>
-    <a class="vote-cta" href="#vote">Cast your vote</a>
+    
   </div>
 </header>
 <div class="wrap">
@@ -165,13 +183,22 @@ html{scroll-behavior:smooth}
   <div class="program-row"><a class="prog" href="#p1"><span class="prog-t">Automated Image Suggestion and Generation</span><span class="prog-l">Jothairo Ursaga</span></a><a class="prog" href="#p2"><span class="prog-t">QLab</span><span class="prog-l">Steven</span></a><a class="prog" href="#p4"><span class="prog-t">Creation of Math Applications</span><span class="prog-l">Miguel Punongbayan</span></a><a class="prog" href="#p8"><span class="prog-t">Branching video (K3-SHS)</span><span class="prog-l">Nadine Uy / Hazenne Taplac</span></a></div>
 </section>
 
+<section class="winner">
+  <p class="win-eyebrow">People&#8217;s Choice &middot; July 8</p>
+  <h2>QLab</h2>
+  <p class="win-lead">Steven</p>
+  <p class="win-blurb">Virtual collaborative science labs inside existing Quipper courses: no equipment, no lab space, no safety risk.</p>
+  <p class="win-try">Try the sample labs the team built</p>
+  <div class="samples"><a class="sample" href="https://kelsienguyen.github.io/content-innovation-showcase-jul8/interactives/virtual-titration-lab.html" target="_blank" rel="noopener"><span class="sample-t">Virtual Titration Lab</span><span class="subj">Chemistry</span></a><a class="sample" href="https://kelsienguyen.github.io/content-innovation-showcase-jul8/interactives/gas-laws.html" target="_blank" rel="noopener"><span class="sample-t">Gas Laws</span><span class="subj">Chemistry</span></a><a class="sample" href="https://kelsienguyen.github.io/content-innovation-showcase-jul8/interactives/intermolecular-forces.html" target="_blank" rel="noopener"><span class="sample-t">Intermolecular Forces</span><span class="subj">Chemistry</span></a><a class="sample" href="https://kelsienguyen.github.io/content-innovation-showcase-jul8/interactives/photosynthesis-lab.html" target="_blank" rel="noopener"><span class="sample-t">Photosynthesis Lab</span><span class="subj">Biology</span></a><a class="sample" href="https://kelsienguyen.github.io/content-innovation-showcase-jul8/interactives/cellular-tonicity.html" target="_blank" rel="noopener"><span class="sample-t">Cellular Tonicity</span><span class="subj">Biology</span></a><a class="sample" href="https://kelsienguyen.github.io/content-innovation-showcase-jul8/interactives/seismic-waves.html" target="_blank" rel="noopener"><span class="sample-t">Seismic Waves</span><span class="subj">Earth Science</span></a><a class="sample" href="https://kelsienguyen.github.io/content-innovation-showcase-jul8/interactives/force-table.html" target="_blank" rel="noopener"><span class="sample-t">Force Table</span><span class="subj">Physics</span></a><a class="sample" href="https://kelsienguyen.github.io/content-innovation-showcase-jul8/interactives/riemann-sums.html" target="_blank" rel="noopener"><span class="sample-t">Riemann Sums</span><span class="subj">Calculus</span></a><a class="sample" href="https://kelsienguyen.github.io/content-innovation-showcase-jul8/interactives/piano-studio.html" target="_blank" rel="noopener"><span class="sample-t">Piano Studio</span><span class="subj">Music</span></a><a class="sample" href="https://kelsienguyen.github.io/content-innovation-showcase-jul8/interactives/color-harmony.html" target="_blank" rel="noopener"><span class="sample-t">Color Harmony</span><span class="subj">Arts</span></a></div>
+</section>
+
 <nav class="filters" aria-label="Filter projects"><button class="chip active" data-filter="all">All projects <b>11</b></button><button class="chip" data-filter="Workflow Automation" style="--pc:#544dc9">Workflow Automation <b>3</b></button><button class="chip" data-filter="Learner Engagement" style="--pc:#0081cc">Learner Engagement <b>3</b></button><button class="chip" data-filter="Content Quality" style="--pc:#008878">Content Quality <b>3</b></button><button class="chip" data-filter="Scalability &amp; Expansion" style="--pc:#cc4004">Scalability &amp; Expansion <b>2</b></button><button class="chip" data-filter="live">Live on Jul 8 <b>4</b></button></nav>
 
 <main class="grid">
 <article class="card" id="p1" data-pillar="Workflow Automation" data-live="true">
   <div class="cardtop">
     <span class="pillchip" style="--pc:#544dc9;--pb:#e2dff6">Workflow Automation</span>
-    <span class="badge-live">Presenting live &middot; Jul 8</span>
+    <span class="badge-live">Presented live &middot; Jul 8</span>
   </div>
   <h3>Automated Image Suggestion and Generation</h3>
   <p class="lead-line">Jothairo Ursaga</p>
@@ -197,7 +224,7 @@ Cross-Strand Applicability: The logic must prove effective across all technical 
 <article class="card" id="p2" data-pillar="Learner Engagement" data-live="true">
   <div class="cardtop">
     <span class="pillchip" style="--pc:#0081cc;--pb:#d6f5ff">Learner Engagement</span>
-    <span class="badge-live">Presenting live &middot; Jul 8</span>
+    <span class="badge-live">People&#8217;s Choice winner</span>
   </div>
   <h3>QLab</h3>
   <p class="lead-line">Steven</p>
@@ -219,7 +246,7 @@ Cross-Strand Applicability: The logic must prove effective across all technical 
 <article class="card" id="p4" data-pillar="Content Quality" data-live="true">
   <div class="cardtop">
     <span class="pillchip" style="--pc:#008878;--pb:#bcefe2">Content Quality</span>
-    <span class="badge-live">Presenting live &middot; Jul 8</span>
+    <span class="badge-live">Presented live &middot; Jul 8</span>
   </div>
   <h3>Creation of Math Applications</h3>
   <p class="lead-line">Miguel Punongbayan</p>
@@ -237,7 +264,7 @@ Cross-Strand Applicability: The logic must prove effective across all technical 
 <article class="card" id="p8" data-pillar="Learner Engagement" data-live="true">
   <div class="cardtop">
     <span class="pillchip" style="--pc:#0081cc;--pb:#d6f5ff">Learner Engagement</span>
-    <span class="badge-live">Presenting live &middot; Jul 8</span>
+    <span class="badge-live">Presented live &middot; Jul 8</span>
   </div>
   <h3>Branching video (K3-SHS)</h3>
   <p class="lead-line">Nadine Uy / Hazenne Taplac</p>
@@ -425,11 +452,11 @@ Partnership execution: Successful signing of the MOU with the NLP administration
   </details>
 </article></main>
 
-<section class="votebar" id="vote"><p>Seen all 11? Vote for the project that stood out most.</p><iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdgVXf-HHWn0ZkN48X9mgLewFEYAJgBj14ify0rn8s2lsHVdw/viewform?embedded=true" title="Vote form" loading="lazy"></iframe><p class="alt">Form not loading? <a href="https://docs.google.com/forms/d/e/1FAIpQLSdgVXf-HHWn0ZkN48X9mgLewFEYAJgBj14ify0rn8s2lsHVdw/viewform" target="_blank" rel="noopener">Open the ballot in a new tab</a>.</p></section>
+
 
 <footer class="foot">
   <p>Source: <a href="https://docs.google.com/spreadsheets/d/1UMuHgg1VP8MPRr8sAQce7wyvRNt3XCbIojl5F9Y0v3s/edit" target="_blank" rel="noopener">
-  Innovation &amp; Initiatives Project Intake (Responses)</a> &middot; pulled July 7, 2026, 5:50 PM.</p>
+  Innovation &amp; Initiatives Project Intake (Responses)</a> &middot; pulled July 8, 2026, 5:04 PM.</p>
   <p>The first submissions predate a fix in the intake form's impact question; those leads re-confirmed their ratings directly (Slack, July 7), and the site shows the confirmed values. The raw responses in the sheet are untouched.</p>
   <p>Attachment links open in Google Drive; access follows the file's Drive permissions.</p>
 </footer>

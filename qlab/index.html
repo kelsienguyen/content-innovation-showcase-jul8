@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>QLab &middot; Try the sample labs</title>
+<style>
+:root{--ink:#0c2846;--navy:#1e3f6b;--sub:#6b8fbc;--line:#e3ecf5;--blue1:#009feb;--darkblue:#0056b3;
+  --font:"Open Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{display:flex;flex-direction:column;height:100vh;height:100dvh;font-family:var(--font);
+  background:#f6f7fa;color:var(--ink);-webkit-font-smoothing:antialiased}
+.bar{background:#0c2846;color:#fff;padding:14px 20px 12px;position:relative}
+.bar::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;
+  background:linear-gradient(90deg,#00beff,#009feb)}
+.crumb{font-size:12px;margin-bottom:2px}
+.crumb a{color:#7ddcff;text-decoration:none}
+.crumb a:hover{text-decoration:underline}
+.bar h1{display:inline;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.win{display:inline-block;vertical-align:3px;margin-left:10px;font-size:11px;font-weight:700;color:#0c2846;
+  background:linear-gradient(90deg,rgb(240 205 0),rgb(240 140 8));border-radius:9999px;padding:3px 10px}
+.bar .sub{font-size:12.5px;color:#8fb0d4;margin-top:3px}
+.labs{display:flex;flex-wrap:wrap;gap:6px;padding:10px 20px;background:#fff;
+  border-bottom:1px solid var(--line)}
+.lab{font:600 12.5px/1.2 var(--font);color:var(--navy);background:#f6f7fa;border:1px solid #bed2e8;
+  border-radius:9999px;padding:6px 12px;cursor:pointer}
+.lab span{display:block;font-size:10px;font-weight:600;color:var(--sub)}
+.lab:hover{border-color:var(--blue1);color:var(--darkblue)}
+.lab[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.lab[aria-pressed="true"] span{color:#7ddcff}
+.lab:focus-visible{outline:2px solid var(--blue1);outline-offset:2px}
+main{flex:1;min-height:0}
+iframe{width:100%;height:100%;border:0;background:#fff;display:block}
+.foot{padding:7px 20px;font-size:12px;color:var(--sub);background:#fff;border-top:1px solid var(--line)}
+.foot a{color:var(--darkblue)}
+</style>
+</head>
+<body>
+<header class="bar">
+  <p class="crumb"><a href="../">&#8592; Innovation &amp; Initiatives Showcase</a></p>
+  <h1>QLab</h1><span class="win">People&#8217;s Choice &middot; Jul 8</span>
+  <p class="sub">Virtual collaborative science labs by Steven and team. Pick a lab and try it right here.</p>
+</header>
+<nav class="labs" aria-label="Choose a lab"><button class="lab" data-slug="virtual-titration-lab" aria-pressed="false">Virtual Titration Lab<span>Chemistry</span></button><button class="lab" data-slug="gas-laws" aria-pressed="false">Gas Laws<span>Chemistry</span></button><button class="lab" data-slug="intermolecular-forces" aria-pressed="false">Intermolecular Forces<span>Chemistry</span></button><button class="lab" data-slug="photosynthesis-lab" aria-pressed="false">Photosynthesis Lab<span>Biology</span></button><button class="lab" data-slug="cellular-tonicity" aria-pressed="false">Cellular Tonicity<span>Biology</span></button><button class="lab" data-slug="seismic-waves" aria-pressed="false">Seismic Waves<span>Earth Science</span></button><button class="lab" data-slug="force-table" aria-pressed="false">Force Table<span>Physics</span></button><button class="lab" data-slug="riemann-sums" aria-pressed="false">Riemann Sums<span>Calculus</span></button><button class="lab" data-slug="piano-studio" aria-pressed="false">Piano Studio<span>Music</span></button><button class="lab" data-slug="color-harmony" aria-pressed="false">Color Harmony<span>Arts</span></button></nav>
+<main><iframe id="frame" title="QLab simulation"></iframe></main>
+<p class="foot">Trouble with the embed? <a id="full" href="#" target="_blank" rel="noopener">Open this lab in its own tab</a></p>
+<script>
+var LABS = [{"slug": "virtual-titration-lab", "title": "Virtual Titration Lab", "subj": "Chemistry"}, {"slug": "gas-laws", "title": "Gas Laws", "subj": "Chemistry"}, {"slug": "intermolecular-forces", "title": "Intermolecular Forces", "subj": "Chemistry"}, {"slug": "photosynthesis-lab", "title": "Photosynthesis Lab", "subj": "Biology"}, {"slug": "cellular-tonicity", "title": "Cellular Tonicity", "subj": "Biology"}, {"slug": "seismic-waves", "title": "Seismic Waves", "subj": "Earth Science"}, {"slug": "force-table", "title": "Force Table", "subj": "Physics"}, {"slug": "riemann-sums", "title": "Riemann Sums", "subj": "Calculus"}, {"slug": "piano-studio", "title": "Piano Studio", "subj": "Music"}, {"slug": "color-harmony", "title": "Color Harmony", "subj": "Arts"}];
+var frame = document.getElementById('frame'), full = document.getElementById('full');
+var chips = Array.prototype.slice.call(document.querySelectorAll('.lab'));
+function select(slug, push) {
+  var lab = LABS.filter(function(l) { return l.slug === slug; })[0] || LABS[0];
+  chips.forEach(function(c) { c.setAttribute('aria-pressed', String(c.dataset.slug === lab.slug)); });
+  frame.src = '../interactives/' + lab.slug + '.html';
+  full.href = '../interactives/' + lab.slug + '.html';
+  document.title = lab.title + ' \u00b7 QLab';
+  if (push) location.hash = lab.slug;
+}
+chips.forEach(function(c) { c.addEventListener('click', function() { select(c.dataset.slug, true); }); });
+window.addEventListener('hashchange', function() { select(location.hash.slice(1), false); });
+select(location.hash.slice(1), false);
+</script>
+</body>
+</html>
